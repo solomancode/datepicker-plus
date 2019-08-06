@@ -31,7 +31,7 @@ export class SelectDateRange {
    * On Select date
    * if false is returned date select will cancel
    */
-  @Prop() onSelect: (dateString: string, date: Date) => void | boolean;
+  @Prop() onDateSelect: (dateString: string, date: Date) => void | boolean;
   
   @State() config = DEFAULT_CONFIG
   
@@ -66,8 +66,8 @@ export class SelectDateRange {
   }
   
   bindOnSelect(date: IDateElement) {
-    if (this.onSelect) {
-      date.bindEvent('onSelect', this.onSelect)
+    if (this.onDateSelect) {
+      date.bindEvent('onSelect', this.onDateSelect)
     }
   }
 
