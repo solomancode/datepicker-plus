@@ -40,6 +40,7 @@ export class SelectDateRange {
   @Watch('checkedDates')
   parseCheckedDates(dates: string | string[]) {
     if (typeof dates === 'string') {
+      dates = dates.replace(/'/g,'"')
       dates = JSON.parse(dates)
     }
     (dates as string[]).forEach(date => this.checked[date] = true)
