@@ -12,6 +12,8 @@ export interface IDateHelperMethods {
     dateString(): string
     select(): void
     deselect(): void
+    enable(): void
+    disable(): void
     bindEvent(event: DateEvents, emitter: EventEmitter): void
 }
 
@@ -51,6 +53,14 @@ const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
         this.checked = false;
         this.el && (this.el.checked = false)
         this.events.onDateDeselect.emit(this)
+    },
+    enable() {
+        this.disabled = false;
+        this.el && (this.el.disabled = false)
+    },
+    disable() {
+        this.disabled = true;
+        this.el && (this.el.disabled = true)
     },
     bindEvent(event: string, emitter: EventEmitter) { this.events[event] = emitter }
 })

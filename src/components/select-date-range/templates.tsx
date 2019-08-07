@@ -5,13 +5,20 @@ import { DEFAULT_MONTHS, DEFAULT_WEEK_DAYS, DEFAULT_CLASSES, IWeekDay } from "./
 
 export const renderDate = (date: IDateElement) => {
     const toggleSelected = () => date.checked ? date.deselect() : date.select();
-    return (<time dateTime={date.dateString()}>
+    const getClassList = () => {
+        const SEP = ' '
+        const disabled = date.disabled ? SEP + DEFAULT_CLASSES.disabled : ''
+        const selected = date.checked ? SEP + DEFAULT_CLASSES.selected : ''
+        return DEFAULT_CLASSES.day + disabled + selected;
+    }
+    return (<time class={getClassList()} dateTime={date.dateString()}>
         <label>
             { date.day }
             <input
                 ref={el=>date.el=el}
                 onChange={toggleSelected.bind(this)}
-                checked={date.checked} type="checkbox" value={date.dateString()}/>
+                checked={date.checked} disabled={date.disabled}
+                type="checkbox" value={date.dateString()}/>
         </label>
     </time>)
 }

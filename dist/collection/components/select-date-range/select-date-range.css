@@ -2,3 +2,11 @@
     border: 1px double;
     margin-bottom: 2px;
 }
+
+.day.disabled {
+    background-color: #ccc;
+}
+
+.day.selected {
+    outline: 1px dotted #f00;
+}

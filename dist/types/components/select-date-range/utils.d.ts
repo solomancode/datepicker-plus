@@ -9,3 +9,4 @@ export declare const monthToWeeks: (month: IDateElement[]) => any[];
 export declare const dateStringInRange: (dateString: string, dateRange: [string, string]) => boolean;
 export declare const getCurrentMonthRange: () => string[];
 export declare const getDatesBetween: (dateString0: string, dateString1: string) => any[];
+export declare const parsePropJSON: (prop: string) => any;

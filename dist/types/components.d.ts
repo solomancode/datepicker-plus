@@ -13,6 +13,7 @@ import {
 export namespace Components {
   interface SelectDateRange {
     'checkedDates': string;
+    'disabledDates': string;
     'selectMode': string;
     'viewRangeEnd': string;
     'viewRangeStart': string;
@@ -35,6 +36,7 @@ declare global {
 declare namespace LocalJSX {
   interface SelectDateRange extends JSXBase.HTMLAttributes<HTMLSelectDateRangeElement> {
     'checkedDates'?: string;
+    'disabledDates'?: string;
     'onOnDateDeselect'?: (event: CustomEvent<IDateElement>) => void;
     'onOnDateSelect'?: (event: CustomEvent<IDateElement>) => void;
     'selectMode'?: string;

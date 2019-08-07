@@ -14,6 +14,9 @@ export declare const DEFAULT_MONTHS: IMonth[];
  * CSS Classes
  */
 export declare const DEFAULT_CLASSES: {
+    day: string;
+    disabled: string;
+    selected: string;
     month: string;
     week: string;
     weekend: string;

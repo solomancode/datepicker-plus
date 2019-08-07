@@ -14,10 +14,12 @@ export declare class SelectDateRange {
     viewRangeStart: string;
     viewRangeEnd: string;
     checkedDates: string;
+    disabledDates: string;
     /**
      * Parsed date list...
      */
     private checkedDatesInput;
+    private disabledDatesInput;
     onDateSelect: EventEmitter<IDateElement>;
     onDateDeselect: EventEmitter<IDateElement>;
     readonly events: {
@@ -26,11 +28,13 @@ export declare class SelectDateRange {
     };
     config: IConfig;
     parseCheckedDates(dates: string | string[]): void;
+    parseDisabledDates(dates: string | string[]): void;
     componentWillLoad(): void;
     getDateElement: (dateString: string) => IDateElement;
     selectDate: (dateString: string) => void;
+    selectDates: (dateString: string[]) => void;
+    disableDates: (dateString: string[]) => void;
     isSelectedDate: (dateString: string) => void;
-    private isCheckedDate;
     clearSelected(): void;
     private createDate;
     private updateViewList;

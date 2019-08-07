@@ -8,6 +8,8 @@ export interface IDateHelperMethods {
     dateString(): string;
     select(): void;
     deselect(): void;
+    enable(): void;
+    disable(): void;
     bindEvent(event: DateEvents, emitter: EventEmitter): void;
 }
 export interface IDateOptions {

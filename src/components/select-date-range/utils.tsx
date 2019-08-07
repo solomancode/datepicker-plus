@@ -86,3 +86,7 @@ export const getDatesBetween = (dateString0: string, dateString1: string) => {
     }
     return rangeDates;
 }
+
+export const parsePropJSON = (prop: string) => {
+    return JSON.parse(prop.replace(/'/g,'"'))
+}

@@ -1,7 +1,7 @@
 import { Component, Prop, Watch, State, Event, EventEmitter } from '@stencil/core';
 import { renderMonth } from './templates';
 import { IDateElement, createDateElement, createdDateElements } from './createDateElement';
-import { getDateRange, dateToString, isSameDate, getNextDay, dateStringInRange, getDatesBetween } from './utils';
+import { getDateRange, dateToString, isSameDate, getNextDay, getDatesBetween, parsePropJSON } from './utils';
 import { SelectMode, DEFAULT_CONFIG } from './config';
 
 export type DateString = string
@@ -26,11 +26,13 @@ export class SelectDateRange {
   @Prop() viewRangeStart: string
   @Prop() viewRangeEnd: string
   @Prop() checkedDates: string
+  @Prop() disabledDates: string
 
   /**
    * Parsed date list...
    */
   private checkedDatesInput: string[] = []
+  private disabledDatesInput: string[] = []
   
   @Event() onDateSelect: EventEmitter<IDateElement>
   @Event() onDateDeselect: EventEmitter<IDateElement>
@@ -47,15 +49,25 @@ export class SelectDateRange {
   @Watch('checkedDates')
   parseCheckedDates(dates: string | string[]) {
     if (typeof dates === 'string') {
-      dates = dates.replace(/'/g,'"')
-      dates = JSON.parse(dates)
+      dates = parsePropJSON(dates)
     }
-    (dates as string[]).forEach(this.selectDate)
+    this.selectDates(dates as string[])
     this.checkedDatesInput = dates as string[] || [];
+  }
+
+  @Watch('disabledDates')
+  parseDisabledDates(dates: string | string[]) {
+    if (typeof dates === 'string') {
+      dates = parsePropJSON(dates)
+    }
+    this.disableDates(dates as string[])
+    this.disabledDatesInput = dates as string[] || [];
   }
 
   componentWillLoad() {
     this.parseCheckedDates(this.checkedDates)
+    this.parseDisabledDates(this.disabledDates)
+    // this.parseDisabledRange(this.disabledRange)
     this.updateConfig()
   }
 
@@ -71,18 +83,25 @@ export class SelectDateRange {
     const dateElement = this.getDateElement(dateString)
     dateElement && dateElement.select()
   }
+  
+  selectDates = (dateString: string[]) => {
+    if (this.config.selectMode==='range') {
+      const datesRange = getDatesBetween(dateString[0], dateString[1]);
+      [dateString[0],...datesRange,dateString[1]].forEach(this.selectDate)
+    } else {
+      dateString.forEach(this.selectDate)
+    }
+  }
+
+  disableDates = (dateString: string[]) => {
+    dateString.forEach(dateStr => {
+      const dateElement = this.getDateElement(dateStr)
+      dateElement && dateElement.disable()
+    })
+  }
 
   isSelectedDate = (dateString: string) => {
     this.getDateElement(dateString).checked
-  }
-  
-  private isCheckedDate(dateString: string) {
-    if (this.config.selectMode==='range') {
-      let range = this.checkedDatesInput as [string, string]
-      return dateStringInRange(dateString, range)
-    } else {
-      return this.getDateElement(dateString).checked
-    }
   }
 
   clearSelected() {
@@ -103,13 +122,10 @@ export class SelectDateRange {
 
   private createDate = (date: Date) => {
     const dateString = dateToString(date)
-    const dateElement = createDateElement({
+    return createDateElement({
       dateString,
       events: this.events
     })
-    let isChecked = this.isCheckedDate(dateString)
-    isChecked && dateElement.select()
-    return dateElement
   }
   
   private updateViewList(config: IConfig = this.config) {
@@ -128,7 +144,8 @@ export class SelectDateRange {
       }
       lastIndex = date.month;
     }
-    
+    this.selectDates(this.checkedDatesInput)
+    this.disableDates(this.disabledDatesInput)
     this.viewList.push(monthDates)
     
     return Object.create({
