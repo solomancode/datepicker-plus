@@ -3,6 +3,13 @@ declare type DateEvents = 'onDateSelect';
 export interface IDateEvents {
     onDateSelect?: EventEmitter;
 }
+export interface IDateTags {
+    isToday(): boolean;
+    isTomorrow(): boolean;
+    isYesterday(): boolean;
+    isPastDate(): boolean;
+    isFutureDate(): boolean;
+}
 export interface IDateHelperMethods {
     dateObject(): Date;
     dateString(): string;
@@ -10,13 +17,14 @@ export interface IDateHelperMethods {
     deselect(): void;
     enable(): void;
     disable(): void;
+    offset(): void;
     bindEvent(event: DateEvents, emitter: EventEmitter): void;
 }
 export interface IDateOptions {
     checked?: boolean;
     disabled?: boolean;
 }
-export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateEvents {
+export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateEvents, IDateTags {
     day: number;
     month: number;
     year: number;

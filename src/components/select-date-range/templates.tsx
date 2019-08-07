@@ -9,11 +9,12 @@ export const renderDate = (date: IDateElement) => {
         const SEP = ' '
         const disabled = date.disabled ? SEP + DEFAULT_CLASSES.disabled : ''
         const selected = date.checked ? SEP + DEFAULT_CLASSES.selected : ''
-        return DEFAULT_CLASSES.day + disabled + selected;
+        const today = date.isToday() ? SEP + DEFAULT_CLASSES.today : ''
+        return DEFAULT_CLASSES.day + disabled + selected + today;
     }
     return (<time class={getClassList()} dateTime={date.dateString()}>
         <label>
-            { date.day }
+            {date.day}
             <input
                 ref={el=>date.el=el}
                 onChange={toggleSelected.bind(this)}

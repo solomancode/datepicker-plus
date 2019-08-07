@@ -10,3 +10,7 @@
 .day.selected {
     outline: 1px dotted #f00;
 }
+
+.day.today {
+    background-color: gold;
+}

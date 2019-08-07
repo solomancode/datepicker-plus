@@ -20,6 +20,7 @@ export declare const DEFAULT_CLASSES: {
     month: string;
     week: string;
     weekend: string;
+    today: string;
 };
 export declare type SelectMode = 'single' | 'multiple' | 'range';
 export declare const DEFAULT_VIEW_RANGE_START: string, DEFAULT_VIEW_RANGE_END: string;

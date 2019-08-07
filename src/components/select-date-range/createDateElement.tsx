@@ -1,10 +1,18 @@
-import { getDateComponents } from "./utils";
+import { getDateComponents, stringToDate } from "./utils";
 import { EventEmitter } from "@stencil/core";
 
 type DateEvents = 'onDateSelect'
 
 export interface IDateEvents {
     onDateSelect?: EventEmitter
+}
+
+export interface IDateTags {
+    isToday(): boolean
+    isTomorrow(): boolean
+    isYesterday(): boolean
+    isPastDate(): boolean
+    isFutureDate(): boolean
 }
 
 export interface IDateHelperMethods {
@@ -14,6 +22,7 @@ export interface IDateHelperMethods {
     deselect(): void
     enable(): void
     disable(): void
+    offset(): void
     bindEvent(event: DateEvents, emitter: EventEmitter): void
 }
 
@@ -22,7 +31,7 @@ export interface IDateOptions {
     disabled?: boolean
 }
 
-export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateEvents {
+export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateEvents, IDateTags {
     day: number
     month: number
     year: number
@@ -42,8 +51,12 @@ const composeDateOptions = (options?: IDateOptions): IDateOptions => {
 }
 
 const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
-    dateObject: () => this.stringToDate(dateString),
-    dateString: () => dateString,
+    dateObject() {
+        return stringToDate(dateString)
+    },
+    dateString() {
+        return dateString
+    },
     select() {
         this.checked = true;
         this.el && (this.el.checked = true)
@@ -62,7 +75,30 @@ const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
         this.disabled = true;
         this.el && (this.el.disabled = true)
     },
+    offset() {
+        const date = (this as IDateElement).dateObject().getTime()
+        const now = new Date().getTime()
+        return Math.ceil((date-now)/86400000)
+    },
     bindEvent(event: string, emitter: EventEmitter) { this.events[event] = emitter }
+})
+
+const composeDateTags = () => ({
+    isToday() {
+        return this.offset() === 0;
+    },
+    isTomorrow() {
+        return this.offset() === 1;
+    },
+    isYesterday() {
+        return this.offset() === -1;
+    },
+    isPastDate() {
+        return this.offset() < 0;
+    },
+    isFutureDate() {
+        return this.offset() > 0
+    }
 })
 
 export const createdDateElements: {[key: string]: IDateElement} = {}
@@ -80,6 +116,7 @@ export const createDateElement = ({ dateString, options, events = {} }: IDatePar
         createdDateElements,
         ...composeDateOptions(options),
         ...composeDateHelpers(dateString),
+        ...composeDateTags()
     })
 
     if ( isCreatedDateElement(dateString) ) {

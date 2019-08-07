@@ -46,7 +46,8 @@ export const DEFAULT_CLASSES = {
     selected: 'selected',
     month: 'month',
     week: 'week',
-    weekend: 'weekend'
+    weekend: 'weekend',
+    today: 'today'
 }
 
 export type SelectMode = 'single' | 'multiple' | 'range'
