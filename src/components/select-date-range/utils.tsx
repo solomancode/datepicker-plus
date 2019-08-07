@@ -21,16 +21,17 @@ export const stringToDate = (dateString: string) => {
     return date;
 }
 
-export const getNextDay = (date: Date) => {
-    const nextDay = new Date(date)
+export const getNextDay = (date: Date | string) => {
+    const isStringDate = typeof date === 'string';
+    const nextDay = isStringDate ? stringToDate(date as string) : new Date(date);
     nextDay.setDate(nextDay.getDate() + 1)
-    return nextDay
+    return isStringDate ? dateToString(nextDay) : nextDay
 }
 
 export const getDateRange = (start: string, end: string): [Date, Date] => {
     let startDate = stringToDate(start)
     let endDate = stringToDate(end)
-    endDate = getNextDay(endDate)
+    endDate = getNextDay(endDate) as Date
     return [startDate, endDate]
 }
   
@@ -74,4 +75,14 @@ export const getCurrentMonthRange = () => {
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     return [ dateToString(firstDay), dateToString(lastDay) ]
+}
+
+export const getDatesBetween = (dateString0: string, dateString1: string) => {
+    let rangeDates = []
+    let currentDateString = getNextDay(dateString0) as string;
+    while (currentDateString!==dateString1) {
+        rangeDates.push(currentDateString)
+        currentDateString = getNextDay(currentDateString) as string;
+    }
+    return rangeDates;
 }

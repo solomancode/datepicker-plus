@@ -4,13 +4,14 @@ import { monthToWeeks } from './utils';
 import { DEFAULT_MONTHS, DEFAULT_WEEK_DAYS, DEFAULT_CLASSES, IWeekDay } from "./config";
 
 export const renderDate = (date: IDateElement) => {
-    const onValueChange = (event) => {
-        event.target.checked && date.select()
-    }
+    const toggleSelected = () => date.checked ? date.deselect() : date.select();
     return (<time dateTime={date.dateString()}>
         <label>
             { date.day }
-            <input onChange={(event) => onValueChange(event)} checked={date.checked} type="checkbox" value={date.dateString()}/>
+            <input
+                ref={el=>date.el=el}
+                onChange={toggleSelected.bind(this)}
+                checked={date.checked} type="checkbox" value={date.dateString()}/>
         </label>
     </time>)
 }

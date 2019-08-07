@@ -6,15 +6,13 @@
 
 
 import { HTMLStencilElement, JSXBase } from './stencil.core';
-
+import {
+  IDateElement,
+} from './components/select-date-range/createDateElement';
 
 export namespace Components {
   interface SelectDateRange {
     'checkedDates': string;
-    /**
-    * On Select date if false is returned date select will cancel
-    */
-    'onDateSelect': (dateString: string, date: Date) => void | boolean;
     'selectMode': string;
     'viewRangeEnd': string;
     'viewRangeStart': string;
@@ -37,10 +35,8 @@ declare global {
 declare namespace LocalJSX {
   interface SelectDateRange extends JSXBase.HTMLAttributes<HTMLSelectDateRangeElement> {
     'checkedDates'?: string;
-    /**
-    * On Select date if false is returned date select will cancel
-    */
-    'onDateSelect'?: (dateString: string, date: Date) => void | boolean;
+    'onOnDateDeselect'?: (event: CustomEvent<IDateElement>) => void;
+    'onOnDateSelect'?: (event: CustomEvent<IDateElement>) => void;
     'selectMode'?: string;
     'viewRangeEnd'?: string;
     'viewRangeStart'?: string;

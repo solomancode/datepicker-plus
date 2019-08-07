@@ -1,7 +1,7 @@
-import { Component, Prop, Watch, State } from '@stencil/core';
+import { Component, Prop, Watch, State, Event, EventEmitter } from '@stencil/core';
 import { renderMonth } from './templates';
 import { IDateElement, createDateElement, createdDateElements } from './createDateElement';
-import { getDateRange, dateToString, isSameDate, getNextDay, dateStringInRange } from './utils';
+import { getDateRange, dateToString, isSameDate, getNextDay, dateStringInRange, getDatesBetween } from './utils';
 import { SelectMode, DEFAULT_CONFIG } from './config';
 
 export type DateString = string
@@ -27,13 +27,20 @@ export class SelectDateRange {
   @Prop() viewRangeEnd: string
   @Prop() checkedDates: string
 
-  private checkedDatesList: string[] = []
-  
   /**
-   * On Select date
-   * if false is returned date select will cancel
+   * Parsed date list...
    */
-  @Prop() onDateSelect: (dateString: string, date: Date) => void | boolean;
+  private checkedDatesInput: string[] = []
+  
+  @Event() onDateSelect: EventEmitter<IDateElement>
+  @Event() onDateDeselect: EventEmitter<IDateElement>
+  
+  get events() {
+    return {
+      onDateSelect: this.onDateSelect,
+      onDateDeselect: this.onDateDeselect
+    }
+  }
   
   @State() config = DEFAULT_CONFIG
 
@@ -44,7 +51,7 @@ export class SelectDateRange {
       dates = JSON.parse(dates)
     }
     (dates as string[]).forEach(this.selectDate)
-    this.checkedDatesList = dates as string[] || [];
+    this.checkedDatesInput = dates as string[] || [];
   }
 
   componentWillLoad() {
@@ -54,7 +61,7 @@ export class SelectDateRange {
 
   getDateElement = (dateString: string) => {
     if (dateString in createdDateElements) {
-      createdDateElements[dateString]
+      return createdDateElements[dateString]
     } else {
       return null
     } 
@@ -71,34 +78,37 @@ export class SelectDateRange {
   
   private isCheckedDate(dateString: string) {
     if (this.config.selectMode==='range') {
-      let range = this.checkedDatesList as [string, string]
+      let range = this.checkedDatesInput as [string, string]
       return dateStringInRange(dateString, range)
     } else {
       return this.getDateElement(dateString).checked
     }
   }
 
-  dispatchOnSelect(target: IDateElement,dateString: string, date: Date) {
-    if ('onSelect' in target.events) {
-      return target.events.onSelect(dateString, date)
+  clearSelected() {
+    this.checkedDatesInput.forEach(dateString => {
+      const dateElement: IDateElement = this.getDateElement(dateString)
+      dateElement && dateElement.deselect()
+    })
+    if (this.config.selectMode==='range') {
+      const [start, end] = this.checkedDatesInput
+      let dates = getDatesBetween(start, end)
+      dates.forEach(dateString => {
+        const dateElement: IDateElement = this.getDateElement(dateString)
+        dateElement && dateElement.deselect()
+      });
     }
-  }
-  
-  bindOnSelect(date: IDateElement) {
-    if (this.onDateSelect) {
-      date.bindEvent('onSelect', this.onDateSelect)
-    }
+    this.checkedDatesInput = []
   }
 
-  private createDate(date: Date) {
+  private createDate = (date: Date) => {
     const dateString = dateToString(date)
-    const dateElement = createDateElement(dateString)
-    this.bindOnSelect(dateElement)
+    const dateElement = createDateElement({
+      dateString,
+      events: this.events
+    })
     let isChecked = this.isCheckedDate(dateString)
-    if (isChecked) {
-      const canSelect = this.dispatchOnSelect(dateElement, dateString, date)
-      if (canSelect!==false) dateElement.select()
-    }
+    isChecked && dateElement.select()
     return dateElement
   }
   
@@ -114,11 +124,13 @@ export class SelectDateRange {
         monthDates = []
       } else {
         monthDates.push(date)
-        currentDate = getNextDay(currentDate)
+        currentDate = getNextDay(currentDate) as Date
       }
       lastIndex = date.month;
     }
+    
     this.viewList.push(monthDates)
+    
     return Object.create({
       render: () => this.viewList.map(renderMonth)
     })

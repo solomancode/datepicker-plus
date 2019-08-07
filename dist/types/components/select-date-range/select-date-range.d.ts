@@ -1,3 +1,4 @@
+import { EventEmitter } from '../../stencil.core';
 import { IDateElement } from './createDateElement';
 import { SelectMode } from './config';
 export declare type DateString = string;
@@ -13,21 +14,24 @@ export declare class SelectDateRange {
     viewRangeStart: string;
     viewRangeEnd: string;
     checkedDates: string;
-    private checkedDatesList;
     /**
-     * On Select date
-     * if false is returned date select will cancel
+     * Parsed date list...
      */
-    onDateSelect: (dateString: string, date: Date) => void | boolean;
+    private checkedDatesInput;
+    onDateSelect: EventEmitter<IDateElement>;
+    onDateDeselect: EventEmitter<IDateElement>;
+    readonly events: {
+        onDateSelect: EventEmitter<IDateElement>;
+        onDateDeselect: EventEmitter<IDateElement>;
+    };
     config: IConfig;
     parseCheckedDates(dates: string | string[]): void;
     componentWillLoad(): void;
-    getDateElement: (dateString: string) => any;
+    getDateElement: (dateString: string) => IDateElement;
     selectDate: (dateString: string) => void;
     isSelectedDate: (dateString: string) => void;
     private isCheckedDate;
-    dispatchOnSelect(target: IDateElement, dateString: string, date: Date): any;
-    bindOnSelect(date: IDateElement): void;
+    clearSelected(): void;
     private createDate;
     private updateViewList;
     updateConfig(config?: IConfig): void;

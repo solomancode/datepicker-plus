@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0">
-  <title>Stencil Component Starter</title>
+  <title>⚡ Select Date Range ⚡</title>
 
   <script type="module" src="/build/select-date-range.esm.js"></script>
   <script nomodule src="/build/select-date-range.js"></script>
@@ -15,13 +15,29 @@
   </select-date-range>
 
   <script>
-    const selectDateRange = document.querySelector('select-date-range')
+    // Set selected dates range
+    var selectDateRange = document.querySelector('select-date-range')
     selectDateRange.checkedDates = ['2019-8-1','2019-8-20']
-    selectDateRange.onSelect = (dateString, date) => {
-      console.group(dateString)
+  </script>
+
+  <script>
+    // On Date Select
+    selectDateRange.addEventListener('onDateSelect', (event) => {
+      console.group()
       console.count('selected')
+      console.log(event.detail)
       console.groupEnd()
-    }
+    })
+  </script>
+
+  <script>
+    // On Date Deselect
+    selectDateRange.addEventListener('onDateDeselect', (event) => {
+      console.group()
+      console.count('deselected')
+      console.log(event.detail)
+      console.groupEnd()
+    })
   </script>
 
 </body>

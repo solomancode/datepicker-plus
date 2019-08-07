@@ -1,16 +1,18 @@
 import { getDateComponents } from "./utils";
+import { EventEmitter } from "@stencil/core";
 
-type DateEvents = 'onSelect'
+type DateEvents = 'onDateSelect'
 
 export interface IDateEvents {
-    onSelect?: (dateString: string, date: Date) => void | boolean
+    onDateSelect?: EventEmitter
 }
 
 export interface IDateHelperMethods {
     dateObject(): Date
     dateString(): string
     select(): void
-    bindEvent(event: DateEvents, fn: Function): void
+    deselect(): void
+    bindEvent(event: DateEvents, emitter: EventEmitter): void
 }
 
 export interface IDateOptions {
@@ -19,11 +21,18 @@ export interface IDateOptions {
 }
 
 export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateEvents {
-    day: number,
-    month: number,
-    year: number,
-    dayOfWeek: number,
-    events: {[key: string]: Function}
+    day: number
+    month: number
+    year: number
+    dayOfWeek: number
+    events: {[key: string]: EventEmitter}
+    el: HTMLInputElement
+}
+
+export interface IDateParams {
+    dateString: string
+    options?: IDateOptions
+    events?: IDateEvents
 }
 
 const composeDateOptions = (options?: IDateOptions): IDateOptions => {
@@ -33,8 +42,17 @@ const composeDateOptions = (options?: IDateOptions): IDateOptions => {
 const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
     dateObject: () => this.stringToDate(dateString),
     dateString: () => dateString,
-    select() { this.checked = true },
-    bindEvent(event: string, fn: Function) { this.events[event] = fn }
+    select() {
+        this.checked = true;
+        this.el && (this.el.checked = true)
+        this.events.onDateSelect.emit(this)
+    },
+    deselect() {
+        this.checked = false;
+        this.el && (this.el.checked = false)
+        this.events.onDateDeselect.emit(this)
+    },
+    bindEvent(event: string, emitter: EventEmitter) { this.events[event] = emitter }
 })
 
 export const createdDateElements: {[key: string]: IDateElement} = {}
@@ -43,11 +61,12 @@ const isCreatedDateElement = (dateString: string) => {
     return (dateString in createdDateElements)
 }
 
-export const createDateElement = (dateString: string, options?: IDateOptions): IDateElement => {
+export const createDateElement = ({ dateString, options, events = {} }: IDateParams): IDateElement => {
+    
     const [year, month, day] = getDateComponents(dateString)
 
     const dateOptions = Object.create({
-        events: {},
+        events,
         createdDateElements,
         ...composeDateOptions(options),
         ...composeDateHelpers(dateString),

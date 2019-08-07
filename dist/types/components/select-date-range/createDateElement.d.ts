@@ -1,12 +1,14 @@
-declare type DateEvents = 'onSelect';
+import { EventEmitter } from "../../stencil.core";
+declare type DateEvents = 'onDateSelect';
 export interface IDateEvents {
-    onSelect?: (dateString: string, date: Date) => void | boolean;
+    onDateSelect?: EventEmitter;
 }
 export interface IDateHelperMethods {
     dateObject(): Date;
     dateString(): string;
     select(): void;
-    bindEvent(event: DateEvents, fn: Function): void;
+    deselect(): void;
+    bindEvent(event: DateEvents, emitter: EventEmitter): void;
 }
 export interface IDateOptions {
     checked?: boolean;
@@ -18,11 +20,17 @@ export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateEve
     year: number;
     dayOfWeek: number;
     events: {
-        [key: string]: Function;
+        [key: string]: EventEmitter;
     };
+    el: HTMLInputElement;
+}
+export interface IDateParams {
+    dateString: string;
+    options?: IDateOptions;
+    events?: IDateEvents;
 }
 export declare const createdDateElements: {
     [key: string]: IDateElement;
 };
-export declare const createDateElement: (dateString: string, options?: IDateOptions) => IDateElement;
+export declare const createDateElement: ({ dateString, options, events }: IDateParams) => IDateElement;
 export {};
