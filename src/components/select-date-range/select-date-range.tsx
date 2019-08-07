@@ -1,6 +1,6 @@
 import { Component, Prop, Watch, State } from '@stencil/core';
 import { renderMonth } from './templates';
-import { IDateElement, createDateElement } from './createDateElement';
+import { IDateElement, createDateElement, createdDateElements } from './createDateElement';
 import { getDateRange, dateToString, isSameDate, getNextDay, dateStringInRange } from './utils';
 import { SelectMode, DEFAULT_CONFIG } from './config';
 
@@ -27,6 +27,8 @@ export class SelectDateRange {
   @Prop() viewRangeEnd: string
   @Prop() checkedDates: string
 
+  private checkedDatesList: string[] = []
+  
   /**
    * On Select date
    * if false is returned date select will cancel
@@ -34,8 +36,6 @@ export class SelectDateRange {
   @Prop() onDateSelect: (dateString: string, date: Date) => void | boolean;
   
   @State() config = DEFAULT_CONFIG
-  
-  @State() checked = {}
 
   @Watch('checkedDates')
   parseCheckedDates(dates: string | string[]) {
@@ -43,20 +43,38 @@ export class SelectDateRange {
       dates = dates.replace(/'/g,'"')
       dates = JSON.parse(dates)
     }
-    (dates as string[]).forEach(date => this.checked[date] = true)
+    (dates as string[]).forEach(this.selectDate)
+    this.checkedDatesList = dates as string[] || [];
   }
 
   componentWillLoad() {
     this.parseCheckedDates(this.checkedDates)
     this.updateConfig()
   }
+
+  getDateElement = (dateString: string) => {
+    if (dateString in createdDateElements) {
+      createdDateElements[dateString]
+    } else {
+      return null
+    } 
+  }
+  
+  selectDate = (dateString: string) => {
+    const dateElement = this.getDateElement(dateString)
+    dateElement && dateElement.select()
+  }
+
+  isSelectedDate = (dateString: string) => {
+    this.getDateElement(dateString).checked
+  }
   
   private isCheckedDate(dateString: string) {
     if (this.config.selectMode==='range') {
-      let range = Object.keys(this.checked) as [string, string]
+      let range = this.checkedDatesList as [string, string]
       return dateStringInRange(dateString, range)
     } else {
-      return (dateString in this.checked)
+      return this.getDateElement(dateString).checked
     }
   }
 

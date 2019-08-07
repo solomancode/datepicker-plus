@@ -37,14 +37,32 @@ const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
     bindEvent(event: string, fn: Function) { this.events[event] = fn }
 })
 
+export const createdDateElements: {[key: string]: IDateElement} = {}
+
+const isCreatedDateElement = (dateString: string) => {
+    return (dateString in createdDateElements)
+}
+
 export const createDateElement = (dateString: string, options?: IDateOptions): IDateElement => {
     const [year, month, day] = getDateComponents(dateString)
+
     const dateOptions = Object.create({
         events: {},
+        createdDateElements,
         ...composeDateOptions(options),
         ...composeDateHelpers(dateString),
     })
+
+    if ( isCreatedDateElement(dateString) ) {
+        const dateElement = createdDateElements[dateString]
+        Object.assign(dateElement, dateOptions)
+        return dateElement;
+    }
+    
     const dayOfWeek = new Date(dateString).getDay()
     const props = { year, month, day, dayOfWeek }
-    return Object.assign(dateOptions, props)
+    const dateElement = Object.assign(dateOptions, props)
+    Object.defineProperty(createdDateElements, dateString, { value: dateElement })
+
+    return dateElement
 }

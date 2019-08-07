@@ -21,5 +21,8 @@ export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateEve
         [key: string]: Function;
     };
 }
+export declare const createdDateElements: {
+    [key: string]: IDateElement;
+};
 export declare const createDateElement: (dateString: string, options?: IDateOptions) => IDateElement;
 export {};

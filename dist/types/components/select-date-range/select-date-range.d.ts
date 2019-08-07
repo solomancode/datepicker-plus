@@ -13,15 +13,18 @@ export declare class SelectDateRange {
     viewRangeStart: string;
     viewRangeEnd: string;
     checkedDates: string;
+    private checkedDatesList;
     /**
      * On Select date
      * if false is returned date select will cancel
      */
     onDateSelect: (dateString: string, date: Date) => void | boolean;
     config: IConfig;
-    checked: {};
     parseCheckedDates(dates: string | string[]): void;
     componentWillLoad(): void;
+    getDateElement: (dateString: string) => any;
+    selectDate: (dateString: string) => void;
+    isSelectedDate: (dateString: string) => void;
     private isCheckedDate;
     dispatchOnSelect(target: IDateElement, dateString: string, date: Date): any;
     bindOnSelect(date: IDateElement): void;
