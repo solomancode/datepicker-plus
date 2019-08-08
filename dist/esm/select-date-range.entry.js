@@ -1,4 +1,4 @@
-import { h, r as registerInstance, c as createEvent } from './chunk-20af2f18.js';
+import { h, r as registerInstance, c as createEvent } from './chunk-c703814f.js';
 
 const dateToString = (date) => {
     const yyyy = date.getFullYear();
@@ -56,18 +56,6 @@ const monthToWeeks = (month) => {
         weeks.push(week);
     }
     return weeks;
-};
-const dateStringInRange = (dateString, dateRange) => {
-    const [year, month, day] = getDateComponents(dateString);
-    const [year0, month0, day0] = getDateComponents(dateRange[0]);
-    const [year1, month1, day1] = getDateComponents(dateRange[1]);
-    if (day < day0 || day > day1)
-        return false;
-    if (month < month0 || month > month1)
-        return false;
-    if (year < year0 || year > year1)
-        return false;
-    return true;
 };
 const getCurrentMonthRange = () => {
     const date = new Date();
@@ -406,7 +394,7 @@ class SelectDateRange {
         "checkedDates": ["parseCheckedDates"],
         "disabledDates": ["parseDisabledDates"]
     }; }
-    static get style() { return ".sdr-container {\n    font-family: monospace;\n}\n\n.month {\n    border: 1px solid #ccc;\n    padding: 20px;\n}\n\n.month-header {\n    text-transform: uppercase;\n    font-weight: bold;\n    margin-bottom: 5px;\n}\n\n.week {\n    \n}\n\n.week-header {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.week-header abbr {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    text-align: center;\n}\n\n.week-content {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.week-content > .day, .week-content > .empty {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    -ms-flex-preferred-size: 80px;\n    flex-basis: 80px;\n    text-align: center;\n}\n\n.day {\n\n}\n\n.day.disabled {\n    background-color: #ccc;\n}\n\n.day.selected {\n    background-color: gold;\n}\n\n.day.today {\n    background-color: #e45;\n}\n\n.checkbox {}"; }
+    static get style() { return ".sdr-container{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.week-header{display:-ms-flexbox;display:flex}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day.disabled{background-color:#ccc}.day.selected{background-color:gold}.day.today{background-color:#e45}"; }
 }
 
 export { SelectDateRange as select_date_range };
