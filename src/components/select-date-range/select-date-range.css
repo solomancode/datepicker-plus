@@ -1,6 +1,43 @@
+.sdr-container {
+    font-family: monospace;
+}
+
 .month {
-    border: 1px double;
-    margin-bottom: 2px;
+    border: 1px solid #ccc;
+    padding: 20px;
+}
+
+.month-header {
+    text-transform: uppercase;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.week {
+    
+}
+
+.week-header {
+    display: flex;
+}
+
+.week-header abbr {
+    flex-grow: 1;
+    text-align: center;
+}
+
+.week-content {
+    display: flex;
+}
+
+.week-content > .day, .week-content > .empty {
+    flex-grow: 1;
+    flex-basis: 80px;
+    text-align: center;
+}
+
+.day {
+
 }
 
 .day.disabled {
@@ -8,9 +45,11 @@
 }
 
 .day.selected {
-    outline: 1px dotted #f00;
+    background-color: gold;
 }
 
 .day.today {
-    background-color: gold;
+    background-color: #e45;
 }
+
+.checkbox {}

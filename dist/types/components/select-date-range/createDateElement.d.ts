@@ -2,6 +2,7 @@ import { EventEmitter } from "../../stencil.core";
 declare type DateEvents = 'onDateSelect';
 export interface IDateEvents {
     onDateSelect?: EventEmitter;
+    onDateDeselect?: EventEmitter;
 }
 export interface IDateTags {
     isToday(): boolean;
@@ -13,7 +14,10 @@ export interface IDateTags {
 export interface IDateHelperMethods {
     dateObject(): Date;
     dateString(): string;
+    classList(): string;
     select(): void;
+    selectRangeStart(): void;
+    selectRangeEnd(): void;
     deselect(): void;
     enable(): void;
     disable(): void;

@@ -1,10 +1,12 @@
 import { getDateComponents, stringToDate } from "./utils";
 import { EventEmitter } from "@stencil/core";
+import { DEFAULT_CLASSES } from "./config";
 
 type DateEvents = 'onDateSelect'
 
 export interface IDateEvents {
     onDateSelect?: EventEmitter
+    onDateDeselect?: EventEmitter
 }
 
 export interface IDateTags {
@@ -18,7 +20,10 @@ export interface IDateTags {
 export interface IDateHelperMethods {
     dateObject(): Date
     dateString(): string
+    classList(): string
     select(): void
+    selectRangeStart(): void
+    selectRangeEnd(): void
     deselect(): void
     enable(): void
     disable(): void
@@ -27,7 +32,7 @@ export interface IDateHelperMethods {
 }
 
 export interface IDateOptions {
-    checked?: boolean,
+    checked?: boolean
     disabled?: boolean
 }
 
@@ -75,10 +80,24 @@ const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
         this.disabled = true;
         this.el && (this.el.disabled = true)
     },
+    selectRangeStart() {
+        // TODO:
+    },
+    selectRangeEnd() {
+        // TODO:
+    },
     offset() {
         const date = (this as IDateElement).dateObject().getTime()
         const now = new Date().getTime()
         return Math.ceil((date-now)/86400000)
+    },
+    classList() {
+        const date = (this as IDateElement)
+        const SEP = ' '
+        const disabled = date.disabled ? SEP + DEFAULT_CLASSES.disabled : ''
+        const selected = date.checked ? SEP + DEFAULT_CLASSES.selected : ''
+        const today = date.isToday() ? SEP + DEFAULT_CLASSES.today : ''
+        return DEFAULT_CLASSES.day + disabled + selected + today;
     },
     bindEvent(event: string, emitter: EventEmitter) { this.events[event] = emitter }
 })

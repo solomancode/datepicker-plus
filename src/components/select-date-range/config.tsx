@@ -45,9 +45,15 @@ export const DEFAULT_CLASSES = {
     disabled: 'disabled',
     selected: 'selected',
     month: 'month',
+    monthHeader: 'month-header',
+    monthContent: 'month-content',
     week: 'week',
+    empty: 'empty',
+    weekHeader: 'week-header',
+    weekContent: 'week-content',
     weekend: 'weekend',
-    today: 'today'
+    today: 'today',
+    checkbox: 'checkbox'
 }
 
 export type SelectMode = 'single' | 'multiple' | 'range'

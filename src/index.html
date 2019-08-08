@@ -8,10 +8,22 @@
   <script type="module" src="/build/select-date-range.esm.js"></script>
   <script nomodule src="/build/select-date-range.js"></script>
 
+  <style>
+    /*-------------------*/
+    /* Component Parts */
+    /*---------------*/
+    /* select-date-range::part(sdr-container) { ... } */
+    /* select-date-range::part(month-header) { ... } */
+    /* select-date-range::part(month) { ... } */
+    /* select-date-range::part(week-header) { ... } */
+    /* select-date-range::part(week) { ... } */
+    /* select-date-range::part(day) { ... } */
+  </style>
+
 </head>
 <body>
 
-  <select-date-range select-mode="range">
+  <select-date-range stylesheet-url="theme.css" select-mode="range">
   </select-date-range>
 
   <script>

@@ -1,8 +1,8 @@
-import { Component, Prop, Watch, State, Event, EventEmitter } from '@stencil/core';
-import { renderMonth } from './templates';
+import { Component, Prop, Watch, State, Event, EventEmitter, h } from '@stencil/core';
+import { renderContainer } from './templates';
 import { IDateElement, createDateElement, createdDateElements } from './createDateElement';
 import { getDateRange, dateToString, isSameDate, getNextDay, getDatesBetween, parsePropJSON } from './utils';
-import { SelectMode, DEFAULT_CONFIG } from './config';
+import { SelectMode, DEFAULT_CONFIG, DEFAULT_CLASSES } from './config';
 
 export type DateString = string
 
@@ -27,6 +27,7 @@ export class SelectDateRange {
   @Prop() viewRangeEnd: string
   @Prop() checkedDates: string
   @Prop() disabledDates: string
+  @Prop() stylesheetUrl: string
 
   /**
    * Parsed date list...
@@ -45,6 +46,7 @@ export class SelectDateRange {
   }
   
   @State() config = DEFAULT_CONFIG
+  @State() dayClassList = DEFAULT_CLASSES.day;
 
   @Watch('checkedDates')
   parseCheckedDates(dates: string | string[]) {
@@ -67,7 +69,6 @@ export class SelectDateRange {
   componentWillLoad() {
     this.parseCheckedDates(this.checkedDates)
     this.parseDisabledDates(this.disabledDates)
-    // this.parseDisabledRange(this.disabledRange)
     this.updateConfig()
   }
 
@@ -149,7 +150,7 @@ export class SelectDateRange {
     this.viewList.push(monthDates)
     
     return Object.create({
-      render: () => this.viewList.map(renderMonth)
+      render: () => renderContainer(this.viewList)
     })
   }
 
@@ -164,9 +165,16 @@ export class SelectDateRange {
       if (this.selectMode) this.config.selectMode = selectMode as SelectMode;
     }
   }
+
+  loadStylesheet() {
+    return this.stylesheetUrl ? <link rel="stylesheet" type="text/css" href={this.stylesheetUrl}/> : null 
+  }
   
   render() {
-    return this.updateViewList().render()
+    return [
+      this.loadStylesheet(),
+      this.updateViewList().render()
+    ]
   }
   
 }

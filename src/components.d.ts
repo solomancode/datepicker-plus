@@ -15,6 +15,7 @@ export namespace Components {
     'checkedDates': string;
     'disabledDates': string;
     'selectMode': string;
+    'stylesheetUrl': string;
     'viewRangeEnd': string;
     'viewRangeStart': string;
   }
@@ -40,6 +41,7 @@ declare namespace LocalJSX {
     'onOnDateDeselect'?: (event: CustomEvent<IDateElement>) => void;
     'onOnDateSelect'?: (event: CustomEvent<IDateElement>) => void;
     'selectMode'?: string;
+    'stylesheetUrl'?: string;
     'viewRangeEnd'?: string;
     'viewRangeStart'?: string;
   }

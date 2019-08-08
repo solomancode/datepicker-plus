@@ -18,9 +18,15 @@ export declare const DEFAULT_CLASSES: {
     disabled: string;
     selected: string;
     month: string;
+    monthHeader: string;
+    monthContent: string;
     week: string;
+    empty: string;
+    weekHeader: string;
+    weekContent: string;
     weekend: string;
     today: string;
+    checkbox: string;
 };
 export declare type SelectMode = 'single' | 'multiple' | 'range';
 export declare const DEFAULT_VIEW_RANGE_START: string, DEFAULT_VIEW_RANGE_END: string;
