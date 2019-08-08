@@ -26,9 +26,19 @@ export const DEFAULT_MONTHS = [
  * CSS Classes
  */
 export const DEFAULT_CLASSES = {
+    day: 'day',
+    disabled: 'disabled',
+    selected: 'selected',
     month: 'month',
+    monthHeader: 'month-header',
+    monthContent: 'month-content',
     week: 'week',
-    weekend: 'weekend'
+    empty: 'empty',
+    weekHeader: 'week-header',
+    weekContent: 'week-content',
+    weekend: 'weekend',
+    today: 'today',
+    checkbox: 'checkbox'
 };
 export const [DEFAULT_VIEW_RANGE_START, DEFAULT_VIEW_RANGE_END] = getCurrentMonthRange();
 export const DEFAULT_CONFIG = {

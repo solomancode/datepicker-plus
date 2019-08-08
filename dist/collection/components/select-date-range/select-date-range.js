@@ -1,53 +1,95 @@
-import { renderMonth } from './templates';
-import { createDateElement } from './createDateElement';
-import { getDateRange, dateToString, isSameDate, getNextDay, dateStringInRange } from './utils';
-import { DEFAULT_CONFIG } from './config';
+import { h } from '@stencil/core';
+import { renderContainer } from './templates';
+import { createDateElement, createdDateElements } from './createDateElement';
+import { getDateRange, dateToString, isSameDate, getNextDay, getDatesBetween, parsePropJSON } from './utils';
+import { DEFAULT_CONFIG, DEFAULT_CLASSES } from './config';
 export class SelectDateRange {
     constructor() {
         this.viewList = [];
+        /**
+         * Parsed date list...
+         */
+        this.checkedDatesInput = [];
+        this.disabledDatesInput = [];
         this.config = DEFAULT_CONFIG;
-        this.checked = {};
+        this.dayClassList = DEFAULT_CLASSES.day;
+        this.getDateElement = (dateString) => {
+            if (dateString in createdDateElements) {
+                return createdDateElements[dateString];
+            }
+            else {
+                return null;
+            }
+        };
+        this.selectDate = (dateString) => {
+            const dateElement = this.getDateElement(dateString);
+            dateElement && dateElement.select();
+        };
+        this.selectDates = (dateString) => {
+            if (this.config.selectMode === 'range') {
+                const datesRange = getDatesBetween(dateString[0], dateString[1]);
+                [dateString[0], ...datesRange, dateString[1]].forEach(this.selectDate);
+            }
+            else {
+                dateString.forEach(this.selectDate);
+            }
+        };
+        this.disableDates = (dateString) => {
+            dateString.forEach(dateStr => {
+                const dateElement = this.getDateElement(dateStr);
+                dateElement && dateElement.disable();
+            });
+        };
+        this.isSelectedDate = (dateString) => {
+            this.getDateElement(dateString).checked;
+        };
+        this.createDate = (date) => {
+            const dateString = dateToString(date);
+            return createDateElement({
+                dateString,
+                events: this.events
+            });
+        };
+    }
+    get events() {
+        return {
+            onDateSelect: this.onDateSelect,
+            onDateDeselect: this.onDateDeselect
+        };
     }
     parseCheckedDates(dates) {
         if (typeof dates === 'string') {
-            dates = JSON.parse(dates);
+            dates = parsePropJSON(dates);
         }
-        dates.forEach(date => this.checked[date] = true);
+        this.selectDates(dates);
+        this.checkedDatesInput = dates || [];
+    }
+    parseDisabledDates(dates) {
+        if (typeof dates === 'string') {
+            dates = parsePropJSON(dates);
+        }
+        this.disableDates(dates);
+        this.disabledDatesInput = dates || [];
     }
     componentWillLoad() {
         this.parseCheckedDates(this.checkedDates);
+        this.parseDisabledDates(this.disabledDates);
         this.updateConfig();
     }
-    isCheckedDate(dateString) {
+    clearSelected() {
+        this.checkedDatesInput.forEach(dateString => {
+            const dateElement = this.getDateElement(dateString);
+            dateElement && dateElement.deselect();
+        });
         if (this.config.selectMode === 'range') {
-            let range = Object.keys(this.checked);
-            return dateStringInRange(dateString, range);
+            const [start, end] = this.checkedDatesInput;
+            let dates = getDatesBetween(start, end);
+            dates.forEach(dateString => {
+                const dateElement = this.getDateElement(dateString);
+                dateElement && dateElement.deselect();
+            });
         }
-        else {
-            return (dateString in this.checked);
-        }
-    }
-    dispatchOnSelect(target, dateString, date) {
-        if ('onSelect' in target.events) {
-            return target.events.onSelect(dateString, date);
-        }
-    }
-    bindOnSelect(date) {
-        if (this.onDateSelect) {
-            date.bindEvent('onSelect', this.onDateSelect);
-        }
-    }
-    createDate(date) {
-        const dateString = dateToString(date);
-        const dateElement = createDateElement(dateString);
-        this.bindOnSelect(dateElement);
-        let isChecked = this.isCheckedDate(dateString);
-        if (isChecked) {
-            const canSelect = this.dispatchOnSelect(dateElement, dateString, date);
-            if (canSelect !== false)
-                dateElement.select();
-        }
-        return dateElement;
+        this.checkedDatesInput = [];
     }
     updateViewList(config = this.config) {
         let lastIndex = null;
@@ -66,9 +108,11 @@ export class SelectDateRange {
             }
             lastIndex = date.month;
         }
+        this.selectDates(this.checkedDatesInput);
+        this.disableDates(this.disabledDatesInput);
         this.viewList.push(monthDates);
         return Object.create({
-            render: () => this.viewList.map(renderMonth)
+            render: () => renderContainer(this.viewList)
         });
     }
     updateConfig(config) {
@@ -87,8 +131,14 @@ export class SelectDateRange {
                 this.config.selectMode = selectMode;
         }
     }
+    loadStylesheet() {
+        return this.stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: this.stylesheetUrl }) : null;
+    }
     render() {
-        return this.updateViewList().render();
+        return [
+            this.loadStylesheet(),
+            this.updateViewList().render()
+        ];
     }
     static get is() { return "select-date-range"; }
     static get encapsulation() { return "shadow"; }
@@ -167,32 +217,91 @@ export class SelectDateRange {
             "attribute": "checked-dates",
             "reflect": false
         },
-        "onDateSelect": {
-            "type": "unknown",
+        "disabledDates": {
+            "type": "string",
             "mutable": false,
             "complexType": {
-                "original": "(dateString: string, date: Date) => void | boolean",
-                "resolved": "(dateString: string, date: Date) => boolean | void",
-                "references": {
-                    "Date": {
-                        "location": "global"
-                    }
-                }
+                "original": "string",
+                "resolved": "string",
+                "references": {}
             },
             "required": false,
             "optional": false,
             "docs": {
                 "tags": [],
-                "text": "On Select date\nif false is returned date select will cancel"
-            }
+                "text": ""
+            },
+            "attribute": "disabled-dates",
+            "reflect": false
+        },
+        "stylesheetUrl": {
+            "type": "string",
+            "mutable": false,
+            "complexType": {
+                "original": "string",
+                "resolved": "string",
+                "references": {}
+            },
+            "required": false,
+            "optional": false,
+            "docs": {
+                "tags": [],
+                "text": ""
+            },
+            "attribute": "stylesheet-url",
+            "reflect": false
         }
     }; }
     static get states() { return {
         "config": {},
-        "checked": {}
+        "dayClassList": {}
     }; }
+    static get events() { return [{
+            "method": "onDateSelect",
+            "name": "onDateSelect",
+            "bubbles": true,
+            "cancelable": true,
+            "composed": true,
+            "docs": {
+                "tags": [],
+                "text": ""
+            },
+            "complexType": {
+                "original": "IDateElement",
+                "resolved": "IDateElement",
+                "references": {
+                    "IDateElement": {
+                        "location": "import",
+                        "path": "./createDateElement"
+                    }
+                }
+            }
+        }, {
+            "method": "onDateDeselect",
+            "name": "onDateDeselect",
+            "bubbles": true,
+            "cancelable": true,
+            "composed": true,
+            "docs": {
+                "tags": [],
+                "text": ""
+            },
+            "complexType": {
+                "original": "IDateElement",
+                "resolved": "IDateElement",
+                "references": {
+                    "IDateElement": {
+                        "location": "import",
+                        "path": "./createDateElement"
+                    }
+                }
+            }
+        }]; }
     static get watchers() { return [{
             "propName": "checkedDates",
             "methodName": "parseCheckedDates"
+        }, {
+            "propName": "disabledDates",
+            "methodName": "parseDisabledDates"
         }]; }
 }
