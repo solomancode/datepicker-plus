@@ -30,13 +30,11 @@ export function renderWeekHeader (weekDays: IWeekDay[] = DEFAULT_WEEK_DAYS) {
     )
 }
 
-export function renderPadStart (offset: number) {
-    if (offset===0) return null;
+export function renderEmpty (offset: number) {
     const nodes = []
-    let count = 8 - offset;
-    while (count) {
+    while (offset) {
         nodes.push(<span class={DEFAULT_CLASSES.empty}></span>)
-        count--;
+        offset--;
     }
     return nodes;
 }
@@ -46,8 +44,9 @@ export function renderWeek (week: IDateElement[], renderHeader: boolean = false)
         <section part="week" class={DEFAULT_CLASSES.week}>
             { renderHeader && renderWeekHeader() }
             <section class={DEFAULT_CLASSES.weekContent}>
-                { renderPadStart(week[0].dayOfWeek) }
+                { renderEmpty(week[0].dayOfWeek) }
                 { week.map(renderDate) }
+                { renderEmpty(6-week[week.length-1].dayOfWeek) }
             </section>
         </section>
     )
