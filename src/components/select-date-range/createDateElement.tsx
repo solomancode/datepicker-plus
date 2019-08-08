@@ -22,6 +22,7 @@ export interface IDateHelperMethods {
     dateString(): string
     classList(): string
     select(): void
+    updateDateClassList(): void
     selectRangeStart(): void
     selectRangeEnd(): void
     deselect(): void
@@ -62,23 +63,34 @@ const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
     dateString() {
         return dateString
     },
+    updateDateClassList() {
+        if (this.el) {
+            this.el.parentElement.parentElement.setAttribute('class', this.classList())
+        }
+    },
     select() {
         this.checked = true;
-        this.el && (this.el.checked = true)
+        if (this.el) {
+            this.el.checked = true
+        }
         this.events.onDateSelect.emit(this)
+        this.updateDateClassList()
     },
     deselect() {
         this.checked = false;
         this.el && (this.el.checked = false)
         this.events.onDateDeselect.emit(this)
+        this.updateDateClassList()
     },
     enable() {
         this.disabled = false;
         this.el && (this.el.disabled = false)
+        this.updateDateClassList()
     },
     disable() {
         this.disabled = true;
         this.el && (this.el.disabled = true)
+        this.updateDateClassList()
     },
     selectRangeStart() {
         // TODO:
@@ -97,7 +109,8 @@ const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
         const disabled = date.disabled ? SEP + DEFAULT_CLASSES.disabled : ''
         const selected = date.checked ? SEP + DEFAULT_CLASSES.selected : ''
         const today = date.isToday() ? SEP + DEFAULT_CLASSES.today : ''
-        return DEFAULT_CLASSES.day + disabled + selected + today;
+        const classList = DEFAULT_CLASSES.day + disabled + selected + today;
+        return classList
     },
     bindEvent(event: string, emitter: EventEmitter) { this.events[event] = emitter }
 })

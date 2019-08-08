@@ -16,6 +16,7 @@ export interface IDateHelperMethods {
     dateString(): string;
     classList(): string;
     select(): void;
+    updateDateClassList(): void;
     selectRangeStart(): void;
     selectRangeEnd(): void;
     deselect(): void;
