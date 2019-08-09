@@ -1,5 +1,4 @@
 import { EventEmitter } from "../../stencil.core";
-declare type DateEvents = 'onDateSelect';
 export interface IDateEvents {
     onDateSelect?: EventEmitter;
     onDateDeselect?: EventEmitter;
@@ -23,7 +22,6 @@ export interface IDateHelperMethods {
     enable(): void;
     disable(): void;
     offset(): void;
-    bindEvent(event: DateEvents, emitter: EventEmitter): void;
 }
 export interface IDateOptions {
     checked?: boolean;
@@ -48,4 +46,3 @@ export declare const createdDateElements: {
     [key: string]: IDateElement;
 };
 export declare const createDateElement: ({ dateString, options, events }: IDateParams) => IDateElement;
-export {};

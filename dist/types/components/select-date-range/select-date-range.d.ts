@@ -16,6 +16,7 @@ export declare class SelectDateRange {
     checkedDates: string;
     disabledDates: string;
     stylesheetUrl: string;
+    config: string;
     /**
      * Parsed date list...
      */
@@ -27,7 +28,7 @@ export declare class SelectDateRange {
         onDateSelect: EventEmitter<IDateElement>;
         onDateDeselect: EventEmitter<IDateElement>;
     };
-    config: IConfig;
+    _config: IConfig;
     dayClassList: string;
     parseCheckedDates(dates: string | string[]): void;
     parseDisabledDates(dates: string | string[]): void;

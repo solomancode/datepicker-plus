@@ -11,7 +11,7 @@ export class SelectDateRange {
          */
         this.checkedDatesInput = [];
         this.disabledDatesInput = [];
-        this.config = DEFAULT_CONFIG;
+        this._config = DEFAULT_CONFIG;
         this.dayClassList = DEFAULT_CLASSES.day;
         this.getDateElement = (dateString) => {
             if (dateString in createdDateElements) {
@@ -26,7 +26,7 @@ export class SelectDateRange {
             dateElement && dateElement.select();
         };
         this.selectDates = (dateString) => {
-            if (this.config.selectMode === 'range') {
+            if (this._config.selectMode === 'range') {
                 const datesRange = getDatesBetween(dateString[0], dateString[1]);
                 [dateString[0], ...datesRange, dateString[1]].forEach(this.selectDate);
             }
@@ -81,7 +81,7 @@ export class SelectDateRange {
             const dateElement = this.getDateElement(dateString);
             dateElement && dateElement.deselect();
         });
-        if (this.config.selectMode === 'range') {
+        if (this._config.selectMode === 'range') {
             const [start, end] = this.checkedDatesInput;
             let dates = getDatesBetween(start, end);
             dates.forEach(dateString => {
@@ -91,7 +91,7 @@ export class SelectDateRange {
         }
         this.checkedDatesInput = [];
     }
-    updateViewList(config = this.config) {
+    updateViewList(config = this._config) {
         let lastIndex = null;
         let monthDates = [];
         this.viewList = [];
@@ -117,18 +117,18 @@ export class SelectDateRange {
     }
     updateConfig(config) {
         if (config) {
-            Object.assign(this.config, config);
+            Object.assign(this._config, config);
         }
         else {
             const { viewRangeStart, viewRangeEnd, checkedDates, selectMode } = this;
             if (viewRangeStart)
-                this.config.viewRangeStart = viewRangeStart;
+                this._config.viewRangeStart = viewRangeStart;
             if (viewRangeEnd)
-                this.config.viewRangeEnd = viewRangeEnd;
+                this._config.viewRangeEnd = viewRangeEnd;
             if (checkedDates)
-                this.config.checkedDates = checkedDates;
+                this._config.checkedDates = checkedDates;
             if (this.selectMode)
-                this.config.selectMode = selectMode;
+                this._config.selectMode = selectMode;
         }
     }
     loadStylesheet() {
@@ -250,10 +250,27 @@ export class SelectDateRange {
             },
             "attribute": "stylesheet-url",
             "reflect": false
+        },
+        "config": {
+            "type": "string",
+            "mutable": false,
+            "complexType": {
+                "original": "string",
+                "resolved": "string",
+                "references": {}
+            },
+            "required": false,
+            "optional": false,
+            "docs": {
+                "tags": [],
+                "text": ""
+            },
+            "attribute": "config",
+            "reflect": false
         }
     }; }
     static get states() { return {
-        "config": {},
+        "_config": {},
         "dayClassList": {}
     }; }
     static get events() { return [{

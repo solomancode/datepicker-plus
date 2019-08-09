@@ -8,7 +8,7 @@ export function renderDate(date) {
     return (h("time", { part: "day", class: date.classList(), dateTime: date.dateString() },
         h("label", null,
             date.day,
-            h("input", { ref: el => date.el = el, onChange: toggleSelected.bind(this), onMouseDown: () => date.selectRangeStart(), onMouseEnter: () => date.selectRangeEnd(), checked: date.checked, disabled: date.disabled, class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString() }))));
+            h("input", { ref: el => date.el = el, onChange: toggleSelected.bind(this), onMouseEnter: () => date.selectRangeEnd(), checked: date.checked, disabled: date.disabled, class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString() }))));
 }
 export function renderWeekHeader(weekDays = DEFAULT_WEEK_DAYS) {
     return (h("header", { class: DEFAULT_CLASSES.weekHeader, part: "week-header" }, weekDays.map(({ name, abbr, isWeekend }) => h("abbr", { class: isWeekend && DEFAULT_CLASSES.weekend, title: name }, abbr))));

@@ -144,7 +144,7 @@ function renderDate(date) {
     return (h("time", { part: "day", class: date.classList(), dateTime: date.dateString() },
         h("label", null,
             date.day,
-            h("input", { ref: el => date.el = el, onChange: toggleSelected.bind(this), onMouseDown: () => date.selectRangeStart(), onMouseEnter: () => date.selectRangeEnd(), checked: date.checked, disabled: date.disabled, class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString() }))));
+            h("input", { ref: el => date.el = el, onChange: toggleSelected.bind(this), onMouseEnter: () => date.selectRangeEnd(), checked: date.checked, disabled: date.disabled, class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString() }))));
 }
 function renderWeekHeader(weekDays = DEFAULT_WEEK_DAYS) {
     return (h("header", { class: DEFAULT_CLASSES.weekHeader, part: "week-header" }, weekDays.map(({ name, abbr, isWeekend }) => h("abbr", { class: isWeekend && DEFAULT_CLASSES.weekend, title: name }, abbr))));
@@ -232,8 +232,7 @@ const composeDateHelpers = (dateString) => ({
         const today = date.isToday() ? SEP + DEFAULT_CLASSES.today : '';
         const classList = DEFAULT_CLASSES.day + disabled + selected + today;
         return classList;
-    },
-    bindEvent(event, emitter) { this.events[event] = emitter; }
+    }
 });
 const composeDateTags = () => ({
     isToday() {
@@ -281,7 +280,7 @@ class SelectDateRange {
          */
         this.checkedDatesInput = [];
         this.disabledDatesInput = [];
-        this.config = DEFAULT_CONFIG;
+        this._config = DEFAULT_CONFIG;
         this.dayClassList = DEFAULT_CLASSES.day;
         this.getDateElement = (dateString) => {
             if (dateString in createdDateElements) {
@@ -296,7 +295,7 @@ class SelectDateRange {
             dateElement && dateElement.select();
         };
         this.selectDates = (dateString) => {
-            if (this.config.selectMode === 'range') {
+            if (this._config.selectMode === 'range') {
                 const datesRange = getDatesBetween(dateString[0], dateString[1]);
                 [dateString[0], ...datesRange, dateString[1]].forEach(this.selectDate);
             }
@@ -353,7 +352,7 @@ class SelectDateRange {
             const dateElement = this.getDateElement(dateString);
             dateElement && dateElement.deselect();
         });
-        if (this.config.selectMode === 'range') {
+        if (this._config.selectMode === 'range') {
             const [start, end] = this.checkedDatesInput;
             let dates = getDatesBetween(start, end);
             dates.forEach(dateString => {
@@ -363,7 +362,7 @@ class SelectDateRange {
         }
         this.checkedDatesInput = [];
     }
-    updateViewList(config = this.config) {
+    updateViewList(config = this._config) {
         let lastIndex = null;
         let monthDates = [];
         this.viewList = [];
@@ -389,18 +388,18 @@ class SelectDateRange {
     }
     updateConfig(config) {
         if (config) {
-            Object.assign(this.config, config);
+            Object.assign(this._config, config);
         }
         else {
             const { viewRangeStart, viewRangeEnd, checkedDates, selectMode } = this;
             if (viewRangeStart)
-                this.config.viewRangeStart = viewRangeStart;
+                this._config.viewRangeStart = viewRangeStart;
             if (viewRangeEnd)
-                this.config.viewRangeEnd = viewRangeEnd;
+                this._config.viewRangeEnd = viewRangeEnd;
             if (checkedDates)
-                this.config.checkedDates = checkedDates;
+                this._config.checkedDates = checkedDates;
             if (this.selectMode)
-                this.config.selectMode = selectMode;
+                this._config.selectMode = selectMode;
         }
     }
     loadStylesheet() {

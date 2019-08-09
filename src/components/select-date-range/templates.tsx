@@ -13,7 +13,6 @@ export function renderDate (date: IDateElement) {
             <input
                 ref={el=>date.el=el}
                 onChange={toggleSelected.bind(this)}
-                onMouseDown={()=>date.selectRangeStart()}
                 onMouseEnter={()=>date.selectRangeEnd()}
                 checked={date.checked} disabled={date.disabled}
                 class={DEFAULT_CLASSES.checkbox}

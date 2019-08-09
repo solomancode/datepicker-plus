@@ -58,8 +58,7 @@ const composeDateHelpers = (dateString) => ({
         const today = date.isToday() ? SEP + DEFAULT_CLASSES.today : '';
         const classList = DEFAULT_CLASSES.day + disabled + selected + today;
         return classList;
-    },
-    bindEvent(event, emitter) { this.events[event] = emitter; }
+    }
 });
 const composeDateTags = () => ({
     isToday() {
