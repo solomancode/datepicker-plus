@@ -2,37 +2,22 @@ import { EventEmitter } from '../../stencil.core';
 import { IDateElement } from './createDateElement';
 import { SelectMode } from './config';
 export declare type DateString = string;
-export interface IConfig {
-    viewRangeStart?: DateString;
-    viewRangeEnd?: DateString;
-    checkedDates?: DateString;
-    selectMode?: SelectMode;
+export interface IPlusConfig {
+    selectMode: SelectMode;
+    viewRange: [DateString, DateString];
+    selected: DateString[];
+    disabled: DateString[];
+    stylesheetUrl?: string;
 }
 export declare class SelectDateRange {
-    private viewList;
-    selectMode: string;
-    viewRangeStart: string;
-    viewRangeEnd: string;
-    checkedDates: string;
-    disabledDates: string;
-    stylesheetUrl: string;
-    plusConfig: string;
-    parseConfig(config: string): void;
-    /**
-     * Parsed date list...
-     */
-    private checkedDatesInput;
-    private disabledDatesInput;
+    plusConfig: IPlusConfig;
+    parseConfig(): void;
     onDateSelect: EventEmitter<IDateElement>;
     onDateDeselect: EventEmitter<IDateElement>;
     readonly events: {
         onDateSelect: EventEmitter<IDateElement>;
         onDateDeselect: EventEmitter<IDateElement>;
     };
-    _config: IConfig;
-    dayClassList: string;
-    parseCheckedDates(dates: string | string[]): void;
-    parseDisabledDates(dates: string | string[]): void;
     componentWillLoad(): void;
     getDateElement: (dateString: string) => IDateElement;
     selectDate: (dateString: string) => void;
@@ -41,8 +26,9 @@ export declare class SelectDateRange {
     isSelectedDate: (dateString: string) => void;
     clearSelected(): void;
     private createDate;
+    private updateViewOptions;
     private updateViewList;
-    updateConfig(config?: IConfig): void;
+    updateConfig(config?: IPlusConfig): void;
     loadStylesheet(): any;
     render(): any[];
 }

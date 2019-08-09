@@ -1,16 +1,17 @@
-import { Component, Prop, Watch, State, Event, EventEmitter, h } from '@stencil/core';
+import { Component, Prop, Watch, Event, EventEmitter, h } from '@stencil/core';
 import { renderContainer } from './templates';
 import { IDateElement, createDateElement, createdDateElements } from './createDateElement';
-import { getDateRange, dateToString, isSameDate, getNextDay, getDatesBetween, parsePropJSON } from './utils';
-import { SelectMode, DEFAULT_CONFIG, DEFAULT_CLASSES } from './config';
+import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate } from './utils';
+import { SelectMode, DEFAULT_CONFIG } from './config';
 
 export type DateString = string
 
-export interface IConfig {
-  viewRangeStart?: DateString
-  viewRangeEnd?: DateString
-  checkedDates?: DateString
-  selectMode?: SelectMode
+export interface IPlusConfig {
+  selectMode: SelectMode
+  viewRange : [DateString, DateString]
+  selected  : DateString[]
+  disabled  : DateString[]
+  stylesheetUrl ?: string
 }
 
 @Component({
@@ -18,30 +19,14 @@ export interface IConfig {
   styleUrl: 'datepicker-plus.css',
   shadow: true
 })
-export class SelectDateRange {
-  
-  private viewList: Array<IDateElement[]> = [];
-  
-  @Prop() selectMode: string
-  @Prop() viewRangeStart: string
-  @Prop() viewRangeEnd: string
-  @Prop() checkedDates: string
-  @Prop() disabledDates: string
-  @Prop() stylesheetUrl: string
+export class DatepickerPlus {
 
-  @Prop() plusConfig: string;
+  @Prop() plusConfig: IPlusConfig = DEFAULT_CONFIG;
 
   @Watch('plusConfig')
-  parseConfig(config: string) {
-    const parsed = parsePropJSON(config)
-    console.log(parsed)
+  parseConfig() {
+    // TODO: handle config update
   }
-
-  /**
-   * Parsed date list...
-   */
-  private checkedDatesInput: string[] = []
-  private disabledDatesInput: string[] = []
   
   @Event() onDateSelect: EventEmitter<IDateElement>
   @Event() onDateDeselect: EventEmitter<IDateElement>
@@ -53,32 +38,8 @@ export class SelectDateRange {
     }
   }
   
-  @State() _config = DEFAULT_CONFIG
-  @State() dayClassList = DEFAULT_CLASSES.day;
-
-  @Watch('checkedDates')
-  parseCheckedDates(dates: string | string[]) {
-    if (typeof dates === 'string') {
-      dates = parsePropJSON(dates)
-    }
-    this.selectDates(dates as string[])
-    this.checkedDatesInput = dates as string[] || [];
-  }
-
-  @Watch('disabledDates')
-  parseDisabledDates(dates: string | string[]) {
-    if (typeof dates === 'string') {
-      dates = parsePropJSON(dates)
-    }
-    this.disableDates(dates as string[])
-    this.disabledDatesInput = dates as string[] || [];
-  }
-
   componentWillLoad() {
-    this.parseCheckedDates(this.checkedDates)
-    this.parseDisabledDates(this.disabledDates)
-    this.parseConfig(this.plusConfig)
-    this.updateConfig()
+    this.plusConfig = { ...DEFAULT_CONFIG, ...this.plusConfig }
   }
 
   getDateElement = (dateString: string) => {
@@ -86,7 +47,7 @@ export class SelectDateRange {
       return createdDateElements[dateString]
     } else {
       return null
-    } 
+    }
   }
   
   selectDate = (dateString: string) => {
@@ -95,7 +56,7 @@ export class SelectDateRange {
   }
   
   selectDates = (dateString: string[]) => {
-    if (this._config.selectMode==='range') {
+    if (this.plusConfig.selectMode==='range') {
       const datesRange = getDatesBetween(dateString[0], dateString[1]);
       [dateString[0],...datesRange,dateString[1]].forEach(this.selectDate)
     } else {
@@ -115,38 +76,46 @@ export class SelectDateRange {
   }
 
   clearSelected() {
-    this.checkedDatesInput.forEach(dateString => {
+    this.plusConfig.selected.forEach(dateString => {
       const dateElement: IDateElement = this.getDateElement(dateString)
       dateElement && dateElement.deselect()
     })
-    if (this._config.selectMode==='range') {
-      const [start, end] = this.checkedDatesInput
+    if (this.plusConfig.selectMode==='range') {
+      const [start, end] = this.plusConfig.selected
       let dates = getDatesBetween(start, end)
       dates.forEach(dateString => {
         const dateElement: IDateElement = this.getDateElement(dateString)
         dateElement && dateElement.deselect()
       });
     }
-    this.checkedDatesInput = []
+    this.plusConfig.selected = []
   }
 
   private createDate = (date: Date) => {
     const dateString = dateToString(date)
-    return createDateElement({
+    debugger
+    const dateElement = createDateElement({
       dateString,
       events: this.events
     })
+    return dateElement
+  }
+
+  private updateViewOptions() {
+    this.selectDates(this.plusConfig.selected)
+    this.disableDates(this.plusConfig.disabled)
   }
   
-  private updateViewList(config: IConfig = this._config) {
+  private updateViewList(config: IPlusConfig = this.plusConfig) {
     let lastIndex = null
     let monthDates = []
-    this.viewList = []
-    let [ currentDate, endDate ] = getDateRange(config.viewRangeStart, config.viewRangeEnd)
-    while (!isSameDate(currentDate, endDate)) {
+    const viewList = []
+    let [ currentDate, endDate ] = config.viewRange.map(stringToDate)
+    let stopDate = getNextDay(endDate) as Date;
+    while (!isSameDate(currentDate, stopDate)) {
       const date = this.createDate(currentDate)
       if (lastIndex !== null && lastIndex !== date.month) {
-        this.viewList.push(monthDates)
+        viewList.push(monthDates)
         monthDates = []
       } else {
         monthDates.push(date)
@@ -154,29 +123,20 @@ export class SelectDateRange {
       }
       lastIndex = date.month;
     }
-    this.selectDates(this.checkedDatesInput)
-    this.disableDates(this.disabledDatesInput)
-    this.viewList.push(monthDates)
-    
+    viewList.push(monthDates)
+    this.updateViewOptions()
     return Object.create({
-      render: () => renderContainer(this.viewList)
+      render: () => renderContainer(viewList)
     })
   }
 
-  updateConfig(config?: IConfig) {
-    if (config) {
-      Object.assign(this._config, config)
-    } else {
-      const { viewRangeStart, viewRangeEnd, checkedDates, selectMode } = this
-      if (viewRangeStart) this._config.viewRangeStart = viewRangeStart
-      if (viewRangeEnd) this._config.viewRangeEnd = viewRangeEnd
-      if (checkedDates) this._config.checkedDates = checkedDates
-      if (this.selectMode) this._config.selectMode = selectMode as SelectMode;
-    }
+  updateConfig(config?: IPlusConfig) {
+    if (config) Object.assign(this.plusConfig, config)
   }
 
   loadStylesheet() {
-    return this.stylesheetUrl ? <link rel="stylesheet" type="text/css" href={this.stylesheetUrl}/> : null 
+    const { stylesheetUrl } = this.plusConfig
+    return stylesheetUrl ? <link rel="stylesheet" type="text/css" href={stylesheetUrl}/> : null 
   }
   
   render() {

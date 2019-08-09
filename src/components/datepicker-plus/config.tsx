@@ -1,4 +1,4 @@
-import { IConfig } from "./datepicker-plus";
+import { IPlusConfig, DateString } from "./datepicker-plus";
 import { getCurrentMonthRange } from "./utils";
 
 export interface IWeekDay {
@@ -58,14 +58,9 @@ export const DEFAULT_CLASSES = {
 
 export type SelectMode = 'single' | 'multiple' | 'range'
 
-export const [
-    DEFAULT_VIEW_RANGE_START,
-    DEFAULT_VIEW_RANGE_END
-] = getCurrentMonthRange()
-
-export const DEFAULT_CONFIG: IConfig = {
-    selectMode: 'single',
-    checkedDates: '',
-    viewRangeStart: DEFAULT_VIEW_RANGE_START,
-    viewRangeEnd: DEFAULT_VIEW_RANGE_END
+export const DEFAULT_CONFIG: IPlusConfig = {
+    selectMode: 'range',
+    selected: [],
+    disabled: [],
+    viewRange: getCurrentMonthRange() as [DateString, DateString]
 }

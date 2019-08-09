@@ -40,10 +40,9 @@ export const DEFAULT_CLASSES = {
     today: 'today',
     checkbox: 'checkbox'
 };
-export const [DEFAULT_VIEW_RANGE_START, DEFAULT_VIEW_RANGE_END] = getCurrentMonthRange();
 export const DEFAULT_CONFIG = {
-    selectMode: 'single',
-    checkedDates: '',
-    viewRangeStart: DEFAULT_VIEW_RANGE_START,
-    viewRangeEnd: DEFAULT_VIEW_RANGE_END
+    selectMode: 'range',
+    selected: [],
+    disabled: [],
+    viewRange: getCurrentMonthRange()
 };

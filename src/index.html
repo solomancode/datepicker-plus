@@ -23,19 +23,22 @@
 </head>
 <body>
 
-  <datepicker-plus plus-config="{a:5}" view-range-start="2019-8-1" view-range-end="2019-10-31" select-mode="range">
+  <datepicker-plus view-range-start="2019-8-1" view-range-end="2019-10-31" select-mode="range">
   </datepicker-plus>
 
   <script>
-    // Set selected, disabled dates range
-    var selectDateRange = document.querySelector('datepicker-plus')
-    selectDateRange.checkedDates = ['2019-8-1','2019-8-10']
-    selectDateRange.disabledDates = ['2019-8-10','2019-8-11','2019-8-12']
+    // datepicker-plus config ...
+    var datepickerPlus = document.querySelector('datepicker-plus')
+    datepickerPlus.plusConfig = {
+      viewRange: ['2019-8-1','2019-10-31'],
+      selected: ['2019-8-13','2019-8-20'],
+      disabled: ['2019-8-10','2019-8-11','2019-8-12']
+    }
   </script>
-
+  
   <script>
     // On Date Select
-    selectDateRange.addEventListener('onDateSelect', (event) => {
+    datepickerPlus.addEventListener('onDateSelect', (event) => {
       console.group()
       console.count('selected')
       console.log(event.detail)
@@ -45,7 +48,7 @@
 
   <script>
     // On Date Deselect
-    selectDateRange.addEventListener('onDateDeselect', (event) => {
+    datepickerPlus.addEventListener('onDateDeselect', (event) => {
       console.group()
       console.count('deselected')
       console.log(event.detail)

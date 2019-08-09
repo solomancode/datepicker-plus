@@ -21,8 +21,6 @@ export interface IDateHelperMethods {
     classList(): string
     select(): void
     updateDateClassList(): void
-    selectRangeStart(): void
-    selectRangeEnd(): void
     deselect(): void
     enable(): void
     disable(): void
@@ -89,12 +87,6 @@ const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
         this.el && (this.el.disabled = true)
         this.updateDateClassList()
     },
-    selectRangeStart() {
-        // TODO:
-    },
-    selectRangeEnd() {
-        // TODO:
-    },
     offset() {
         const date = (this as IDateElement).dateObject().getTime()
         const now = new Date().getTime()
@@ -135,7 +127,7 @@ const isCreatedDateElement = (dateString: string) => {
     return (dateString in createdDateElements)
 }
 
-export const createDateElement = ({ dateString, options, events = {} }: IDateParams): IDateElement => {
+export function createDateElement({ dateString, options, events = {} }: IDateParams): IDateElement {
     
     const [year, month, day] = getDateComponents(dateString)
 

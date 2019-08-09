@@ -27,13 +27,6 @@ export const getNextDay = (date: Date | string) => {
     nextDay.setDate(nextDay.getDate() + 1)
     return isStringDate ? dateToString(nextDay) : nextDay
 }
-
-export const getDateRange = (start: string, end: string): [Date, Date] => {
-    let startDate = stringToDate(start)
-    let endDate = stringToDate(end)
-    endDate = getNextDay(endDate) as Date
-    return [startDate, endDate]
-}
   
 export const isSameDate = (date1: Date, date2: Date) => {
     if (date1.getDate() !== date2.getDate()) return false;

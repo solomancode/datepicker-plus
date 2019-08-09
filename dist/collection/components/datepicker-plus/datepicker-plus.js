@@ -1,18 +1,11 @@
 import { h } from '@stencil/core';
 import { renderContainer } from './templates';
 import { createDateElement, createdDateElements } from './createDateElement';
-import { getDateRange, dateToString, isSameDate, getNextDay, getDatesBetween, parsePropJSON } from './utils';
-import { DEFAULT_CONFIG, DEFAULT_CLASSES } from './config';
+import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate } from './utils';
+import { DEFAULT_CONFIG } from './config';
 export class SelectDateRange {
     constructor() {
-        this.viewList = [];
-        /**
-         * Parsed date list...
-         */
-        this.checkedDatesInput = [];
-        this.disabledDatesInput = [];
-        this._config = DEFAULT_CONFIG;
-        this.dayClassList = DEFAULT_CLASSES.day;
+        this.plusConfig = DEFAULT_CONFIG;
         this.getDateElement = (dateString) => {
             if (dateString in createdDateElements) {
                 return createdDateElements[dateString];
@@ -26,7 +19,7 @@ export class SelectDateRange {
             dateElement && dateElement.select();
         };
         this.selectDates = (dateString) => {
-            if (this._config.selectMode === 'range') {
+            if (this.plusConfig.selectMode === 'range') {
                 const datesRange = getDatesBetween(dateString[0], dateString[1]);
                 [dateString[0], ...datesRange, dateString[1]].forEach(this.selectDate);
             }
@@ -45,15 +38,16 @@ export class SelectDateRange {
         };
         this.createDate = (date) => {
             const dateString = dateToString(date);
-            return createDateElement({
+            debugger;
+            const dateElement = createDateElement({
                 dateString,
                 events: this.events
             });
+            return dateElement;
         };
     }
-    parseConfig(config) {
-        const parsed = parsePropJSON(config);
-        console.log(parsed);
+    parseConfig() {
+        // TODO: handle config update
     }
     get events() {
         return {
@@ -61,50 +55,38 @@ export class SelectDateRange {
             onDateDeselect: this.onDateDeselect
         };
     }
-    parseCheckedDates(dates) {
-        if (typeof dates === 'string') {
-            dates = parsePropJSON(dates);
-        }
-        this.selectDates(dates);
-        this.checkedDatesInput = dates || [];
-    }
-    parseDisabledDates(dates) {
-        if (typeof dates === 'string') {
-            dates = parsePropJSON(dates);
-        }
-        this.disableDates(dates);
-        this.disabledDatesInput = dates || [];
-    }
     componentWillLoad() {
-        this.parseCheckedDates(this.checkedDates);
-        this.parseDisabledDates(this.disabledDates);
-        this.parseConfig(this.plusConfig);
-        this.updateConfig();
+        this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
     }
     clearSelected() {
-        this.checkedDatesInput.forEach(dateString => {
+        this.plusConfig.selected.forEach(dateString => {
             const dateElement = this.getDateElement(dateString);
             dateElement && dateElement.deselect();
         });
-        if (this._config.selectMode === 'range') {
-            const [start, end] = this.checkedDatesInput;
+        if (this.plusConfig.selectMode === 'range') {
+            const [start, end] = this.plusConfig.selected;
             let dates = getDatesBetween(start, end);
             dates.forEach(dateString => {
                 const dateElement = this.getDateElement(dateString);
                 dateElement && dateElement.deselect();
             });
         }
-        this.checkedDatesInput = [];
+        this.plusConfig.selected = [];
     }
-    updateViewList(config = this._config) {
+    updateViewOptions() {
+        this.selectDates(this.plusConfig.selected);
+        this.disableDates(this.plusConfig.disabled);
+    }
+    updateViewList(config = this.plusConfig) {
         let lastIndex = null;
         let monthDates = [];
-        this.viewList = [];
-        let [currentDate, endDate] = getDateRange(config.viewRangeStart, config.viewRangeEnd);
-        while (!isSameDate(currentDate, endDate)) {
+        const viewList = [];
+        let [currentDate, endDate] = config.viewRange.map(stringToDate);
+        let stopDate = getNextDay(endDate);
+        while (!isSameDate(currentDate, stopDate)) {
             const date = this.createDate(currentDate);
             if (lastIndex !== null && lastIndex !== date.month) {
-                this.viewList.push(monthDates);
+                viewList.push(monthDates);
                 monthDates = [];
             }
             else {
@@ -113,31 +95,19 @@ export class SelectDateRange {
             }
             lastIndex = date.month;
         }
-        this.selectDates(this.checkedDatesInput);
-        this.disableDates(this.disabledDatesInput);
-        this.viewList.push(monthDates);
+        viewList.push(monthDates);
+        this.updateViewOptions();
         return Object.create({
-            render: () => renderContainer(this.viewList)
+            render: () => renderContainer(viewList)
         });
     }
     updateConfig(config) {
-        if (config) {
-            Object.assign(this._config, config);
-        }
-        else {
-            const { viewRangeStart, viewRangeEnd, checkedDates, selectMode } = this;
-            if (viewRangeStart)
-                this._config.viewRangeStart = viewRangeStart;
-            if (viewRangeEnd)
-                this._config.viewRangeEnd = viewRangeEnd;
-            if (checkedDates)
-                this._config.checkedDates = checkedDates;
-            if (this.selectMode)
-                this._config.selectMode = selectMode;
-        }
+        if (config)
+            Object.assign(this.plusConfig, config);
     }
     loadStylesheet() {
-        return this.stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: this.stylesheetUrl }) : null;
+        const { stylesheetUrl } = this.plusConfig;
+        return stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: stylesheetUrl }) : null;
     }
     render() {
         return [
@@ -154,115 +124,17 @@ export class SelectDateRange {
         "$": ["datepicker-plus.css"]
     }; }
     static get properties() { return {
-        "selectMode": {
-            "type": "string",
-            "mutable": false,
-            "complexType": {
-                "original": "string",
-                "resolved": "string",
-                "references": {}
-            },
-            "required": false,
-            "optional": false,
-            "docs": {
-                "tags": [],
-                "text": ""
-            },
-            "attribute": "select-mode",
-            "reflect": false
-        },
-        "viewRangeStart": {
-            "type": "string",
-            "mutable": false,
-            "complexType": {
-                "original": "string",
-                "resolved": "string",
-                "references": {}
-            },
-            "required": false,
-            "optional": false,
-            "docs": {
-                "tags": [],
-                "text": ""
-            },
-            "attribute": "view-range-start",
-            "reflect": false
-        },
-        "viewRangeEnd": {
-            "type": "string",
-            "mutable": false,
-            "complexType": {
-                "original": "string",
-                "resolved": "string",
-                "references": {}
-            },
-            "required": false,
-            "optional": false,
-            "docs": {
-                "tags": [],
-                "text": ""
-            },
-            "attribute": "view-range-end",
-            "reflect": false
-        },
-        "checkedDates": {
-            "type": "string",
-            "mutable": false,
-            "complexType": {
-                "original": "string",
-                "resolved": "string",
-                "references": {}
-            },
-            "required": false,
-            "optional": false,
-            "docs": {
-                "tags": [],
-                "text": ""
-            },
-            "attribute": "checked-dates",
-            "reflect": false
-        },
-        "disabledDates": {
-            "type": "string",
-            "mutable": false,
-            "complexType": {
-                "original": "string",
-                "resolved": "string",
-                "references": {}
-            },
-            "required": false,
-            "optional": false,
-            "docs": {
-                "tags": [],
-                "text": ""
-            },
-            "attribute": "disabled-dates",
-            "reflect": false
-        },
-        "stylesheetUrl": {
-            "type": "string",
-            "mutable": false,
-            "complexType": {
-                "original": "string",
-                "resolved": "string",
-                "references": {}
-            },
-            "required": false,
-            "optional": false,
-            "docs": {
-                "tags": [],
-                "text": ""
-            },
-            "attribute": "stylesheet-url",
-            "reflect": false
-        },
         "plusConfig": {
-            "type": "string",
+            "type": "unknown",
             "mutable": false,
             "complexType": {
-                "original": "string",
-                "resolved": "string",
-                "references": {}
+                "original": "IPlusConfig",
+                "resolved": "IPlusConfig",
+                "references": {
+                    "IPlusConfig": {
+                        "location": "local"
+                    }
+                }
             },
             "required": false,
             "optional": false,
@@ -270,13 +142,8 @@ export class SelectDateRange {
                 "tags": [],
                 "text": ""
             },
-            "attribute": "plus-config",
-            "reflect": false
+            "defaultValue": "DEFAULT_CONFIG"
         }
-    }; }
-    static get states() { return {
-        "_config": {},
-        "dayClassList": {}
     }; }
     static get events() { return [{
             "method": "onDateSelect",
@@ -322,11 +189,5 @@ export class SelectDateRange {
     static get watchers() { return [{
             "propName": "plusConfig",
             "methodName": "parseConfig"
-        }, {
-            "propName": "checkedDates",
-            "methodName": "parseCheckedDates"
-        }, {
-            "propName": "disabledDates",
-            "methodName": "parseDisabledDates"
         }]; }
 }

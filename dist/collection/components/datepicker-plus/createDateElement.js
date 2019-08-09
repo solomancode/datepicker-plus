@@ -81,7 +81,7 @@ export const createdDateElements = {};
 const isCreatedDateElement = (dateString) => {
     return (dateString in createdDateElements);
 };
-export const createDateElement = ({ dateString, options, events = {} }) => {
+export function createDateElement({ dateString, options, events = {} }) {
     const [year, month, day] = getDateComponents(dateString);
     const dateOptions = Object.create(Object.assign({ events,
         createdDateElements }, composeDateOptions(options), composeDateHelpers(dateString), composeDateTags()));
@@ -95,4 +95,4 @@ export const createDateElement = ({ dateString, options, events = {} }) => {
     const dateElement = Object.assign(dateOptions, props);
     Object.defineProperty(createdDateElements, dateString, { value: dateElement });
     return dateElement;
-};
+}

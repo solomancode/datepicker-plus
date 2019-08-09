@@ -7,18 +7,15 @@
 
 import { HTMLStencilElement, JSXBase } from './stencil.core';
 import {
+  IPlusConfig,
+} from './components/datepicker-plus/datepicker-plus';
+import {
   IDateElement,
 } from './components/datepicker-plus/createDateElement';
 
 export namespace Components {
   interface DatepickerPlus {
-    'checkedDates': string;
-    'disabledDates': string;
-    'plusConfig': string;
-    'selectMode': string;
-    'stylesheetUrl': string;
-    'viewRangeEnd': string;
-    'viewRangeStart': string;
+    'plusConfig': IPlusConfig;
   }
 }
 
@@ -37,15 +34,9 @@ declare global {
 
 declare namespace LocalJSX {
   interface DatepickerPlus extends JSXBase.HTMLAttributes<HTMLDatepickerPlusElement> {
-    'checkedDates'?: string;
-    'disabledDates'?: string;
     'onOnDateDeselect'?: (event: CustomEvent<IDateElement>) => void;
     'onOnDateSelect'?: (event: CustomEvent<IDateElement>) => void;
-    'plusConfig'?: string;
-    'selectMode'?: string;
-    'stylesheetUrl'?: string;
-    'viewRangeEnd'?: string;
-    'viewRangeStart'?: string;
+    'plusConfig'?: IPlusConfig;
   }
 
   interface IntrinsicElements {

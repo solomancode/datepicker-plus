@@ -1,4 +1,4 @@
-import { IConfig } from "./datepicker-plus";
+import { IPlusConfig } from "./datepicker-plus";
 export interface IWeekDay {
     name: string;
     abbr: string;
@@ -29,5 +29,4 @@ export declare const DEFAULT_CLASSES: {
     checkbox: string;
 };
 export declare type SelectMode = 'single' | 'multiple' | 'range';
-export declare const DEFAULT_VIEW_RANGE_START: string, DEFAULT_VIEW_RANGE_END: string;
-export declare const DEFAULT_CONFIG: IConfig;
+export declare const DEFAULT_CONFIG: IPlusConfig;

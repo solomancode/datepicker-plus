@@ -16,8 +16,6 @@ export interface IDateHelperMethods {
     classList(): string;
     select(): void;
     updateDateClassList(): void;
-    selectRangeStart(): void;
-    selectRangeEnd(): void;
     deselect(): void;
     enable(): void;
     disable(): void;
@@ -45,4 +43,4 @@ export interface IDateParams {
 export declare const createdDateElements: {
     [key: string]: IDateElement;
 };
-export declare const createDateElement: ({ dateString, options, events }: IDateParams) => IDateElement;
+export declare function createDateElement({ dateString, options, events }: IDateParams): IDateElement;
