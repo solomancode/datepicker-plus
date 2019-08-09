@@ -1,6 +1,6 @@
 {
   "entries": [
-    "components/select-date-range/select-date-range.js"
+    "components/datepicker-plus/datepicker-plus.js"
   ],
   "compiler": {
     "name": "@stencil/core",

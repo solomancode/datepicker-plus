@@ -1,5 +1,5 @@
 {
-  "name": "@bitbite/select-date-range",
+  "name": "@bitbite/datepicker-plus",
   "version": "0.0.1",
   "description": "Stencil Component Starter",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
   "types": "dist/types/index.d.ts",
   "collection": "dist/collection/collection-manifest.json",
   "collection:main": "dist/collection/index.js",
-  "unpkg": "dist/select-date-range/select-date-range.js",
+  "unpkg": "dist/datepicker-plus/datepicker-plus.js",
   "files": [
     "dist/",
     "loader/"

@@ -1,7 +1,7 @@
 import { Config } from '@stencil/core';
 
 export const config: Config = {
-  namespace: 'select-date-range',
+  namespace: 'datepicker-plus',
   outputTargets: [
     {
       type: 'dist',

@@ -16,7 +16,8 @@ export declare class SelectDateRange {
     checkedDates: string;
     disabledDates: string;
     stylesheetUrl: string;
-    config: string;
+    plusConfig: string;
+    parseConfig(config: string): void;
     /**
      * Parsed date list...
      */

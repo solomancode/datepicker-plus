@@ -1,4 +1,4 @@
-import { h, r as registerInstance, c as createEvent } from './chunk-20af2f18.js';
+import { h, r as registerInstance, c as createEvent } from './chunk-e23590cd.js';
 
 const dateToString = (date) => {
     const yyyy = date.getFullYear();
@@ -322,6 +322,10 @@ class SelectDateRange {
         this.onDateSelect = createEvent(this, "onDateSelect", 7);
         this.onDateDeselect = createEvent(this, "onDateDeselect", 7);
     }
+    parseConfig(config) {
+        const parsed = parsePropJSON(config);
+        console.log(parsed);
+    }
     get events() {
         return {
             onDateSelect: this.onDateSelect,
@@ -345,6 +349,7 @@ class SelectDateRange {
     componentWillLoad() {
         this.parseCheckedDates(this.checkedDates);
         this.parseDisabledDates(this.disabledDates);
+        this.parseConfig(this.plusConfig);
         this.updateConfig();
     }
     clearSelected() {
@@ -412,10 +417,11 @@ class SelectDateRange {
         ];
     }
     static get watchers() { return {
+        "plusConfig": ["parseConfig"],
         "checkedDates": ["parseCheckedDates"],
         "disabledDates": ["parseDisabledDates"]
     }; }
     static get style() { return ".sdr-container {\n    font-family: monospace;\n}\n\n.month {\n    border: 1px solid #ccc;\n    padding: 20px;\n}\n\n.month-header {\n    text-transform: uppercase;\n    font-weight: bold;\n    margin-bottom: 5px;\n}\n\n.week {\n    \n}\n\n.week-header {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.week-header abbr {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    text-align: center;\n}\n\n.week-content {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.week-content > .day, .week-content > .empty {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    -ms-flex-preferred-size: 80px;\n    flex-basis: 80px;\n    text-align: center;\n}\n\n.day {\n\n}\n\n.day.disabled {\n    background-color: #ccc;\n}\n\n.day.selected {\n    background-color: gold;\n}\n\n.day.today {\n    background-color: #e45;\n}\n\n.checkbox {}"; }
 }
 
-export { SelectDateRange as select_date_range };
+export { SelectDateRange as datepicker_plus };

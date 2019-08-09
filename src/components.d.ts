@@ -8,13 +8,13 @@
 import { HTMLStencilElement, JSXBase } from '@stencil/core/internal';
 import {
   IDateElement,
-} from './components/select-date-range/createDateElement';
+} from './components/datepicker-plus/createDateElement';
 
 export namespace Components {
-  interface SelectDateRange {
+  interface DatepickerPlus {
     'checkedDates': string;
-    'config': string;
     'disabledDates': string;
+    'plusConfig': string;
     'selectMode': string;
     'stylesheetUrl': string;
     'viewRangeEnd': string;
@@ -25,23 +25,23 @@ export namespace Components {
 declare global {
 
 
-  interface HTMLSelectDateRangeElement extends Components.SelectDateRange, HTMLStencilElement {}
-  var HTMLSelectDateRangeElement: {
-    prototype: HTMLSelectDateRangeElement;
-    new (): HTMLSelectDateRangeElement;
+  interface HTMLDatepickerPlusElement extends Components.DatepickerPlus, HTMLStencilElement {}
+  var HTMLDatepickerPlusElement: {
+    prototype: HTMLDatepickerPlusElement;
+    new (): HTMLDatepickerPlusElement;
   };
   interface HTMLElementTagNameMap {
-    'select-date-range': HTMLSelectDateRangeElement;
+    'datepicker-plus': HTMLDatepickerPlusElement;
   }
 }
 
 declare namespace LocalJSX {
-  interface SelectDateRange extends JSXBase.HTMLAttributes<HTMLSelectDateRangeElement> {
+  interface DatepickerPlus extends JSXBase.HTMLAttributes<HTMLDatepickerPlusElement> {
     'checkedDates'?: string;
-    'config'?: string;
     'disabledDates'?: string;
     'onOnDateDeselect'?: (event: CustomEvent<IDateElement>) => void;
     'onOnDateSelect'?: (event: CustomEvent<IDateElement>) => void;
+    'plusConfig'?: string;
     'selectMode'?: string;
     'stylesheetUrl'?: string;
     'viewRangeEnd'?: string;
@@ -49,7 +49,7 @@ declare namespace LocalJSX {
   }
 
   interface IntrinsicElements {
-    'select-date-range': SelectDateRange;
+    'datepicker-plus': DatepickerPlus;
   }
 }
 

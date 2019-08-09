@@ -51,6 +51,10 @@ export class SelectDateRange {
             });
         };
     }
+    parseConfig(config) {
+        const parsed = parsePropJSON(config);
+        console.log(parsed);
+    }
     get events() {
         return {
             onDateSelect: this.onDateSelect,
@@ -74,6 +78,7 @@ export class SelectDateRange {
     componentWillLoad() {
         this.parseCheckedDates(this.checkedDates);
         this.parseDisabledDates(this.disabledDates);
+        this.parseConfig(this.plusConfig);
         this.updateConfig();
     }
     clearSelected() {
@@ -140,13 +145,13 @@ export class SelectDateRange {
             this.updateViewList().render()
         ];
     }
-    static get is() { return "select-date-range"; }
+    static get is() { return "datepicker-plus"; }
     static get encapsulation() { return "shadow"; }
     static get originalStyleUrls() { return {
-        "$": ["select-date-range.css"]
+        "$": ["datepicker-plus.css"]
     }; }
     static get styleUrls() { return {
-        "$": ["select-date-range.css"]
+        "$": ["datepicker-plus.css"]
     }; }
     static get properties() { return {
         "selectMode": {
@@ -251,7 +256,7 @@ export class SelectDateRange {
             "attribute": "stylesheet-url",
             "reflect": false
         },
-        "config": {
+        "plusConfig": {
             "type": "string",
             "mutable": false,
             "complexType": {
@@ -265,7 +270,7 @@ export class SelectDateRange {
                 "tags": [],
                 "text": ""
             },
-            "attribute": "config",
+            "attribute": "plus-config",
             "reflect": false
         }
     }; }
@@ -315,6 +320,9 @@ export class SelectDateRange {
             }
         }]; }
     static get watchers() { return [{
+            "propName": "plusConfig",
+            "methodName": "parseConfig"
+        }, {
             "propName": "checkedDates",
             "methodName": "parseCheckedDates"
         }, {

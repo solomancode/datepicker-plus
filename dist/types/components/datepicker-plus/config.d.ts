@@ -1,4 +1,4 @@
-import { IConfig } from "./select-date-range";
+import { IConfig } from "./datepicker-plus";
 export interface IWeekDay {
     name: string;
     abbr: string;

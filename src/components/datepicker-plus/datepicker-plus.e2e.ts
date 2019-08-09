@@ -1,20 +1,20 @@
 import { newE2EPage } from '@stencil/core/testing';
 
-describe('select-date-range', () => {
+describe('datepicker-plus', () => {
   it('renders', async () => {
     const page = await newE2EPage();
 
-    await page.setContent('<select-date-range></select-date-range>');
-    const element = await page.find('select-date-range');
+    await page.setContent('<datepicker-plus></datepicker-plus>');
+    const element = await page.find('datepicker-plus');
     expect(element).toHaveClass('hydrated');
   });
 
   it('renders changes to the name data', async () => {
     const page = await newE2EPage();
 
-    await page.setContent('<select-date-range></select-date-range>');
-    const component = await page.find('select-date-range');
-    const element = await page.find('select-date-range >>> div');
+    await page.setContent('<datepicker-plus></datepicker-plus>');
+    const component = await page.find('datepicker-plus');
+    const element = await page.find('datepicker-plus >>> div');
     expect(element.textContent).toEqual(`Hello, World! I'm `);
 
     component.setProperty('first', 'James');

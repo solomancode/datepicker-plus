@@ -5,30 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0">
   <title>⚡ Select Date Range ⚡</title>
 
-  <script type="module" src="/build/select-date-range.esm.js"></script>
-  <script nomodule src="/build/select-date-range.js"></script>
+  <script type="module" src="/build/datepicker-plus.esm.js"></script>
+  <script nomodule src="/build/datepicker-plus.js"></script>
 
   <style>
     /*-------------------*/
     /* Component Parts */
     /*---------------*/
-    /* select-date-range::part(sdr-container) { ... } */
-    /* select-date-range::part(month-header) { ... } */
-    /* select-date-range::part(month) { ... } */
-    /* select-date-range::part(week-header) { ... } */
-    /* select-date-range::part(week) { ... } */
-    /* select-date-range::part(day) { ... } */
+    /* datepicker-plus::part(sdr-container) { ... } */
+    /* datepicker-plus::part(month-header) { ... } */
+    /* datepicker-plus::part(month) { ... } */
+    /* datepicker-plus::part(week-header) { ... } */
+    /* datepicker-plus::part(week) { ... } */
+    /* datepicker-plus::part(day) { ... } */
   </style>
 
 </head>
 <body>
 
-  <select-date-range view-range-start="2019-8-1" view-range-end="2019-10-31" select-mode="range">
-  </select-date-range>
+  <datepicker-plus plus-config="{a:5}" view-range-start="2019-8-1" view-range-end="2019-10-31" select-mode="range">
+  </datepicker-plus>
 
   <script>
     // Set selected, disabled dates range
-    var selectDateRange = document.querySelector('select-date-range')
+    var selectDateRange = document.querySelector('datepicker-plus')
     selectDateRange.checkedDates = ['2019-8-1','2019-8-10']
     selectDateRange.disabledDates = ['2019-8-10','2019-8-11','2019-8-12']
   </script>

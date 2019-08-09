@@ -1,4 +1,4 @@
-import { IConfig } from "./select-date-range";
+import { IConfig } from "./datepicker-plus";
 import { getCurrentMonthRange } from "./utils";
 
 export interface IWeekDay {

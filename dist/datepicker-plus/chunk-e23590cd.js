@@ -1,5 +1,5 @@
 const BUILD = {"allRenderFn":true,"cmpDidLoad":false,"cmpDidUnload":false,"cmpDidUpdate":false,"cmpDidRender":false,"cmpWillLoad":true,"cmpWillUpdate":false,"cmpWillRender":false,"connectedCallback":false,"disconnectedCallback":false,"element":false,"event":true,"hasRenderFn":true,"lifecycle":true,"hostListener":false,"hostListenerTargetWindow":false,"hostListenerTargetDocument":false,"hostListenerTargetBody":false,"hostListenerTargetParent":false,"hostListenerTarget":false,"member":true,"method":false,"mode":false,"noVdomRender":false,"observeAttribute":true,"prop":true,"propBoolean":false,"propNumber":false,"propString":true,"propMutable":false,"reflect":false,"scoped":false,"shadowDom":true,"slot":false,"slotRelocation":false,"state":true,"style":true,"svg":false,"updatable":true,"vdomAttribute":true,"vdomClass":true,"vdomFunctional":true,"vdomKey":true,"vdomListener":true,"vdomRef":true,"vdomRender":true,"vdomStyle":true,"vdomText":true,"watchCallback":true,"taskQueue":true,"lazyLoad":true,"hydrateServerSide":false,"cssVarShim":true,"hydrateClientSide":false,"isDebug":false,"isDev":true,"lifecycleDOMEvents":false,"profile":false,"hotModuleReplacement":true,"cssAnnotations":true};
-const NAMESPACE = 'select-date-range';
+const NAMESPACE = 'datepicker-plus';
 
 const win = window;
 const doc = document;
@@ -62,7 +62,7 @@ const loadModule = (cmpMeta, hostRef, hmrVersionId) => {
     const bundleId = (BUILD.mode && typeof cmpMeta.$lazyBundleIds$ !== 'string')
         ? cmpMeta.$lazyBundleIds$[hostRef.$modeName$]
         : cmpMeta.$lazyBundleIds$;
-    return __sc_import_select_date_range(
+    return __sc_import_datepicker_plus(
     /* webpackInclude: /\.entry\.js$/ */
     /* webpackExclude: /\.system\.entry\.js$/ */
     /* webpackMode: "lazy" */
@@ -173,7 +173,7 @@ const patchEsm = () => {
     // @ts-ignore
     if (!(win.CSS && win.CSS.supports && win.CSS.supports('color', 'var(--c)'))) {
         // @ts-ignore
-        return __sc_import_select_date_range('./css-shim-f7ddb189-f7ddb189.js');
+        return __sc_import_datepicker_plus('./css-shim-f7ddb189-f7ddb189.js');
     }
     return Promise.resolve();
 };
@@ -190,7 +190,7 @@ const patchBrowser = async () => {
         patchDynamicImport(resourcesUrl.href);
         if (!window.customElements) {
             // @ts-ignore
-            await __sc_import_select_date_range('./dom-a0c82e31-a0c82e31.js');
+            await __sc_import_datepicker_plus('./dom-a0c82e31-a0c82e31.js');
         }
         return resourcesUrl.href;
     }
@@ -1758,7 +1758,7 @@ const initializeComponent = async (elm, hostRef, cmpMeta, hmrVersionId, Cstr) =>
             let style = Cstr.style;
             let scopeId = getScopeId(cmpMeta.$tagName$, hostRef.$modeName$);
             if (!BUILD.hydrateServerSide && BUILD.shadowDom && cmpMeta.$flags$ & 8 /* needsShadowDomShim */) {
-                style = await __sc_import_select_date_range('./shadow-css-984bac74-549b16dd.js').then(m => m.scopeCss(style, scopeId, false));
+                style = await __sc_import_datepicker_plus('./shadow-css-984bac74-549b16dd.js').then(m => m.scopeCss(style, scopeId, false));
             }
             registerStyle(scopeId, style, !!(cmpMeta.$flags$ & 1 /* shadowDomEncapsulation */));
             Cstr.isStyleRegistered = true;

@@ -14,8 +14,8 @@ export interface IConfig {
 }
 
 @Component({
-  tag: 'select-date-range',
-  styleUrl: 'select-date-range.css',
+  tag: 'datepicker-plus',
+  styleUrl: 'datepicker-plus.css',
   shadow: true
 })
 export class SelectDateRange {
@@ -28,6 +28,14 @@ export class SelectDateRange {
   @Prop() checkedDates: string
   @Prop() disabledDates: string
   @Prop() stylesheetUrl: string
+
+  @Prop() plusConfig: string;
+
+  @Watch('plusConfig')
+  parseConfig(config: string) {
+    const parsed = parsePropJSON(config)
+    console.log(parsed)
+  }
 
   /**
    * Parsed date list...
@@ -45,7 +53,7 @@ export class SelectDateRange {
     }
   }
   
-  @State() config = DEFAULT_CONFIG
+  @State() _config = DEFAULT_CONFIG
   @State() dayClassList = DEFAULT_CLASSES.day;
 
   @Watch('checkedDates')
@@ -69,6 +77,7 @@ export class SelectDateRange {
   componentWillLoad() {
     this.parseCheckedDates(this.checkedDates)
     this.parseDisabledDates(this.disabledDates)
+    this.parseConfig(this.plusConfig)
     this.updateConfig()
   }
 
@@ -86,7 +95,7 @@ export class SelectDateRange {
   }
   
   selectDates = (dateString: string[]) => {
-    if (this.config.selectMode==='range') {
+    if (this._config.selectMode==='range') {
       const datesRange = getDatesBetween(dateString[0], dateString[1]);
       [dateString[0],...datesRange,dateString[1]].forEach(this.selectDate)
     } else {
@@ -110,7 +119,7 @@ export class SelectDateRange {
       const dateElement: IDateElement = this.getDateElement(dateString)
       dateElement && dateElement.deselect()
     })
-    if (this.config.selectMode==='range') {
+    if (this._config.selectMode==='range') {
       const [start, end] = this.checkedDatesInput
       let dates = getDatesBetween(start, end)
       dates.forEach(dateString => {
@@ -129,7 +138,7 @@ export class SelectDateRange {
     })
   }
   
-  private updateViewList(config: IConfig = this.config) {
+  private updateViewList(config: IConfig = this._config) {
     let lastIndex = null
     let monthDates = []
     this.viewList = []
@@ -156,13 +165,13 @@ export class SelectDateRange {
 
   updateConfig(config?: IConfig) {
     if (config) {
-      Object.assign(this.config, config)
+      Object.assign(this._config, config)
     } else {
       const { viewRangeStart, viewRangeEnd, checkedDates, selectMode } = this
-      if (viewRangeStart) this.config.viewRangeStart = viewRangeStart
-      if (viewRangeEnd) this.config.viewRangeEnd = viewRangeEnd
-      if (checkedDates) this.config.checkedDates = checkedDates
-      if (this.selectMode) this.config.selectMode = selectMode as SelectMode;
+      if (viewRangeStart) this._config.viewRangeStart = viewRangeStart
+      if (viewRangeEnd) this._config.viewRangeEnd = viewRangeEnd
+      if (checkedDates) this._config.checkedDates = checkedDates
+      if (this.selectMode) this._config.selectMode = selectMode as SelectMode;
     }
   }
 
