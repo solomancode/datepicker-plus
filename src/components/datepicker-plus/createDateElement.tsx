@@ -15,9 +15,9 @@ export interface IDateHelperMethods {
     dateObject(): Date
     dateString(): string
     classList(): string
-    select(): void
+    select(source?: 'onChangeEvent'): void
     updateDateClassList(): void
-    deselect(): void
+    deselect(source?: 'onChangeEvent'): void
     enable(): void
     disable(): void
     offset(): void
@@ -60,17 +60,23 @@ const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
             this.el.parentElement.parentElement.setAttribute('class', this.classList())
         }
     },
-    select() {
+    select(source?: 'onChangeEvent') {
         this.checked = true;
-        if (this.el) {
-            this.el.checked = true
+        this.el && (this.el.checked = true)
+        const { selectMode } = this.datepickerPlus.plusConfig
+        if (selectMode==='range' && source==='onChangeEvent') {
+            this.datepickerPlus.addRangeMark(this.dateString())
         }
         this.datepickerPlus.onDateSelect.emit(this)
         this.updateDateClassList()
     },
-    deselect() {
+    deselect(source?: 'onChangeEvent') {
         this.checked = false;
         this.el && (this.el.checked = false)
+        const { selectMode } = this.datepickerPlus.plusConfig
+        if (selectMode==='range' && source==='onChangeEvent') {
+            this.datepickerPlus.checkRangeDeselect(this.dateString())
+        }
         this.datepickerPlus.onDateDeselect.emit(this)
         this.updateDateClassList()
     },

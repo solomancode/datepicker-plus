@@ -1,4 +1,5 @@
 import { IDateElement } from "./createDateElement";
+import { DateString } from "./datepicker-plus";
 
 export const dateToString = (date: Date) => {
     const yyyy = date.getFullYear()
@@ -71,9 +72,10 @@ export const getCurrentMonthRange = () => {
 }
 
 export const getDatesBetween = (dateString0: string, dateString1: string) => {
+    const [start, end] = sortDates([dateString0, dateString1])
     let rangeDates = []
-    let currentDateString = getNextDay(dateString0) as string;
-    while (currentDateString!==dateString1) {
+    let currentDateString = getNextDay(start) as string;
+    while (currentDateString!==end) {
         if (rangeDates.length>3000) openGithubIssue({ title: 'Memory leak @ getDatesBetween', label: 'bug', body: JSON.stringify({dateString0,dateString1},null,2)})
         rangeDates.push(currentDateString)
         currentDateString = getNextDay(currentDateString) as string;
@@ -83,6 +85,12 @@ export const getDatesBetween = (dateString0: string, dateString1: string) => {
 
 export const parsePropJSON = (prop: string) => {
     return JSON.parse(prop.replace(/'/g,'"'))
+}
+
+export const sortDates = ([dateString0, dateString1]: [DateString, DateString]) => {
+    const dt0 = stringToDate(dateString0)
+    const dt1 = stringToDate(dateString1)
+    return (dt0.valueOf() - dt1.valueOf()) > 0 ? [dateString1, dateString0] : [dateString0, dateString1];
 }
 
 interface IGithubIssueParams {

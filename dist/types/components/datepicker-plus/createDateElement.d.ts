@@ -11,9 +11,9 @@ export interface IDateHelperMethods {
     dateObject(): Date;
     dateString(): string;
     classList(): string;
-    select(): void;
+    select(source?: 'onChangeEvent'): void;
     updateDateClassList(): void;
-    deselect(): void;
+    deselect(source?: 'onChangeEvent'): void;
     enable(): void;
     disable(): void;
     offset(): void;

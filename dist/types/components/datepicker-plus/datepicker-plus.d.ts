@@ -15,25 +15,18 @@ export declare class DatepickerPlus {
     selected: DateString[];
     disabled: DateString[];
     private rangeStart;
+    parseSelected(next: DateString[], current: DateString[]): void;
     disableAll(disabled: DateString[]): void;
-    private addRangeMark;
+    addRangeMark: (rangeMark: string) => void;
+    checkRangeDeselect: (dateString: string) => void;
     updateConfig(config: IPlusConfig): void;
     onDateSelect: EventEmitter<IDateElement>;
     onDateDeselect: EventEmitter<IDateElement>;
-    /**
-     * Internal event onClick...
-     */
-    onDateClick: EventEmitter<IDateElement>;
     componentWillLoad(): void;
     getDateElement: (dateString: string) => IDateElement;
-    selectDate: (dateString: string) => void;
-    deselectDate: (dateString: string) => void;
     private MemProtect;
     protectMemLeak(): void;
     parseViewRange(viewRange: [DateString, DateString]): void;
-    clearSelected(): void;
-    resetDisabled(): void;
     private createDate;
-    private c;
     render(): any[];
 }

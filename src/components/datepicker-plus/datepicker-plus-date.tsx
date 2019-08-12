@@ -12,8 +12,7 @@ export const DatepickerPlusDate: FunctionalComponent<IDatepickerPlusDate> = ({ d
       {date.day}
       <input
         ref={el=>date.el=el}
-        onChange={()=>date.el.checked?date.select():date.deselect()}
-        onClick={()=>date.datepickerPlus.onDateClick.emit(date)}
+        onChange={()=>date.el.checked?date.select('onChangeEvent'):date.deselect('onChangeEvent')}
         checked={date.checked} disabled={date.disabled}
         class={DEFAULT_CLASSES.checkbox}
         type="checkbox" value={date.dateString()}/>
