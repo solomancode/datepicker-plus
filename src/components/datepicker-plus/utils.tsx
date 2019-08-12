@@ -74,6 +74,7 @@ export const getDatesBetween = (dateString0: string, dateString1: string) => {
     let rangeDates = []
     let currentDateString = getNextDay(dateString0) as string;
     while (currentDateString!==dateString1) {
+        if (rangeDates.length>3000) openGithubIssue({ title: 'Memory leak @ getDatesBetween', label: 'bug', body: JSON.stringify({dateString0,dateString1},null,2)})
         rangeDates.push(currentDateString)
         currentDateString = getNextDay(currentDateString) as string;
     }
@@ -82,4 +83,20 @@ export const getDatesBetween = (dateString0: string, dateString1: string) => {
 
 export const parsePropJSON = (prop: string) => {
     return JSON.parse(prop.replace(/'/g,'"'))
+}
+
+interface IGithubIssueParams {
+    title: string
+    body: string
+    label: string
+}
+
+export const openGithubIssue = ({ title, body, label }: IGithubIssueParams) => {
+    const tl = 'title=' + encodeURIComponent(title)
+    const lb = 'labels=' + encodeURIComponent(label)
+    const bd = 'body=' + encodeURIComponent(body)
+    throw (
+    "Stopped to prevent memory leak.\n\n🐞 Create a new issue:\n"+
+    `https://github.com/solomancode/datepicker-plus/issues/new?${lb}&${tl}&${bd}`
+    );
 }

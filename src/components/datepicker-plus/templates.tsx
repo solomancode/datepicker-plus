@@ -2,22 +2,10 @@ import { h } from '@stencil/core';
 import { IDateElement } from './createDateElement';
 import { monthToWeeks } from './utils';
 import { DEFAULT_MONTHS, DEFAULT_WEEK_DAYS, DEFAULT_CLASSES, IWeekDay } from "./config";
+import { DatepickerPlusDate } from './datepicker-plus-date';
 
 export function renderDate (date: IDateElement) {
-    const toggleSelected = () => {
-        date.checked ? date.deselect() : date.select()
-    };
-    return (<time part="day" class={date.classList()} dateTime={date.dateString()}>
-        <label>
-            {date.day}
-            <input
-                ref={el=>date.el=el}
-                onChange={toggleSelected.bind(this)}
-                checked={date.checked} disabled={date.disabled}
-                class={DEFAULT_CLASSES.checkbox}
-                type="checkbox" value={date.dateString()}/>
-        </label>
-    </time>)
+    return <DatepickerPlusDate date={date}></DatepickerPlusDate>
 }
 
 export function renderWeekHeader (weekDays: IWeekDay[] = DEFAULT_WEEK_DAYS) {
@@ -61,10 +49,13 @@ export function renderMonth (month: IDateElement[]) {
     )
 }
 
-export function renderContainer(dates: IDateElement[][]) {
-    return (
+export function renderContainer(dates: IDateElement[][], stylesheetUrl?: string) {
+    return ([
+        // theme stylesheet
+        stylesheetUrl ? <link rel="stylesheet" type="text/css" href={stylesheetUrl}/> : null,
+        // contents
         <section class="sdr-container" part="sdr-container">
             {dates.map(month=>renderMonth(month))}
         </section>
-    )
+    ])
 }

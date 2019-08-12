@@ -1,11 +1,7 @@
 import { getDateComponents, stringToDate } from "./utils";
 import { EventEmitter } from "@stencil/core";
 import { DEFAULT_CLASSES } from "./config";
-
-export interface IDateEvents {
-    onDateSelect?: EventEmitter
-    onDateDeselect?: EventEmitter
-}
+import { DatepickerPlus } from "./datepicker-plus";
 
 export interface IDateTags {
     isToday(): boolean
@@ -32,19 +28,20 @@ export interface IDateOptions {
     disabled?: boolean
 }
 
-export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateEvents, IDateTags {
+export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateTags {
     day: number
     month: number
     year: number
     dayOfWeek: number
     events: {[key: string]: EventEmitter}
     el: HTMLInputElement
+    datepickerPlus: DatepickerPlus
 }
 
 export interface IDateParams {
     dateString: string
+    datepickerPlus: DatepickerPlus
     options?: IDateOptions
-    events?: IDateEvents
 }
 
 const composeDateOptions = (options?: IDateOptions): IDateOptions => {
@@ -68,13 +65,13 @@ const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
         if (this.el) {
             this.el.checked = true
         }
-        this.events.onDateSelect.emit(this)
+        this.datepickerPlus.onDateSelect.emit(this)
         this.updateDateClassList()
     },
     deselect() {
         this.checked = false;
         this.el && (this.el.checked = false)
-        this.events.onDateDeselect.emit(this)
+        this.datepickerPlus.onDateDeselect.emit(this)
         this.updateDateClassList()
     },
     enable() {
@@ -127,12 +124,12 @@ const isCreatedDateElement = (dateString: string) => {
     return (dateString in createdDateElements)
 }
 
-export function createDateElement({ dateString, options, events = {} }: IDateParams): IDateElement {
+export function createDateElement({ dateString, options, datepickerPlus }: IDateParams): IDateElement {
     
     const [year, month, day] = getDateComponents(dateString)
 
     const dateOptions = Object.create({
-        events,
+        datepickerPlus,
         createdDateElements,
         ...composeDateOptions(options),
         ...composeDateHelpers(dateString),

@@ -9,3 +9,10 @@ export declare const dateStringInRange: (dateString: string, dateRange: [string,
 export declare const getCurrentMonthRange: () => string[];
 export declare const getDatesBetween: (dateString0: string, dateString1: string) => any[];
 export declare const parsePropJSON: (prop: string) => any;
+interface IGithubIssueParams {
+    title: string;
+    body: string;
+    label: string;
+}
+export declare const openGithubIssue: ({ title, body, label }: IGithubIssueParams) => never;
+export {};

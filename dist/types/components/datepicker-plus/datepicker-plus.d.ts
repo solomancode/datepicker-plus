@@ -9,26 +9,31 @@ export interface IPlusConfig {
     disabled: DateString[];
     stylesheetUrl?: string;
 }
-export declare class SelectDateRange {
+export declare class DatepickerPlus {
     plusConfig: IPlusConfig;
-    parseConfig(): void;
+    viewList: IDateElement[][];
+    selected: DateString[];
+    disabled: DateString[];
+    private rangeStart;
+    disableAll(disabled: DateString[]): void;
+    private addRangeMark;
+    updateConfig(config: IPlusConfig): void;
     onDateSelect: EventEmitter<IDateElement>;
     onDateDeselect: EventEmitter<IDateElement>;
-    readonly events: {
-        onDateSelect: EventEmitter<IDateElement>;
-        onDateDeselect: EventEmitter<IDateElement>;
-    };
+    /**
+     * Internal event onClick...
+     */
+    onDateClick: EventEmitter<IDateElement>;
     componentWillLoad(): void;
     getDateElement: (dateString: string) => IDateElement;
     selectDate: (dateString: string) => void;
-    selectDates: (dateString: string[]) => void;
-    disableDates: (dateString: string[]) => void;
-    isSelectedDate: (dateString: string) => void;
+    deselectDate: (dateString: string) => void;
+    private MemProtect;
+    protectMemLeak(): void;
+    parseViewRange(viewRange: [DateString, DateString]): void;
     clearSelected(): void;
+    resetDisabled(): void;
     private createDate;
-    private updateViewOptions;
-    private updateViewList;
-    updateConfig(config?: IPlusConfig): void;
-    loadStylesheet(): any;
+    private c;
     render(): any[];
 }

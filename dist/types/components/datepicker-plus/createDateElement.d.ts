@@ -1,8 +1,5 @@
 import { EventEmitter } from "../../stencil.core";
-export interface IDateEvents {
-    onDateSelect?: EventEmitter;
-    onDateDeselect?: EventEmitter;
-}
+import { DatepickerPlus } from "./datepicker-plus";
 export interface IDateTags {
     isToday(): boolean;
     isTomorrow(): boolean;
@@ -25,7 +22,7 @@ export interface IDateOptions {
     checked?: boolean;
     disabled?: boolean;
 }
-export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateEvents, IDateTags {
+export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateTags {
     day: number;
     month: number;
     year: number;
@@ -34,13 +31,14 @@ export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateEve
         [key: string]: EventEmitter;
     };
     el: HTMLInputElement;
+    datepickerPlus: DatepickerPlus;
 }
 export interface IDateParams {
     dateString: string;
+    datepickerPlus: DatepickerPlus;
     options?: IDateOptions;
-    events?: IDateEvents;
 }
 export declare const createdDateElements: {
     [key: string]: IDateElement;
 };
-export declare function createDateElement({ dateString, options, events }: IDateParams): IDateElement;
+export declare function createDateElement({ dateString, options, datepickerPlus }: IDateParams): IDateElement;

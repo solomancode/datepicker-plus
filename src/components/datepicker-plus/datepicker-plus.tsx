@@ -1,7 +1,7 @@
-import { Component, Prop, Watch, Event, EventEmitter, h } from '@stencil/core';
+import { Component, Prop, Watch, Event, EventEmitter, State } from '@stencil/core';
 import { renderContainer } from './templates';
 import { IDateElement, createDateElement, createdDateElements } from './createDateElement';
-import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate } from './utils';
+import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate, openGithubIssue } from './utils';
 import { SelectMode, DEFAULT_CONFIG } from './config';
 
 export type DateString = string
@@ -23,21 +23,60 @@ export class DatepickerPlus {
 
   @Prop() plusConfig: IPlusConfig = DEFAULT_CONFIG;
 
-  @Watch('plusConfig')
-  parseConfig() {
-    // TODO: handle config update
+  @State() viewList: IDateElement[][]
+  @State() selected: DateString[] = []
+  @State() disabled: DateString[] = []
+
+  private rangeStart: DateString = null
+
+  // @Watch('selected')
+  // parseSelected(selected: DateString[]) {
+    
+  // }
+
+  @Watch('disabled')
+  disableAll(disabled: DateString[]) {
+    disabled.forEach(dateStr => {
+      const dateElement = this.getDateElement(dateStr)
+      dateElement && dateElement.disable()
+    })
   }
-  
-  @Event() onDateSelect: EventEmitter<IDateElement>
-  @Event() onDateDeselect: EventEmitter<IDateElement>
-  
-  get events() {
-    return {
-      onDateSelect: this.onDateSelect,
-      onDateDeselect: this.onDateDeselect
+
+  private addRangeMark = (rangeMark: DateString) => {
+    if (this.rangeStart===null) {
+      this.rangeStart = rangeMark
+    } else {
+      const start = this.rangeStart
+      const end = rangeMark
+      const inBetween = getDatesBetween(start, end);
+      // TODO: inBetween +class 'connector'
+      const fullRange = [start,...inBetween,end]
+      this.clearSelected()
+      this.selected = fullRange;
+      this.rangeStart = null;
     }
   }
   
+  @Watch('plusConfig')
+  updateConfig(config: IPlusConfig) {
+    if (config.selectMode==='range') {
+      this.addRangeMark(config.selected[0])
+      this.addRangeMark(config.selected[1])
+    } else {
+      this.selected = config.selected
+    }
+    this.disabled = config.disabled
+    this.parseViewRange(config.viewRange)
+  }
+    
+  @Event() onDateSelect: EventEmitter<IDateElement>
+  @Event() onDateDeselect: EventEmitter<IDateElement>
+
+  /**
+   * Internal event onClick...
+   */
+  @Event() onDateClick: EventEmitter<IDateElement>
+
   componentWillLoad() {
     this.plusConfig = { ...DEFAULT_CONFIG, ...this.plusConfig }
   }
@@ -52,67 +91,46 @@ export class DatepickerPlus {
   
   selectDate = (dateString: string) => {
     const dateElement = this.getDateElement(dateString)
-    dateElement && dateElement.select()
+    dateElement.checked = true
+    const { selectMode } = this.plusConfig
+    if (selectMode==='single') {
+      this.selected = [dateString]
+    } else if (selectMode==='range') {
+      this.addRangeMark(dateString)
+    }
+    this.onDateSelect.emit(dateElement)
   }
-  
-  selectDates = (dateString: string[]) => {
-    if (this.plusConfig.selectMode==='range') {
-      const datesRange = getDatesBetween(dateString[0], dateString[1]);
-      [dateString[0],...datesRange,dateString[1]].forEach(this.selectDate)
-    } else {
-      dateString.forEach(this.selectDate)
+
+  deselectDate = (dateString: string) => {
+    const dateElement = this.getDateElement(dateString)
+    dateElement.checked = false
+    this.onDateDeselect.emit(dateElement)
+  }
+
+  private MemProtect = 0;
+  protectMemLeak() {
+    this.MemProtect++;
+    if (this.MemProtect>3000) {
+      const now = '#### ' + new Date().toDateString()
+      const CB = '\`\`\`'
+      const config = JSON.stringify(this.plusConfig,null,2)
+      const body = now + '\n' + CB + config + CB;
+      openGithubIssue({
+        title: 'Memory leak @ render while loop',
+        body,
+        label: 'bug'
+      })
     }
   }
-
-  disableDates = (dateString: string[]) => {
-    dateString.forEach(dateStr => {
-      const dateElement = this.getDateElement(dateStr)
-      dateElement && dateElement.disable()
-    })
-  }
-
-  isSelectedDate = (dateString: string) => {
-    this.getDateElement(dateString).checked
-  }
-
-  clearSelected() {
-    this.plusConfig.selected.forEach(dateString => {
-      const dateElement: IDateElement = this.getDateElement(dateString)
-      dateElement && dateElement.deselect()
-    })
-    if (this.plusConfig.selectMode==='range') {
-      const [start, end] = this.plusConfig.selected
-      let dates = getDatesBetween(start, end)
-      dates.forEach(dateString => {
-        const dateElement: IDateElement = this.getDateElement(dateString)
-        dateElement && dateElement.deselect()
-      });
-    }
-    this.plusConfig.selected = []
-  }
-
-  private createDate = (date: Date) => {
-    const dateString = dateToString(date)
-    debugger
-    const dateElement = createDateElement({
-      dateString,
-      events: this.events
-    })
-    return dateElement
-  }
-
-  private updateViewOptions() {
-    this.selectDates(this.plusConfig.selected)
-    this.disableDates(this.plusConfig.disabled)
-  }
   
-  private updateViewList(config: IPlusConfig = this.plusConfig) {
+  parseViewRange(viewRange: [DateString, DateString]) {
     let lastIndex = null
     let monthDates = []
     const viewList = []
-    let [ currentDate, endDate ] = config.viewRange.map(stringToDate)
+    let [ currentDate, endDate ] = viewRange.map(stringToDate)
     let stopDate = getNextDay(endDate) as Date;
     while (!isSameDate(currentDate, stopDate)) {
+      this.protectMemLeak()
       const date = this.createDate(currentDate)
       if (lastIndex !== null && lastIndex !== date.month) {
         viewList.push(monthDates)
@@ -124,26 +142,57 @@ export class DatepickerPlus {
       lastIndex = date.month;
     }
     viewList.push(monthDates)
-    this.updateViewOptions()
-    return Object.create({
-      render: () => renderContainer(viewList)
-    })
-  }
-
-  updateConfig(config?: IPlusConfig) {
-    if (config) Object.assign(this.plusConfig, config)
-  }
-
-  loadStylesheet() {
-    const { stylesheetUrl } = this.plusConfig
-    return stylesheetUrl ? <link rel="stylesheet" type="text/css" href={stylesheetUrl}/> : null 
+    this.viewList = viewList
+    this.MemProtect = 0;
   }
   
+  clearSelected() {
+    this.selected.forEach(dateString => {
+      const dateElement: IDateElement = this.getDateElement(dateString)
+      dateElement && this.deselectDate(dateString)
+    })
+    this.plusConfig.selected = []
+    this.selected = []
+  }
+
+  resetDisabled() {
+    this.disabled.forEach(dateString => {
+      const dateElement: IDateElement = this.getDateElement(dateString)
+      dateElement && dateElement.enable()
+    })
+    this.plusConfig.disabled = []
+    this.disabled = []
+  }
+
+  private createDate = (date: Date) => {
+    const dateString = dateToString(date)
+    const checked = this.selected.includes(dateString)
+    const disabled = this.disabled.includes(dateString)
+    const dateElement = createDateElement({
+      dateString,
+      datepickerPlus: this,
+      options: { checked, disabled }
+    })
+    return dateElement
+  }
+
+  // private reselectRangeOnClick = (e: UIEvent) => {
+  //   const RS = this.rangeStart !== null;
+  //   const RE = this.rangeEnd !== null;
+  //   if ((RS&&RE)||(!RS&&!RE)) {
+  //     // RS + RE clear and re-select RS
+  //     // !RS + !RE clear and re-select RS
+  //     console.log(e)
+  //   } else if (RS&&!RE) {
+  //     // RS + !RE clear and re-select RE
+  //   }
+  // }
+
+  private c = 1;
   render() {
-    return [
-      this.loadStylesheet(),
-      this.updateViewList().render()
-    ]
+    // this.loadStylesheet(),
+    console.log('%cRENDER x ' + this.c,'color: crimson')
+    return renderContainer(this.viewList, this.plusConfig.stylesheetUrl)
   }
   
 }
