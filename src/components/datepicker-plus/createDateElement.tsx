@@ -11,15 +11,14 @@ export interface IDateTags {
     isFutureDate(): boolean
 }
 
+export interface IDateClassList {
+    classListString: string,
+    updateClassListString(): string
+}
+
 export interface IDateHelperMethods {
     dateObject(): Date
     dateString(): string
-    classList(): string
-    select(source?: 'onChangeEvent'): void
-    updateDateClassList(): void
-    deselect(source?: 'onChangeEvent'): void
-    enable(): void
-    disable(): void
     offset(): void
 }
 
@@ -28,7 +27,7 @@ export interface IDateOptions {
     disabled?: boolean
 }
 
-export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateTags {
+export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateTags, IDateClassList {
     day: number
     month: number
     year: number
@@ -55,54 +54,10 @@ const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
     dateString() {
         return dateString
     },
-    updateDateClassList() {
-        if (this.el) {
-            this.el.parentElement.parentElement.setAttribute('class', this.classList())
-        }
-    },
-    select(source?: 'onChangeEvent') {
-        this.checked = true;
-        this.el && (this.el.checked = true)
-        const { selectMode } = this.datepickerPlus.plusConfig
-        if (selectMode==='range' && source==='onChangeEvent') {
-            this.datepickerPlus.addRangeMark(this.dateString())
-        }
-        this.datepickerPlus.onDateSelect.emit(this)
-        this.updateDateClassList()
-    },
-    deselect(source?: 'onChangeEvent') {
-        this.checked = false;
-        this.el && (this.el.checked = false)
-        const { selectMode } = this.datepickerPlus.plusConfig
-        if (selectMode==='range' && source==='onChangeEvent') {
-            this.datepickerPlus.checkRangeDeselect(this.dateString())
-        }
-        this.datepickerPlus.onDateDeselect.emit(this)
-        this.updateDateClassList()
-    },
-    enable() {
-        this.disabled = false;
-        this.el && (this.el.disabled = false)
-        this.updateDateClassList()
-    },
-    disable() {
-        this.disabled = true;
-        this.el && (this.el.disabled = true)
-        this.updateDateClassList()
-    },
     offset() {
         const date = (this as IDateElement).dateObject().getTime()
         const now = new Date().getTime()
         return Math.ceil((date-now)/86400000)
-    },
-    classList() {
-        const date = (this as IDateElement)
-        const SEP = ' '
-        const disabled = date.disabled ? SEP + DEFAULT_CLASSES.disabled : ''
-        const selected = date.checked ? SEP + DEFAULT_CLASSES.selected : ''
-        const today = date.isToday() ? SEP + DEFAULT_CLASSES.today : ''
-        const classList = DEFAULT_CLASSES.day + disabled + selected + today;
-        return classList
     }
 })
 
@@ -124,6 +79,20 @@ const composeDateTags = () => ({
     }
 })
 
+const composeDateClassList = () => ({
+    classListString: DEFAULT_CLASSES.day,
+    updateClassListString() {
+        const date = (this as IDateElement)
+        const SEP = ' '
+        const disabled = date.disabled ? SEP + DEFAULT_CLASSES.disabled : ''
+        const selected = date.checked ? SEP + DEFAULT_CLASSES.selected : ''
+        const today = date.isToday() ? SEP + DEFAULT_CLASSES.today : ''
+        const classList = DEFAULT_CLASSES.day + disabled + selected + today;
+        this.classListString = classList
+        return classList
+    }
+})
+
 export const createdDateElements: {[key: string]: IDateElement} = {}
 
 const isCreatedDateElement = (dateString: string) => {
@@ -139,7 +108,8 @@ export function createDateElement({ dateString, options, datepickerPlus }: IDate
         createdDateElements,
         ...composeDateOptions(options),
         ...composeDateHelpers(dateString),
-        ...composeDateTags()
+        ...composeDateTags(),
+        ...composeDateClassList()
     })
 
     if ( isCreatedDateElement(dateString) ) {
@@ -151,6 +121,7 @@ export function createDateElement({ dateString, options, datepickerPlus }: IDate
     const dayOfWeek = new Date(dateString).getDay()
     const props = { year, month, day, dayOfWeek }
     const dateElement = Object.assign(dateOptions, props)
+    dateElement.updateClassListString()
     Object.defineProperty(createdDateElements, dateString, { value: dateElement })
 
     return dateElement

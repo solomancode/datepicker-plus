@@ -54,7 +54,7 @@ export function renderContainer(dates: IDateElement[][], stylesheetUrl?: string)
         // theme stylesheet
         stylesheetUrl ? <link rel="stylesheet" type="text/css" href={stylesheetUrl}/> : null,
         // contents
-        <section class="sdr-container" part="sdr-container">
+        <section class="dpp-container" part="dpp-container">
             {dates.map(month=>renderMonth(month))}
         </section>
     ])

@@ -1,5 +1,5 @@
 import { EventEmitter } from '../../stencil.core';
-import { IDateElement } from './createDateElement';
+import { IDateElement, IDateOptions } from './createDateElement';
 import { SelectMode } from './config';
 export declare type DateString = string;
 export interface IPlusConfig {
@@ -16,9 +16,12 @@ export declare class DatepickerPlus {
     disabled: DateString[];
     private rangeStart;
     parseSelected(next: DateString[], current: DateString[]): void;
-    disableAll(disabled: DateString[]): void;
-    addRangeMark: (rangeMark: string) => void;
-    checkRangeDeselect: (dateString: string) => void;
+    parseDisabled(next: DateString[], current: DateString[]): void;
+    addRangeMark: (dateString: string) => void;
+    resetRangeMarks: () => void;
+    updateDateOptions(dateString: DateString, options: IDateOptions): void;
+    select: (dateString: string) => void;
+    deselect: (dateString: string) => void;
     updateConfig(config: IPlusConfig): void;
     onDateSelect: EventEmitter<IDateElement>;
     onDateDeselect: EventEmitter<IDateElement>;

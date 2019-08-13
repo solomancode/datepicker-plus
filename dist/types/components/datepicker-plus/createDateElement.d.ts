@@ -7,22 +7,20 @@ export interface IDateTags {
     isPastDate(): boolean;
     isFutureDate(): boolean;
 }
+export interface IDateClassList {
+    classListString: string;
+    updateClassListString(): string;
+}
 export interface IDateHelperMethods {
     dateObject(): Date;
     dateString(): string;
-    classList(): string;
-    select(source?: 'onChangeEvent'): void;
-    updateDateClassList(): void;
-    deselect(source?: 'onChangeEvent'): void;
-    enable(): void;
-    disable(): void;
     offset(): void;
 }
 export interface IDateOptions {
     checked?: boolean;
     disabled?: boolean;
 }
-export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateTags {
+export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateTags, IDateClassList {
     day: number;
     month: number;
     year: number;

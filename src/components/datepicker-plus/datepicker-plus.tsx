@@ -1,6 +1,6 @@
 import { Component, Prop, Watch, Event, EventEmitter, State } from '@stencil/core';
 import { renderContainer } from './templates';
-import { IDateElement, createDateElement, createdDateElements } from './createDateElement';
+import { IDateElement, createDateElement, createdDateElements, IDateOptions } from './createDateElement';
 import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate, openGithubIssue } from './utils';
 import { SelectMode, DEFAULT_CONFIG } from './config';
 
@@ -32,32 +32,28 @@ export class DatepickerPlus {
   @Watch('selected')
   parseSelected(next: DateString[], current: DateString[]) {
     // DESELECT CURRENT
-    current.forEach(dateString => {
-      const dateElement = this.getDateElement(dateString)
-      if (dateElement) dateElement.deselect()
-    })
+    current.forEach(dateString => this.updateDateOptions(dateString, { checked: false }))
     // SELECT NEXT
-    next.forEach(dateString => {
-      const dateElement = this.getDateElement(dateString)
-      if (dateElement) dateElement.select()
-    })
+    next.forEach(dateString => this.updateDateOptions(dateString, { checked: true }))
+    console.log('%cSELECTED','font-weight:bold;background:cyan')
+    console.log(next)
   }
 
   @Watch('disabled')
-  disableAll(disabled: DateString[]) {
-    disabled.forEach(dateStr => {
-      const dateElement = this.getDateElement(dateStr)
-      dateElement && dateElement.disable()
-    })
+  parseDisabled(next: DateString[], current: DateString[]) {
+    // ENABLE CURRENT
+    current.forEach(dateString => this.updateDateOptions(dateString, { disabled: false }))
+    // DISABLE NEXT
+    next.forEach(dateString => this.updateDateOptions(dateString, { disabled: true }))
   }
 
-  public addRangeMark = (rangeMark: DateString) => {
+  public addRangeMark = (dateString: DateString) => {
     if (this.rangeStart===null) {
-      this.rangeStart = rangeMark
-      this.selected = [rangeMark]
-    } else if (this.rangeStart!==rangeMark) {
+      this.rangeStart = dateString
+      this.selected = [dateString]
+    } else if (this.rangeStart!==dateString) {
       const start = this.rangeStart
-      const end = rangeMark
+      const end = dateString
       const inBetween = getDatesBetween(start, end);
       // TODO: inBetween +class 'connector'
       const fullRange = [start,...inBetween,end]
@@ -74,26 +70,55 @@ export class DatepickerPlus {
       }
     }
   }
+
+  public resetRangeMarks = () => {
+    this.rangeStart = null
+    this.selected = []
+  }
+
+  updateDateOptions(dateString: DateString, options: IDateOptions) {
+    const dateElement = this.getDateElement(dateString)
+    if (dateElement) {
+      Object.assign(dateElement, options)
+      dateElement.updateClassListString()
+    }
+  }
   
-  public checkRangeDeselect = (dateString: DateString) => {
-    const rangeMode = this.plusConfig.selectMode==='range';
-    const deselectInRange = this.selected.includes(dateString)
-    if (rangeMode&&deselectInRange) this.selected = [];
+  select = (dateString: DateString) => {
+    const dateElement = this.getDateElement(dateString)
+    if (dateElement) {
+      switch (this.plusConfig.selectMode) {
+        case 'single':
+          this.selected = [dateString]
+          break;
+        case 'multiple':
+          this.selected = [...this.selected, dateString]
+          break;
+        case 'range':
+          this.addRangeMark(dateString)
+          break;
+      }
+      this.onDateSelect.emit(dateElement)
+    }
+  }
+
+  public deselect = (dateString: DateString) => {
+    const dateElement = this.getDateElement(dateString)
+    if (dateElement) {
+      if (this.plusConfig.selectMode==='range') {
+        this.selected = []
+      } else {
+        this.selected = this.selected.filter(dt => dt !== dateString)
+      }
+      this.onDateDeselect.emit(dateElement)
+    }
   }
   
   @Watch('plusConfig')
   updateConfig(config: IPlusConfig) {
-    if (config.selectMode==='range') {
-      this.addRangeMark(config.selected[0])
-      this.addRangeMark(config.selected[1])
-    } else if (config.selectMode==='single') {
-      config.selected = config.selected.slice(-1)
-      this.selected = config.selected
-    } else if (config.selectMode==='multiple') {
-      this.selected = config.selected
-    }
-    this.disabled = config.disabled
     this.parseViewRange(config.viewRange)
+    this.plusConfig.selected.forEach(this.select)
+    this.disabled = this.plusConfig.disabled
   }
     
   @Event() onDateSelect: EventEmitter<IDateElement>
@@ -152,12 +177,9 @@ export class DatepickerPlus {
 
   private createDate = (date: Date) => {
     const dateString = dateToString(date)
-    const checked = this.selected.includes(dateString)
-    const disabled = this.disabled.includes(dateString)
     const dateElement = createDateElement({
       dateString,
-      datepickerPlus: this,
-      options: { checked, disabled }
+      datepickerPlus: this
     })
     return dateElement
   }
