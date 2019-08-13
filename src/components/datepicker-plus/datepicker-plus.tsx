@@ -31,10 +31,25 @@ export class DatepickerPlus {
 
   @Watch('selected')
   parseSelected(next: DateString[], current: DateString[]) {
+    const rangeMode = this.plusConfig.selectMode === 'range'
+    const currentLastIndex = current.length - 1;
+    const nextLastIndex = next.length - 1;
     // DESELECT CURRENT
-    current.forEach(dateString => this.updateDateOptions(dateString, { checked: false }))
+    current.forEach((dateString, index) => {
+      const rangeEnd = index === currentLastIndex ? { rangeEnd: null }: {};
+      this.updateDateOptions(dateString, {
+        checked: false,
+        ...(rangeMode ? { rangeIndex: null, ...rangeEnd } : {})
+      })
+    })
     // SELECT NEXT
-    next.forEach(dateString => this.updateDateOptions(dateString, { checked: true }))
+    next.forEach((dateString, index) => {
+      const rangeEnd = index === nextLastIndex ? { rangeEnd: true }: {};
+      this.updateDateOptions(dateString, {
+        checked: true,
+        ...(rangeMode ? { rangeIndex: index, ...rangeEnd } : {})
+      })
+    })
   }
 
   @Watch('disabled')

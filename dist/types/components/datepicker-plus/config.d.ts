@@ -25,7 +25,6 @@ export declare const DEFAULT_CLASSES: {
     weekHeader: string;
     weekContent: string;
     weekend: string;
-    today: string;
     checkbox: string;
 };
 export declare type SelectMode = 'single' | 'multiple' | 'range';

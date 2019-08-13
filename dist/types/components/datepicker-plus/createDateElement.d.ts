@@ -1,12 +1,5 @@
 import { EventEmitter } from "../../stencil.core";
 import { DatepickerPlus } from "./datepicker-plus";
-export interface IDateTags {
-    isToday(): boolean;
-    isTomorrow(): boolean;
-    isYesterday(): boolean;
-    isPastDate(): boolean;
-    isFutureDate(): boolean;
-}
 export interface IDateClassList {
     classListString: string;
     updateClassListString(): string;
@@ -14,13 +7,15 @@ export interface IDateClassList {
 export interface IDateHelperMethods {
     dateObject(): Date;
     dateString(): string;
-    offset(): void;
+    offset(): number;
 }
 export interface IDateOptions {
     checked?: boolean;
     disabled?: boolean;
+    rangeIndex?: number;
+    rangeEnd?: boolean;
 }
-export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateTags, IDateClassList {
+export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateClassList {
     day: number;
     month: number;
     year: number;
@@ -30,6 +25,9 @@ export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateTag
     };
     el: HTMLInputElement;
     datepickerPlus: DatepickerPlus;
+    tags: {
+        [key: string]: string;
+    };
 }
 export interface IDateParams {
     dateString: string;

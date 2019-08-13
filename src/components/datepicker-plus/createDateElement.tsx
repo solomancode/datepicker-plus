@@ -2,14 +2,7 @@ import { getDateComponents, stringToDate } from "./utils";
 import { EventEmitter } from "@stencil/core";
 import { DEFAULT_CLASSES } from "./config";
 import { DatepickerPlus } from "./datepicker-plus";
-
-export interface IDateTags {
-    isToday(): boolean
-    isTomorrow(): boolean
-    isYesterday(): boolean
-    isPastDate(): boolean
-    isFutureDate(): boolean
-}
+import * as tags from "./tags";
 
 export interface IDateClassList {
     classListString: string,
@@ -19,15 +12,17 @@ export interface IDateClassList {
 export interface IDateHelperMethods {
     dateObject(): Date
     dateString(): string
-    offset(): void
+    offset(): number
 }
 
 export interface IDateOptions {
     checked?: boolean
     disabled?: boolean
+    rangeIndex?: number
+    rangeEnd?: boolean
 }
 
-export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateTags, IDateClassList {
+export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateClassList {
     day: number
     month: number
     year: number
@@ -35,6 +30,7 @@ export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateTag
     events: {[key: string]: EventEmitter}
     el: HTMLInputElement
     datepickerPlus: DatepickerPlus
+    tags: {[key: string]: string}
 }
 
 export interface IDateParams {
@@ -61,42 +57,27 @@ const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
     }
 })
 
-const composeDateTags = () => ({
-    isToday() {
-        return this.offset() === 0;
-    },
-    isTomorrow() {
-        return this.offset() === 1;
-    },
-    isYesterday() {
-        return this.offset() === -1;
-    },
-    isPastDate() {
-        return this.offset() < 0;
-    },
-    isFutureDate() {
-        return this.offset() > 0
-    }
-})
-
 const composeDateClassList = () => ({
     classListString: DEFAULT_CLASSES.day,
     updateClassListString() {
         const date = (this as IDateElement)
-        const SEP = ' '
-        const disabled = date.disabled ? SEP + DEFAULT_CLASSES.disabled : ''
-        const selected = date.checked ? SEP + DEFAULT_CLASSES.selected : ''
-        const today = date.isToday() ? SEP + DEFAULT_CLASSES.today : ''
-        const classList = DEFAULT_CLASSES.day + disabled + selected + today;
-        this.classListString = classList
-        return classList
+        const classList = [
+            DEFAULT_CLASSES.day,
+            date.disabled && DEFAULT_CLASSES.disabled,
+            date.checked && DEFAULT_CLASSES.selected
+        ]
+        for (const tag in tags) {
+            const assertion = tags[tag];
+            assertion(date, (c: string) => classList.push(c)) && Object.defineProperty(date.tags, tag, { value: true });
+        }
+        return this.classListString = classList.filter(c=>c).join(' ')
     }
 })
 
-export const createdDateElements: {[key: string]: IDateElement} = {}
-
-const isCreatedDateElement = (dateString: string) => {
-    return (dateString in createdDateElements)
+export const createdDateElements: {[key: string]: IDateElement} = {
+    /**
+     * CREATED DATE ELEMENTS...
+     */
 }
 
 export function createDateElement({ dateString, options, datepickerPlus }: IDateParams): IDateElement {
@@ -104,15 +85,15 @@ export function createDateElement({ dateString, options, datepickerPlus }: IDate
     const [year, month, day] = getDateComponents(dateString)
 
     const dateOptions = Object.create({
+        tags: {},
         datepickerPlus,
         createdDateElements,
         ...composeDateOptions(options),
         ...composeDateHelpers(dateString),
-        ...composeDateTags(),
         ...composeDateClassList()
     })
 
-    if ( isCreatedDateElement(dateString) ) {
+    if (dateString in createdDateElements) {
         const dateElement = createdDateElements[dateString]
         Object.assign(dateElement, dateOptions)
         return dateElement;
