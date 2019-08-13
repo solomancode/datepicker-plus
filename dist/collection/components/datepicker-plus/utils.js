@@ -68,9 +68,12 @@ export const getCurrentMonthRange = () => {
     return [dateToString(firstDay), dateToString(lastDay)];
 };
 export const getDatesBetween = (dateString0, dateString1) => {
+    const [start, end] = sortDates([dateString0, dateString1]);
     let rangeDates = [];
-    let currentDateString = getNextDay(dateString0);
-    while (currentDateString !== dateString1) {
+    let currentDateString = getNextDay(start);
+    while (currentDateString !== end) {
+        if (rangeDates.length > 3000)
+            openGithubIssue({ title: 'Memory leak @ getDatesBetween', label: 'bug', body: JSON.stringify({ dateString0, dateString1 }, null, 2) });
         rangeDates.push(currentDateString);
         currentDateString = getNextDay(currentDateString);
     }
@@ -78,4 +81,16 @@ export const getDatesBetween = (dateString0, dateString1) => {
 };
 export const parsePropJSON = (prop) => {
     return JSON.parse(prop.replace(/'/g, '"'));
+};
+export const sortDates = ([dateString0, dateString1]) => {
+    const dt0 = stringToDate(dateString0);
+    const dt1 = stringToDate(dateString1);
+    return (dt0.valueOf() - dt1.valueOf()) > 0 ? [dateString1, dateString0] : [dateString0, dateString1];
+};
+export const openGithubIssue = ({ title, body, label }) => {
+    const tl = 'title=' + encodeURIComponent(title);
+    const lb = 'labels=' + encodeURIComponent(label);
+    const bd = 'body=' + encodeURIComponent(body);
+    throw ("Stopped to prevent memory leak.\n\n🐞 Create a new issue:\n" +
+        `https://github.com/solomancode/datepicker-plus/issues/new?${lb}&${tl}&${bd}`);
 };

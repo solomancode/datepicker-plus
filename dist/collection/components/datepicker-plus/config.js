@@ -37,7 +37,6 @@ export const DEFAULT_CLASSES = {
     weekHeader: 'week-header',
     weekContent: 'week-content',
     weekend: 'weekend',
-    today: 'today',
     checkbox: 'checkbox'
 };
 export const DEFAULT_CONFIG = {

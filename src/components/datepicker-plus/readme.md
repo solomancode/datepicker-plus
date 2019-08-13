@@ -7,14 +7,9 @@
 
 ## Properties
 
-| Property         | Attribute          | Description | Type     | Default     |
-| ---------------- | ------------------ | ----------- | -------- | ----------- |
-| `checkedDates`   | `checked-dates`    |             | `string` | `undefined` |
-| `disabledDates`  | `disabled-dates`   |             | `string` | `undefined` |
-| `selectMode`     | `select-mode`      |             | `string` | `undefined` |
-| `stylesheetUrl`  | `stylesheet-url`   |             | `string` | `undefined` |
-| `viewRangeEnd`   | `view-range-end`   |             | `string` | `undefined` |
-| `viewRangeStart` | `view-range-start` |             | `string` | `undefined` |
+| Property     | Attribute | Description | Type          | Default          |
+| ------------ | --------- | ----------- | ------------- | ---------------- |
+| `plusConfig` | --        |             | `IPlusConfig` | `DEFAULT_CONFIG` |
 
 
 ## Events
@@ -23,6 +18,7 @@
 | ---------------- | ----------- | --------------------------- |
 | `onDateDeselect` |             | `CustomEvent<IDateElement>` |
 | `onDateSelect`   |             | `CustomEvent<IDateElement>` |
+| `onRangeSelect`  |             | `CustomEvent<string[]>`     |
 
 
 ----------------------------------------------

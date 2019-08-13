@@ -1,11 +1,76 @@
-import { h } from '@stencil/core';
 import { renderContainer } from './templates';
 import { createDateElement, createdDateElements } from './createDateElement';
-import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate } from './utils';
+import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate, openGithubIssue } from './utils';
 import { DEFAULT_CONFIG } from './config';
-export class SelectDateRange {
+export class DatepickerPlus {
     constructor() {
         this.plusConfig = DEFAULT_CONFIG;
+        this.selected = [];
+        this.disabled = [];
+        this.rangeStart = null;
+        this.addRangeMark = (dateString) => {
+            if (this.rangeStart === null) {
+                this.rangeStart = dateString;
+                this.selected = [dateString];
+                this.onDateSelect.emit(this.getDateElement(dateString));
+            }
+            else if (this.rangeStart !== dateString) {
+                const start = this.rangeStart;
+                const end = dateString;
+                const inBetween = getDatesBetween(start, end);
+                // TODO: inBetween +class 'connector'
+                const fullRange = [start, ...inBetween, end];
+                let hasDisabled = fullRange.some((dt) => {
+                    const dateElement = this.getDateElement(dt);
+                    if (dateElement && dateElement.disabled)
+                        return true;
+                });
+                if (hasDisabled) {
+                    this.rangeStart = end;
+                    this.selected = [end];
+                    this.onDateSelect.emit(this.getDateElement(end));
+                }
+                else {
+                    this.rangeStart = null;
+                    this.selected = fullRange;
+                    this.onRangeSelect.emit(fullRange);
+                }
+            }
+        };
+        this.resetRangeMarks = () => {
+            this.rangeStart = null;
+            this.selected = [];
+        };
+        this.select = (dateString) => {
+            const dateElement = this.getDateElement(dateString);
+            if (dateElement) {
+                switch (this.plusConfig.selectMode) {
+                    case 'single':
+                        this.selected = [dateString];
+                        this.onDateSelect.emit(dateElement);
+                        break;
+                    case 'multiple':
+                        this.selected = [...this.selected, dateString];
+                        this.onDateSelect.emit(dateElement);
+                        break;
+                    case 'range':
+                        this.addRangeMark(dateString);
+                        break;
+                }
+            }
+        };
+        this.deselect = (dateString) => {
+            const dateElement = this.getDateElement(dateString);
+            if (dateElement) {
+                if (this.plusConfig.selectMode === 'range') {
+                    this.resetRangeMarks();
+                }
+                else {
+                    this.selected = this.selected.filter(dt => dt !== dateString);
+                }
+                this.onDateDeselect.emit(dateElement);
+            }
+        };
         this.getDateElement = (dateString) => {
             if (dateString in createdDateElements) {
                 return createdDateElements[dateString];
@@ -14,76 +79,74 @@ export class SelectDateRange {
                 return null;
             }
         };
-        this.selectDate = (dateString) => {
-            const dateElement = this.getDateElement(dateString);
-            dateElement && dateElement.select();
-        };
-        this.selectDates = (dateString) => {
-            if (this.plusConfig.selectMode === 'range') {
-                const datesRange = getDatesBetween(dateString[0], dateString[1]);
-                [dateString[0], ...datesRange, dateString[1]].forEach(this.selectDate);
-            }
-            else {
-                dateString.forEach(this.selectDate);
-            }
-        };
-        this.disableDates = (dateString) => {
-            dateString.forEach(dateStr => {
-                const dateElement = this.getDateElement(dateStr);
-                dateElement && dateElement.disable();
-            });
-        };
-        this.isSelectedDate = (dateString) => {
-            this.getDateElement(dateString).checked;
-        };
+        this.MemProtect = 0;
         this.createDate = (date) => {
             const dateString = dateToString(date);
-            debugger;
             const dateElement = createDateElement({
                 dateString,
-                events: this.events
+                datepickerPlus: this
             });
             return dateElement;
         };
     }
-    parseConfig() {
-        // TODO: handle config update
+    parseSelected(next, current) {
+        const rangeMode = this.plusConfig.selectMode === 'range';
+        const currentLastIndex = current.length - 1;
+        const nextLastIndex = next.length - 1;
+        // DESELECT CURRENT
+        current.forEach((dateString, index) => {
+            const rangeEnd = index === currentLastIndex ? { rangeEnd: null } : {};
+            this.updateDateOptions(dateString, Object.assign({ checked: false }, (rangeMode ? Object.assign({ rangeIndex: null }, rangeEnd) : {})));
+        });
+        // SELECT NEXT
+        next.forEach((dateString, index) => {
+            const rangeEnd = index === nextLastIndex ? { rangeEnd: true } : {};
+            this.updateDateOptions(dateString, Object.assign({ checked: true }, (rangeMode ? Object.assign({ rangeIndex: index }, rangeEnd) : {})));
+        });
     }
-    get events() {
-        return {
-            onDateSelect: this.onDateSelect,
-            onDateDeselect: this.onDateDeselect
-        };
+    parseDisabled(next, current) {
+        // ENABLE CURRENT
+        current.forEach(dateString => this.updateDateOptions(dateString, { disabled: false }));
+        // DISABLE NEXT
+        next.forEach(dateString => this.updateDateOptions(dateString, { disabled: true }));
+    }
+    updateDateOptions(dateString, options) {
+        const dateElement = this.getDateElement(dateString);
+        if (dateElement) {
+            Object.assign(dateElement, options);
+            dateElement.updateClassListString();
+        }
+    }
+    updateConfig(config) {
+        this.parseViewRange(config.viewRange);
+        this.plusConfig.selected.forEach(this.select);
+        this.disabled = this.plusConfig.disabled;
     }
     componentWillLoad() {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
     }
-    clearSelected() {
-        this.plusConfig.selected.forEach(dateString => {
-            const dateElement = this.getDateElement(dateString);
-            dateElement && dateElement.deselect();
-        });
-        if (this.plusConfig.selectMode === 'range') {
-            const [start, end] = this.plusConfig.selected;
-            let dates = getDatesBetween(start, end);
-            dates.forEach(dateString => {
-                const dateElement = this.getDateElement(dateString);
-                dateElement && dateElement.deselect();
+    protectMemLeak() {
+        this.MemProtect++;
+        if (this.MemProtect > 3000) {
+            const now = '#### ' + new Date().toDateString();
+            const CB = '\`\`\`';
+            const config = JSON.stringify(this.plusConfig, null, 2);
+            const body = now + '\n' + CB + config + CB;
+            openGithubIssue({
+                title: 'Memory leak @ render while loop',
+                body,
+                label: 'bug'
             });
         }
-        this.plusConfig.selected = [];
     }
-    updateViewOptions() {
-        this.selectDates(this.plusConfig.selected);
-        this.disableDates(this.plusConfig.disabled);
-    }
-    updateViewList(config = this.plusConfig) {
+    parseViewRange(viewRange) {
         let lastIndex = null;
         let monthDates = [];
         const viewList = [];
-        let [currentDate, endDate] = config.viewRange.map(stringToDate);
+        let [currentDate, endDate] = viewRange.map(stringToDate);
         let stopDate = getNextDay(endDate);
         while (!isSameDate(currentDate, stopDate)) {
+            this.protectMemLeak();
             const date = this.createDate(currentDate);
             if (lastIndex !== null && lastIndex !== date.month) {
                 viewList.push(monthDates);
@@ -96,24 +159,12 @@ export class SelectDateRange {
             lastIndex = date.month;
         }
         viewList.push(monthDates);
-        this.updateViewOptions();
-        return Object.create({
-            render: () => renderContainer(viewList)
-        });
-    }
-    updateConfig(config) {
-        if (config)
-            Object.assign(this.plusConfig, config);
-    }
-    loadStylesheet() {
-        const { stylesheetUrl } = this.plusConfig;
-        return stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: stylesheetUrl }) : null;
+        this.viewList = viewList;
+        this.MemProtect = 0;
     }
     render() {
-        return [
-            this.loadStylesheet(),
-            this.updateViewList().render()
-        ];
+        console.count('RENDER:');
+        return renderContainer(this.viewList, this.plusConfig.stylesheetUrl);
     }
     static get is() { return "datepicker-plus"; }
     static get encapsulation() { return "shadow"; }
@@ -144,6 +195,11 @@ export class SelectDateRange {
             },
             "defaultValue": "DEFAULT_CONFIG"
         }
+    }; }
+    static get states() { return {
+        "viewList": {},
+        "selected": {},
+        "disabled": {}
     }; }
     static get events() { return [{
             "method": "onDateSelect",
@@ -185,9 +241,34 @@ export class SelectDateRange {
                     }
                 }
             }
+        }, {
+            "method": "onRangeSelect",
+            "name": "onRangeSelect",
+            "bubbles": true,
+            "cancelable": true,
+            "composed": true,
+            "docs": {
+                "tags": [],
+                "text": ""
+            },
+            "complexType": {
+                "original": "DateString[]",
+                "resolved": "string[]",
+                "references": {
+                    "DateString": {
+                        "location": "local"
+                    }
+                }
+            }
         }]; }
     static get watchers() { return [{
+            "propName": "selected",
+            "methodName": "parseSelected"
+        }, {
+            "propName": "disabled",
+            "methodName": "parseDisabled"
+        }, {
             "propName": "plusConfig",
-            "methodName": "parseConfig"
+            "methodName": "updateConfig"
         }]; }
 }

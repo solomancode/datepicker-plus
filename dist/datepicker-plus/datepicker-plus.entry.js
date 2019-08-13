@@ -1,4 +1,4 @@
-import { h, r as registerInstance, c as createEvent } from './chunk-c8f9ca54.js';
+import { h, r as registerInstance, c as createEvent } from './chunk-b75c5fc9.js';
 
 const dateToString = (date) => {
     const yyyy = date.getFullYear();
@@ -70,9 +70,12 @@ const getCurrentMonthRange = () => {
     return [dateToString(firstDay), dateToString(lastDay)];
 };
 const getDatesBetween = (dateString0, dateString1) => {
+    const [start, end] = sortDates([dateString0, dateString1]);
     let rangeDates = [];
-    let currentDateString = getNextDay(dateString0);
-    while (currentDateString !== dateString1) {
+    let currentDateString = getNextDay(start);
+    while (currentDateString !== end) {
+        if (rangeDates.length > 3000)
+            openGithubIssue({ title: 'Memory leak @ getDatesBetween', label: 'bug', body: JSON.stringify({ dateString0, dateString1 }, null, 2) });
         rangeDates.push(currentDateString);
         currentDateString = getNextDay(currentDateString);
     }
@@ -80,6 +83,18 @@ const getDatesBetween = (dateString0, dateString1) => {
 };
 const parsePropJSON = (prop) => {
     return JSON.parse(prop.replace(/'/g, '"'));
+};
+const sortDates = ([dateString0, dateString1]) => {
+    const dt0 = stringToDate(dateString0);
+    const dt1 = stringToDate(dateString1);
+    return (dt0.valueOf() - dt1.valueOf()) > 0 ? [dateString1, dateString0] : [dateString0, dateString1];
+};
+const openGithubIssue = ({ title, body, label }) => {
+    const tl = 'title=' + encodeURIComponent(title);
+    const lb = 'labels=' + encodeURIComponent(label);
+    const bd = 'body=' + encodeURIComponent(body);
+    throw ("Stopped to prevent memory leak.\n\n🐞 Create a new issue:\n" +
+        `https://github.com/solomancode/datepicker-plus/issues/new?${lb}&${tl}&${bd}`);
 };
 
 const DEFAULT_WEEK_DAYS = [
@@ -120,7 +135,6 @@ const DEFAULT_CLASSES = {
     weekHeader: 'week-header',
     weekContent: 'week-content',
     weekend: 'weekend',
-    today: 'today',
     checkbox: 'checkbox'
 };
 const DEFAULT_CONFIG = {
@@ -130,14 +144,20 @@ const DEFAULT_CONFIG = {
     viewRange: getCurrentMonthRange()
 };
 
-function renderDate(date) {
-    const toggleSelected = () => {
-        date.checked ? date.deselect() : date.select();
+const DatepickerPlusDate = ({ date }) => {
+    const onChange = (e) => {
+        const dateString = date.dateString();
+        const { select, deselect } = date.datepickerPlus;
+        e.target.checked ? select(dateString) : deselect(dateString);
     };
-    return (h("time", { part: "day", class: date.classList(), dateTime: date.dateString() },
+    return (h("time", { part: "day", class: date.classListString, dateTime: date.dateString() },
         h("label", null,
             date.day,
-            h("input", { ref: el => date.el = el, onChange: toggleSelected.bind(this), checked: date.checked, disabled: date.disabled, class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString() }))));
+            h("input", { ref: el => date.el = el, onChange: (e) => onChange(e), checked: date.checked, disabled: date.disabled, class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString() }))));
+};
+
+function renderDate(date) {
+    return h(DatepickerPlusDate, { date: date });
 }
 function renderWeekHeader(weekDays = DEFAULT_WEEK_DAYS) {
     return (h("header", { class: DEFAULT_CLASSES.weekHeader, part: "week-header" }, weekDays.map(({ name, abbr, isWeekend }) => h("abbr", { class: isWeekend && DEFAULT_CLASSES.weekend, title: name }, abbr))));
@@ -163,9 +183,69 @@ function renderMonth(month) {
         h("header", { class: DEFAULT_CLASSES.monthHeader, part: "month-header" }, DEFAULT_MONTHS[month[0].month - 1].name),
         h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map((week, i) => renderWeek(week, i === 0)))));
 }
-function renderContainer(dates) {
-    return (h("section", { class: "sdr-container", part: "sdr-container" }, dates.map(month => renderMonth(month))));
+function renderContainer(dates, stylesheetUrl) {
+    return ([
+        // theme stylesheet
+        stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: stylesheetUrl }) : null,
+        // contents
+        h("section", { class: "dpp-container", part: "dpp-container" }, dates.map(month => renderMonth(month)))
+    ]);
 }
+
+const DYNAMIC_CLASSES = {
+    today: 'today',
+    rangeStart: 'range-start',
+    rangeEnd: 'range-end',
+    connector: 'connector'
+};
+const today = (dateElement, setClass) => {
+    const isToday = dateElement.offset() === 0;
+    if (isToday)
+        setClass(DYNAMIC_CLASSES.today);
+    return isToday;
+};
+const tomorrow = (dateElement) => dateElement.offset() === 1;
+const yesterday = (dateElement) => dateElement.offset() === -1;
+const past = (dateElement) => dateElement.offset() < 0;
+const future = (dateElement) => dateElement.offset() > 0;
+/**
+ * Range start date
+ */
+const rangeStart = (dateElement, setClass) => {
+    const rangeStart = dateElement.rangeIndex === 0;
+    if (rangeStart)
+        setClass(DYNAMIC_CLASSES.rangeStart);
+    return rangeStart;
+};
+/**
+ * Range end date
+ */
+const rangeEnd = (dateElement, setClass) => {
+    if (dateElement.rangeEnd)
+        setClass(DYNAMIC_CLASSES.rangeEnd);
+    return dateElement.rangeEnd;
+};
+/**
+ * A connector is a date between date start and date end
+ * in a range select mode.
+ */
+const connector = (dateElement, setClass) => {
+    const isConnector = dateElement.rangeIndex > 0 && (!dateElement.rangeEnd);
+    if (isConnector)
+        setClass(DYNAMIC_CLASSES.connector);
+    return isConnector;
+};
+
+const tags = /*#__PURE__*/Object.freeze({
+    today: today,
+    tomorrow: tomorrow,
+    yesterday: yesterday,
+    past: past,
+    future: future,
+    rangeStart: rangeStart,
+    rangeEnd: rangeEnd,
+    connector: connector
+});
 
 const composeDateOptions = (options) => {
     return Object.assign({ checked: false, disabled: false }, options);
@@ -177,82 +257,38 @@ const composeDateHelpers = (dateString) => ({
     dateString() {
         return dateString;
     },
-    updateDateClassList() {
-        if (this.el) {
-            this.el.parentElement.parentElement.setAttribute('class', this.classList());
-        }
-    },
-    select() {
-        this.checked = true;
-        if (this.el) {
-            this.el.checked = true;
-        }
-        this.events.onDateSelect.emit(this);
-        this.updateDateClassList();
-    },
-    deselect() {
-        this.checked = false;
-        this.el && (this.el.checked = false);
-        this.events.onDateDeselect.emit(this);
-        this.updateDateClassList();
-    },
-    enable() {
-        this.disabled = false;
-        this.el && (this.el.disabled = false);
-        this.updateDateClassList();
-    },
-    disable() {
-        this.disabled = true;
-        this.el && (this.el.disabled = true);
-        this.updateDateClassList();
-    },
-    selectRangeStart() {
-        // TODO:
-    },
-    selectRangeEnd() {
-        // TODO:
-    },
     offset() {
         const date = this.dateObject().getTime();
         const now = new Date().getTime();
         return Math.ceil((date - now) / 86400000);
-    },
-    classList() {
+    }
+});
+const composeDateClassList = () => ({
+    classListString: DEFAULT_CLASSES.day,
+    updateClassListString() {
         const date = this;
-        const SEP = ' ';
-        const disabled = date.disabled ? SEP + DEFAULT_CLASSES.disabled : '';
-        const selected = date.checked ? SEP + DEFAULT_CLASSES.selected : '';
-        const today = date.isToday() ? SEP + DEFAULT_CLASSES.today : '';
-        const classList = DEFAULT_CLASSES.day + disabled + selected + today;
-        return classList;
+        const classList = [
+            DEFAULT_CLASSES.day,
+            date.disabled && DEFAULT_CLASSES.disabled,
+            date.checked && DEFAULT_CLASSES.selected
+        ];
+        for (const tag in tags) {
+            const assertion = tags[tag];
+            assertion(date, (c) => classList.push(c)) && Object.defineProperty(date.tags, tag, { value: true });
+        }
+        return this.classListString = classList.filter(c => c).join(' ');
     }
 });
-const composeDateTags = () => ({
-    isToday() {
-        return this.offset() === 0;
-    },
-    isTomorrow() {
-        return this.offset() === 1;
-    },
-    isYesterday() {
-        return this.offset() === -1;
-    },
-    isPastDate() {
-        return this.offset() < 0;
-    },
-    isFutureDate() {
-        return this.offset() > 0;
-    }
-});
-const createdDateElements = {};
-const isCreatedDateElement = (dateString) => {
-    return (dateString in createdDateElements);
+const createdDateElements = {
+/**
+ * CREATED DATE ELEMENTS...
+ */
 };
-function createDateElement({ dateString, options, events = {} }) {
+function createDateElement({ dateString, options, datepickerPlus }) {
     const [year, month, day] = getDateComponents(dateString);
-    const dateOptions = Object.create(Object.assign({ events,
-        createdDateElements }, composeDateOptions(options), composeDateHelpers(dateString), composeDateTags()));
-    if (isCreatedDateElement(dateString)) {
+    const dateOptions = Object.create(Object.assign({ tags: {}, datepickerPlus,
+        createdDateElements }, composeDateOptions(options), composeDateHelpers(dateString), composeDateClassList()));
+    if (dateString in createdDateElements) {
         const dateElement = createdDateElements[dateString];
         Object.assign(dateElement, dateOptions);
         return dateElement;
@@ -260,14 +296,81 @@ function createDateElement({ dateString, options, events = {} }) {
     const dayOfWeek = new Date(dateString).getDay();
     const props = { year, month, day, dayOfWeek };
     const dateElement = Object.assign(dateOptions, props);
+    dateElement.updateClassListString();
     Object.defineProperty(createdDateElements, dateString, { value: dateElement });
     return dateElement;
 }
 
-class SelectDateRange {
+class DatepickerPlus {
     constructor(hostRef) {
         registerInstance(this, hostRef);
         this.plusConfig = DEFAULT_CONFIG;
+        this.selected = [];
+        this.disabled = [];
+        this.rangeStart = null;
+        this.addRangeMark = (dateString) => {
+            if (this.rangeStart === null) {
+                this.rangeStart = dateString;
+                this.selected = [dateString];
+                this.onDateSelect.emit(this.getDateElement(dateString));
+            }
+            else if (this.rangeStart !== dateString) {
+                const start = this.rangeStart;
+                const end = dateString;
+                const inBetween = getDatesBetween(start, end);
+                // TODO: inBetween +class 'connector'
+                const fullRange = [start, ...inBetween, end];
+                let hasDisabled = fullRange.some((dt) => {
+                    const dateElement = this.getDateElement(dt);
+                    if (dateElement && dateElement.disabled)
+                        return true;
+                });
+                if (hasDisabled) {
+                    this.rangeStart = end;
+                    this.selected = [end];
+                    this.onDateSelect.emit(this.getDateElement(end));
+                }
+                else {
+                    this.rangeStart = null;
+                    this.selected = fullRange;
+                    this.onRangeSelect.emit(fullRange);
+                }
+            }
+        };
+        this.resetRangeMarks = () => {
+            this.rangeStart = null;
+            this.selected = [];
+        };
+        this.select = (dateString) => {
+            const dateElement = this.getDateElement(dateString);
+            if (dateElement) {
+                switch (this.plusConfig.selectMode) {
+                    case 'single':
+                        this.selected = [dateString];
+                        this.onDateSelect.emit(dateElement);
+                        break;
+                    case 'multiple':
+                        this.selected = [...this.selected, dateString];
+                        this.onDateSelect.emit(dateElement);
+                        break;
+                    case 'range':
+                        this.addRangeMark(dateString);
+                        break;
+                }
+            }
+        };
+        this.deselect = (dateString) => {
+            const dateElement = this.getDateElement(dateString);
+            if (dateElement) {
+                if (this.plusConfig.selectMode === 'range') {
+                    this.resetRangeMarks();
+                }
+                else {
+                    this.selected = this.selected.filter(dt => dt !== dateString);
+                }
+                this.onDateDeselect.emit(dateElement);
+            }
+        };
         this.getDateElement = (dateString) => {
             if (dateString in createdDateElements) {
                 return createdDateElements[dateString];
@@ -276,78 +379,77 @@ class SelectDateRange {
                 return null;
             }
         };
-        this.selectDate = (dateString) => {
-            const dateElement = this.getDateElement(dateString);
-            dateElement && dateElement.select();
-        };
-        this.selectDates = (dateString) => {
-            if (this.plusConfig.selectMode === 'range') {
-                const datesRange = getDatesBetween(dateString[0], dateString[1]);
-                [dateString[0], ...datesRange, dateString[1]].forEach(this.selectDate);
-            }
-            else {
-                dateString.forEach(this.selectDate);
-            }
-        };
-        this.disableDates = (dateString) => {
-            dateString.forEach(dateStr => {
-                const dateElement = this.getDateElement(dateStr);
-                dateElement && dateElement.disable();
-            });
-        };
-        this.isSelectedDate = (dateString) => {
-            this.getDateElement(dateString).checked;
-        };
+        this.MemProtect = 0;
         this.createDate = (date) => {
             const dateString = dateToString(date);
-            debugger;
             const dateElement = createDateElement({
                 dateString,
-                events: this.events
+                datepickerPlus: this
             });
             return dateElement;
         };
         this.onDateSelect = createEvent(this, "onDateSelect", 7);
         this.onDateDeselect = createEvent(this, "onDateDeselect", 7);
+        this.onRangeSelect = createEvent(this, "onRangeSelect", 7);
     }
-    parseConfig() {
-        // TODO: handle config update
+    parseSelected(next, current) {
+        const rangeMode = this.plusConfig.selectMode === 'range';
+        const currentLastIndex = current.length - 1;
+        const nextLastIndex = next.length - 1;
+        // DESELECT CURRENT
+        current.forEach((dateString, index) => {
+            const rangeEnd = index === currentLastIndex ? { rangeEnd: null } : {};
+            this.updateDateOptions(dateString, Object.assign({ checked: false }, (rangeMode ? Object.assign({ rangeIndex: null }, rangeEnd) : {})));
+        });
+        // SELECT NEXT
+        next.forEach((dateString, index) => {
+            const rangeEnd = index === nextLastIndex ? { rangeEnd: true } : {};
+            this.updateDateOptions(dateString, Object.assign({ checked: true }, (rangeMode ? Object.assign({ rangeIndex: index }, rangeEnd) : {})));
+        });
     }
-    get events() {
-        return {
-            onDateSelect: this.onDateSelect,
-            onDateDeselect: this.onDateDeselect
-        };
+    parseDisabled(next, current) {
+        // ENABLE CURRENT
+        current.forEach(dateString => this.updateDateOptions(dateString, { disabled: false }));
+        // DISABLE NEXT
+        next.forEach(dateString => this.updateDateOptions(dateString, { disabled: true }));
+    }
+    updateDateOptions(dateString, options) {
+        const dateElement = this.getDateElement(dateString);
+        if (dateElement) {
+            Object.assign(dateElement, options);
+            dateElement.updateClassListString();
+        }
+    }
+    updateConfig(config) {
+        this.parseViewRange(config.viewRange);
+        this.plusConfig.selected.forEach(this.select);
+        this.disabled = this.plusConfig.disabled;
     }
     componentWillLoad() {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
     }
-    clearSelected() {
-        this.plusConfig.selected.forEach(dateString => {
-            const dateElement = this.getDateElement(dateString);
-            dateElement && dateElement.deselect();
-        });
-        if (this.plusConfig.selectMode === 'range') {
-            const [start, end] = this.plusConfig.selected;
-            let dates = getDatesBetween(start, end);
-            dates.forEach(dateString => {
-                const dateElement = this.getDateElement(dateString);
-                dateElement && dateElement.deselect();
+    protectMemLeak() {
+        this.MemProtect++;
+        if (this.MemProtect > 3000) {
+            const now = '#### ' + new Date().toDateString();
+            const CB = '\`\`\`';
+            const config = JSON.stringify(this.plusConfig, null, 2);
+            const body = now + '\n' + CB + config + CB;
+            openGithubIssue({
+                title: 'Memory leak @ render while loop',
+                body,
+                label: 'bug'
             });
         }
-        this.plusConfig.selected = [];
     }
-    updateViewOptions() {
-        this.selectDates(this.plusConfig.selected);
-        this.disableDates(this.plusConfig.disabled);
-    }
-    updateViewList(config = this.plusConfig) {
+    parseViewRange(viewRange) {
         let lastIndex = null;
         let monthDates = [];
         const viewList = [];
-        let [currentDate, endDate] = config.viewRange.map(stringToDate);
+        let [currentDate, endDate] = viewRange.map(stringToDate);
         let stopDate = getNextDay(endDate);
         while (!isSameDate(currentDate, stopDate)) {
+            this.protectMemLeak();
             const date = this.createDate(currentDate);
             if (lastIndex !== null && lastIndex !== date.month) {
                 viewList.push(monthDates);
@@ -360,29 +462,19 @@ class SelectDateRange {
             lastIndex = date.month;
         }
         viewList.push(monthDates);
-        this.updateViewOptions();
-        return Object.create({
-            render: () => renderContainer(viewList)
-        });
-    }
-    updateConfig(config) {
-        if (config)
-            Object.assign(this.plusConfig, config);
-    }
-    loadStylesheet() {
-        const { stylesheetUrl } = this.plusConfig;
-        return stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: stylesheetUrl }) : null;
+        this.viewList = viewList;
+        this.MemProtect = 0;
     }
     render() {
-        return [
-            this.loadStylesheet(),
-            this.updateViewList().render()
-        ];
+        console.count('RENDER:');
+        return renderContainer(this.viewList, this.plusConfig.stylesheetUrl);
     }
     static get watchers() { return {
-        "plusConfig": ["parseConfig"]
+        "selected": ["parseSelected"],
+        "disabled": ["parseDisabled"],
+        "plusConfig": ["updateConfig"]
     }; }
-    static get style() { return ".sdr-container {\n    font-family: monospace;\n}\n\n.month {\n    border: 1px solid #ccc;\n    padding: 20px;\n}\n\n.month-header {\n    text-transform: uppercase;\n    font-weight: bold;\n    margin-bottom: 5px;\n}\n\n.week {\n    \n}\n\n.week-header {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.week-header abbr {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    text-align: center;\n}\n\n.week-content {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.week-content > .day, .week-content > .empty {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    -ms-flex-preferred-size: 80px;\n    flex-basis: 80px;\n    text-align: center;\n}\n\n.day {\n\n}\n\n.day.disabled {\n    background-color: #ccc;\n}\n\n.day.selected {\n    background-color: gold;\n}\n\n.day.today {\n    background-color: #e45;\n}\n\n.checkbox {}"; }
+    static get style() { return ".dpp-container {\n    font-family: monospace;\n}\n\n.month {\n    border: 1px solid #ccc;\n    padding: 20px;\n}\n\n.month-header {\n    text-transform: uppercase;\n    font-weight: bold;\n    margin-bottom: 5px;\n}\n\n.week {\n    \n}\n\n.week-header {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.week-header abbr {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    text-align: center;\n}\n\n.week-content {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.week-content > .day, .week-content > .empty {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    -ms-flex-preferred-size: 80px;\n    flex-basis: 80px;\n    text-align: center;\n}\n\n.day {\n\n}\n\n.day.disabled {\n    background-color: #ccc;\n}\n\n.day.selected {\n    background-color: gold;\n}\n\n.day.today {\n    background-color: #e45;\n}\n\n.checkbox {}"; }
 }
 
-export { SelectDateRange as datepicker_plus };
+export { DatepickerPlus as datepicker_plus };
