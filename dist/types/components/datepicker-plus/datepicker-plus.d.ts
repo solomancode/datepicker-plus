@@ -25,6 +25,7 @@ export declare class DatepickerPlus {
     updateConfig(config: IPlusConfig): void;
     onDateSelect: EventEmitter<IDateElement>;
     onDateDeselect: EventEmitter<IDateElement>;
+    onRangeSelect: EventEmitter<DateString[]>;
     componentWillLoad(): void;
     getDateElement: (dateString: string) => IDateElement;
     private MemProtect;

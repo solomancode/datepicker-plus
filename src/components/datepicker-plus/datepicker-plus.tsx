@@ -35,8 +35,6 @@ export class DatepickerPlus {
     current.forEach(dateString => this.updateDateOptions(dateString, { checked: false }))
     // SELECT NEXT
     next.forEach(dateString => this.updateDateOptions(dateString, { checked: true }))
-    console.log('%cSELECTED','font-weight:bold;background:cyan')
-    console.log(next)
   }
 
   @Watch('disabled')
@@ -51,6 +49,7 @@ export class DatepickerPlus {
     if (this.rangeStart===null) {
       this.rangeStart = dateString
       this.selected = [dateString]
+      this.onDateSelect.emit(this.getDateElement(dateString));
     } else if (this.rangeStart!==dateString) {
       const start = this.rangeStart
       const end = dateString
@@ -64,9 +63,11 @@ export class DatepickerPlus {
       if (hasDisabled) {
         this.rangeStart = end;
         this.selected = [end];
+        this.onDateSelect.emit(this.getDateElement(end));
       } else {
         this.rangeStart = null
         this.selected = fullRange
+        this.onRangeSelect.emit(fullRange)
       }
     }
   }
@@ -90,15 +91,16 @@ export class DatepickerPlus {
       switch (this.plusConfig.selectMode) {
         case 'single':
           this.selected = [dateString]
+          this.onDateSelect.emit(dateElement)
           break;
         case 'multiple':
           this.selected = [...this.selected, dateString]
+          this.onDateSelect.emit(dateElement)
           break;
         case 'range':
           this.addRangeMark(dateString)
           break;
       }
-      this.onDateSelect.emit(dateElement)
     }
   }
 
@@ -106,7 +108,7 @@ export class DatepickerPlus {
     const dateElement = this.getDateElement(dateString)
     if (dateElement) {
       if (this.plusConfig.selectMode==='range') {
-        this.selected = []
+        this.resetRangeMarks()
       } else {
         this.selected = this.selected.filter(dt => dt !== dateString)
       }
@@ -123,6 +125,7 @@ export class DatepickerPlus {
     
   @Event() onDateSelect: EventEmitter<IDateElement>
   @Event() onDateDeselect: EventEmitter<IDateElement>
+  @Event() onRangeSelect: EventEmitter<DateString[]>
 
   componentWillLoad() {
     this.plusConfig = { ...DEFAULT_CONFIG, ...this.plusConfig }

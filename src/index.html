@@ -39,7 +39,7 @@
     // On Date Select
     datepickerPlus.addEventListener('onDateSelect', (event) => {
       console.group()
-      console.count('selected')
+      console.count('🐱 selected')
       console.log(event.detail)
       console.groupEnd()
     })
@@ -49,7 +49,17 @@
     // On Date Deselect
     datepickerPlus.addEventListener('onDateDeselect', (event) => {
       console.group()
-      console.count('deselected')
+      console.count('🦍 deselected')
+      console.log(event.detail)
+      console.groupEnd()
+    })
+  </script>
+
+  <script>
+    // On Range select
+    datepickerPlus.addEventListener('onRangeSelect', (event) => {
+      console.group()
+      console.count('📌 select range')
       console.log(event.detail)
       console.groupEnd()
     })
