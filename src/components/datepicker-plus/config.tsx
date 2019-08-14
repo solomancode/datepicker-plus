@@ -61,5 +61,6 @@ export const DEFAULT_CONFIG: IPlusConfig = {
     selectMode: 'range',
     selected: [],
     disabled: [],
+    selectScope: 0,
     viewRange: getCurrentMonthRange() as [DateString, DateString]
 }

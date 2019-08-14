@@ -7,6 +7,7 @@ export interface IPlusConfig {
     viewRange: [DateString, DateString];
     selected: DateString[];
     disabled: DateString[];
+    selectScope: number;
     stylesheetUrl?: string;
 }
 export declare class DatepickerPlus {
@@ -15,10 +16,16 @@ export declare class DatepickerPlus {
     selected: DateString[];
     disabled: DateString[];
     private rangeStart;
+    /**
+     * Backup disabled before scoping...
+     */
+    private _disabled;
     parseSelected(next: DateString[], current: DateString[]): void;
     parseDisabled(next: DateString[], current: DateString[]): void;
     unfoldTag: (tag: string) => string[];
     addRangeMark: (dateString: string) => void;
+    activateSelectScope: (dateElement: IDateElement) => void;
+    deactivateSelectScope: () => void;
     resetRangeMarks: () => void;
     updateDateOptions(dateString: DateString, options: IDateOptions): void;
     select: (dateString: string) => void;

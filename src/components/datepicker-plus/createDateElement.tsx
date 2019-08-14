@@ -1,4 +1,4 @@
-import { getDateComponents, stringToDate } from "./utils";
+import { getDateComponents, stringToDate, dateOffset } from "./utils";
 import { EventEmitter } from "@stencil/core";
 import { DEFAULT_CLASSES } from "./config";
 import { DatepickerPlus } from "./datepicker-plus";
@@ -51,9 +51,9 @@ const composeDateHelpers = (dateString: string): IDateHelperMethods => ({
         return dateString
     },
     offset() {
-        const date = (this as IDateElement).dateObject().getTime()
-        const now = new Date().getTime()
-        return Math.ceil((date-now)/86400000)
+        const date = (this as IDateElement).dateObject()
+        const now = new Date()
+        return dateOffset(date, now)
     }
 })
 

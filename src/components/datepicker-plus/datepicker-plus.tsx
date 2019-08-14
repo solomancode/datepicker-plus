@@ -1,7 +1,7 @@
 import { Component, Prop, Watch, Event, EventEmitter, State } from '@stencil/core';
 import { renderContainer } from './templates';
 import { IDateElement, createDateElement, createdDateElements, IDateOptions } from './createDateElement';
-import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate, openGithubIssue } from './utils';
+import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate, openGithubIssue, dateOffset } from './utils';
 import { SelectMode, DEFAULT_CONFIG } from './config';
 import * as tags from "./tags";
 
@@ -12,6 +12,7 @@ export interface IPlusConfig {
   viewRange : [DateString, DateString]
   selected  : DateString[]
   disabled  : DateString[]
+  selectScope: number // in days
   stylesheetUrl ?: string
 }
 
@@ -29,6 +30,11 @@ export class DatepickerPlus {
   @State() disabled: DateString[] = []
 
   private rangeStart: DateString = null
+
+  /**
+   * Backup disabled before scoping...
+   */
+  private _disabled: DateString[] = []
 
   @Watch('selected')
   parseSelected(next: DateString[], current: DateString[]) {
@@ -96,6 +102,25 @@ export class DatepickerPlus {
     }
   }
 
+  public activateSelectScope = (dateElement: IDateElement) => {
+    const selectedDate = dateElement.dateObject()
+    const scope = this.plusConfig.selectScope
+    if (scope > 0 && !this.rangeStart) {
+      this._disabled = this.disabled
+      const locked = this.viewList.reduce((p,n)=>[...p,...n]).map(
+        dateElement => {
+          const offset = dateOffset(selectedDate, dateElement.dateObject())
+          return Math.abs(offset) > scope ? dateElement.dateString() : false
+        }
+      ).filter(d=>d)
+      this.disabled = locked as string[]
+    }
+  }
+
+  public deactivateSelectScope = () => {
+    this.disabled = this._disabled
+  }
+
   public resetRangeMarks = () => {
     this.rangeStart = null
     this.selected = []
@@ -145,6 +170,7 @@ export class DatepickerPlus {
     this.parseViewRange(config.viewRange)
     this.unfoldSelected(config.selected, config.selectMode).forEach(this.select)
     this.disabled = this.plusConfig.disabled
+    this._disabled = this.plusConfig.disabled
   }
     
   @Event() onDateSelect: EventEmitter<IDateElement>
