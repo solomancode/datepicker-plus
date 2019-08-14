@@ -49,12 +49,14 @@ export class DatepickerPlus {
         ...(rangeMode ? { rangeIndex: null, ...rangeEnd } : {})
       })
     })
+    const isReversed = dateOffset(new Date(next[0]), new Date(next[next.length-1])) > 0
     // SELECT NEXT
     next.forEach((dateString, index) => {
-      const rangeEnd = index === nextLastIndex ? { rangeEnd: true }: {};
+      const chronoIndex = isReversed ? (next.length - index) - 1 : index;
+      const rangeEnd = chronoIndex === nextLastIndex ? { rangeEnd: true }: {};
       this.updateDateOptions(dateString, {
         checked: true,
-        ...(rangeMode ? { rangeIndex: index, ...rangeEnd } : {})
+        ...(rangeMode ? { rangeIndex: chronoIndex, ...rangeEnd } : {})
       })
     })
   }
