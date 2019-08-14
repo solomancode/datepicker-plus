@@ -4,7 +4,14 @@ export const DatepickerPlusDate = ({ date }) => {
     const onChange = (e) => {
         const dateString = date.dateString();
         const { select, deselect } = date.datepickerPlus;
-        e.target.checked ? select(dateString) : deselect(dateString);
+        if (e.target.checked) {
+            date.datepickerPlus.activateSelectScope(date);
+            select(dateString);
+        }
+        else {
+            date.datepickerPlus.deactivateSelectScope();
+            deselect(dateString);
+        }
     };
     return (h("time", { part: "day", class: date.classListString, dateTime: date.dateString() },
         h("label", null,

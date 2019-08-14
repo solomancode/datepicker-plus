@@ -1,4 +1,8 @@
-import { h, r as registerInstance, c as createEvent } from './chunk-b75c5fc9.js';
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+const __chunk_1 = require('./chunk-a0b8771d.js');
 
 const dateToString = (date) => {
     const yyyy = date.getFullYear();
@@ -51,18 +55,6 @@ const monthToWeeks = (month) => {
     }
     return weeks;
 };
-const dateStringInRange = (dateString, dateRange) => {
-    const [year, month, day] = getDateComponents(dateString);
-    const [year0, month0, day0] = getDateComponents(dateRange[0]);
-    const [year1, month1, day1] = getDateComponents(dateRange[1]);
-    if (day < day0 || day > day1)
-        return false;
-    if (month < month0 || month > month1)
-        return false;
-    if (year < year0 || year > year1)
-        return false;
-    return true;
-};
 const getCurrentMonthRange = () => {
     const date = new Date();
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -81,13 +73,13 @@ const getDatesBetween = (dateString0, dateString1) => {
     }
     return rangeDates;
 };
-const parsePropJSON = (prop) => {
-    return JSON.parse(prop.replace(/'/g, '"'));
-};
 const sortDates = ([dateString0, dateString1]) => {
     const dt0 = stringToDate(dateString0);
     const dt1 = stringToDate(dateString1);
     return (dt0.valueOf() - dt1.valueOf()) > 0 ? [dateString1, dateString0] : [dateString0, dateString1];
+};
+const dateOffset = (date0, date1) => {
+    return Math.ceil((date0.getTime() - date1.getTime()) / 86400000);
 };
 const openGithubIssue = ({ title, body, label }) => {
     const tl = 'title=' + encodeURIComponent(title);
@@ -141,6 +133,7 @@ const DEFAULT_CONFIG = {
     selectMode: 'range',
     selected: [],
     disabled: [],
+    selectScope: 0,
     viewRange: getCurrentMonthRange()
 };
 
@@ -148,47 +141,54 @@ const DatepickerPlusDate = ({ date }) => {
     const onChange = (e) => {
         const dateString = date.dateString();
         const { select, deselect } = date.datepickerPlus;
-        e.target.checked ? select(dateString) : deselect(dateString);
+        if (e.target.checked) {
+            date.datepickerPlus.activateSelectScope(date);
+            select(dateString);
+        }
+        else {
+            date.datepickerPlus.deactivateSelectScope();
+            deselect(dateString);
+        }
     };
-    return (h("time", { part: "day", class: date.classListString, dateTime: date.dateString() },
-        h("label", null,
+    return (__chunk_1.h("time", { part: "day", class: date.classListString, dateTime: date.dateString() },
+        __chunk_1.h("label", null,
             date.day,
-            h("input", { ref: el => date.el = el, onChange: (e) => onChange(e), checked: date.checked, disabled: date.disabled, class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString() }))));
+            __chunk_1.h("input", { ref: el => date.el = el, onChange: (e) => onChange(e), checked: date.checked, disabled: date.disabled, class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString() }))));
 };
 
 function renderDate(date) {
-    return h(DatepickerPlusDate, { date: date });
+    return __chunk_1.h(DatepickerPlusDate, { date: date });
 }
 function renderWeekHeader(weekDays = DEFAULT_WEEK_DAYS) {
-    return (h("header", { class: DEFAULT_CLASSES.weekHeader, part: "week-header" }, weekDays.map(({ name, abbr, isWeekend }) => h("abbr", { class: isWeekend && DEFAULT_CLASSES.weekend, title: name }, abbr))));
+    return (__chunk_1.h("header", { class: DEFAULT_CLASSES.weekHeader, part: "week-header" }, weekDays.map(({ name, abbr, isWeekend }) => __chunk_1.h("abbr", { class: isWeekend && DEFAULT_CLASSES.weekend, title: name }, abbr))));
 }
 function renderEmpty(offset) {
     const nodes = [];
     while (offset) {
-        nodes.push(h("span", { class: DEFAULT_CLASSES.empty }));
+        nodes.push(__chunk_1.h("span", { class: DEFAULT_CLASSES.empty }));
         offset--;
     }
     return nodes;
 }
 function renderWeek(week, renderHeader = false) {
-    return (h("section", { part: "week", class: DEFAULT_CLASSES.week },
+    return (__chunk_1.h("section", { part: "week", class: DEFAULT_CLASSES.week },
         renderHeader && renderWeekHeader(),
-        h("section", { class: DEFAULT_CLASSES.weekContent },
+        __chunk_1.h("section", { class: DEFAULT_CLASSES.weekContent },
             renderEmpty(week[0].dayOfWeek),
             week.map(renderDate),
             renderEmpty(6 - week[week.length - 1].dayOfWeek))));
 }
 function renderMonth(month) {
-    return (h("section", { part: "month", class: DEFAULT_CLASSES.month },
-        h("header", { class: DEFAULT_CLASSES.monthHeader, part: "month-header" }, DEFAULT_MONTHS[month[0].month - 1].name),
-        h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map((week, i) => renderWeek(week, i === 0)))));
+    return (__chunk_1.h("section", { part: "month", class: DEFAULT_CLASSES.month },
+        __chunk_1.h("header", { class: DEFAULT_CLASSES.monthHeader, part: "month-header" }, DEFAULT_MONTHS[month[0].month - 1].name),
+        __chunk_1.h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map((week, i) => renderWeek(week, i === 0)))));
 }
 function renderContainer(dates, stylesheetUrl) {
     return ([
         // theme stylesheet
-        stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: stylesheetUrl }) : null,
+        stylesheetUrl ? __chunk_1.h("link", { rel: "stylesheet", type: "text/css", href: stylesheetUrl }) : null,
         // contents
-        h("section", { class: "dpp-container", part: "dpp-container" }, dates.map(month => renderMonth(month)))
+        __chunk_1.h("section", { class: "dpp-container", part: "dpp-container" }, dates.map(month => renderMonth(month)))
     ]);
 }
 
@@ -258,9 +258,9 @@ const composeDateHelpers = (dateString) => ({
         return dateString;
     },
     offset() {
-        const date = this.dateObject().getTime();
-        const now = new Date().getTime();
-        return Math.ceil((date - now) / 86400000);
+        const date = this.dateObject();
+        const now = new Date();
+        return dateOffset(date, now);
     }
 });
 const composeDateClassList = () => ({
@@ -303,11 +303,20 @@ function createDateElement({ dateString, options, datepickerPlus }) {
 
 class DatepickerPlus {
     constructor(hostRef) {
-        registerInstance(this, hostRef);
+        __chunk_1.registerInstance(this, hostRef);
         this.plusConfig = DEFAULT_CONFIG;
         this.selected = [];
         this.disabled = [];
         this.rangeStart = null;
+        /**
+         * Backup disabled before scoping...
+         */
+        this._disabled = [];
+        this.unfoldTag = (tag) => {
+            if (!(tag in tags))
+                return [tag];
+            return this.viewList.map((month) => month.filter(dateElement => (tag in dateElement.tags))).reduce((p, n) => [...p, ...n]).map(el => el.dateString());
+        };
         this.addRangeMark = (dateString) => {
             if (this.rangeStart === null) {
                 this.rangeStart = dateString;
@@ -336,6 +345,21 @@ class DatepickerPlus {
                     this.onRangeSelect.emit(fullRange);
                 }
             }
+        };
+        this.activateSelectScope = (dateElement) => {
+            const selectedDate = dateElement.dateObject();
+            const scope = this.plusConfig.selectScope;
+            if (scope > 0 && !this.rangeStart) {
+                this._disabled = this.disabled;
+                const locked = this.viewList.reduce((p, n) => [...p, ...n]).map(dateElement => {
+                    const offset = dateOffset(selectedDate, dateElement.dateObject());
+                    return Math.abs(offset) > scope ? dateElement.dateString() : false;
+                }).filter(d => d);
+                this.disabled = locked;
+            }
+        };
+        this.deactivateSelectScope = () => {
+            this.disabled = this._disabled;
         };
         this.resetRangeMarks = () => {
             this.rangeStart = null;
@@ -371,6 +395,10 @@ class DatepickerPlus {
                 this.onDateDeselect.emit(dateElement);
             }
         };
+        this.unfoldSelected = (selected, selectMode) => {
+            let unfolded = selected.map(this.unfoldTag).reduce((p, n) => [...p, ...n]);
+            return selectMode === 'range' ? [unfolded[0], unfolded[unfolded.length - 1]] : unfolded;
+        };
         this.getDateElement = (dateString) => {
             if (dateString in createdDateElements) {
                 return createdDateElements[dateString];
@@ -388,9 +416,9 @@ class DatepickerPlus {
             });
             return dateElement;
         };
-        this.onDateSelect = createEvent(this, "onDateSelect", 7);
-        this.onDateDeselect = createEvent(this, "onDateDeselect", 7);
-        this.onRangeSelect = createEvent(this, "onRangeSelect", 7);
+        this.onDateSelect = __chunk_1.createEvent(this, "onDateSelect", 7);
+        this.onDateDeselect = __chunk_1.createEvent(this, "onDateDeselect", 7);
+        this.onRangeSelect = __chunk_1.createEvent(this, "onRangeSelect", 7);
     }
     parseSelected(next, current) {
         const rangeMode = this.plusConfig.selectMode === 'range';
@@ -411,6 +439,7 @@ class DatepickerPlus {
         // ENABLE CURRENT
         current.forEach(dateString => this.updateDateOptions(dateString, { disabled: false }));
         // DISABLE NEXT
+        next = next.map(tag => this.unfoldTag(tag)).reduce((p, n) => [...p, ...n]);
         next.forEach(dateString => this.updateDateOptions(dateString, { disabled: true }));
     }
     updateDateOptions(dateString, options) {
@@ -422,8 +451,9 @@ class DatepickerPlus {
     }
     updateConfig(config) {
         this.parseViewRange(config.viewRange);
-        this.plusConfig.selected.forEach(this.select);
+        this.unfoldSelected(config.selected, config.selectMode).forEach(this.select);
         this.disabled = this.plusConfig.disabled;
+        this._disabled = this.plusConfig.disabled;
     }
     componentWillLoad() {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
@@ -474,7 +504,7 @@ class DatepickerPlus {
         "disabled": ["parseDisabled"],
         "plusConfig": ["updateConfig"]
     }; }
-    static get style() { return ".dpp-container {\n    font-family: monospace;\n}\n\n.month {\n    border: 1px solid #ccc;\n    padding: 20px;\n}\n\n.month-header {\n    text-transform: uppercase;\n    font-weight: bold;\n    margin-bottom: 5px;\n}\n\n.week {\n    \n}\n\n.week-header {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.week-header abbr {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    text-align: center;\n}\n\n.week-content {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.week-content > .day, .week-content > .empty {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    -ms-flex-preferred-size: 80px;\n    flex-basis: 80px;\n    text-align: center;\n}\n\n.day {\n\n}\n\n.day.disabled {\n    background-color: #ccc;\n}\n\n.day.selected {\n    background-color: gold;\n}\n\n.day.today {\n    background-color: #e45;\n}\n\n.checkbox {}"; }
+    static get style() { return ".dpp-container{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.week-header{display:-ms-flexbox;display:flex}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day.disabled{background-color:#ccc}.day.selected{background-color:gold}.day.today{background-color:#e45}"; }
 }
 
-export { DatepickerPlus as datepicker_plus };
+exports.datepicker_plus = DatepickerPlus;

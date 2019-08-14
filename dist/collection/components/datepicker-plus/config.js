@@ -43,5 +43,6 @@ export const DEFAULT_CONFIG = {
     selectMode: 'range',
     selected: [],
     disabled: [],
+    selectScope: 0,
     viewRange: getCurrentMonthRange()
 };

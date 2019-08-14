@@ -87,6 +87,9 @@ export const sortDates = ([dateString0, dateString1]) => {
     const dt1 = stringToDate(dateString1);
     return (dt0.valueOf() - dt1.valueOf()) > 0 ? [dateString1, dateString0] : [dateString0, dateString1];
 };
+export const dateOffset = (date0, date1) => {
+    return Math.ceil((date0.getTime() - date1.getTime()) / 86400000);
+};
 export const openGithubIssue = ({ title, body, label }) => {
     const tl = 'title=' + encodeURIComponent(title);
     const lb = 'labels=' + encodeURIComponent(label);
