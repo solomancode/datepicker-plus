@@ -15,9 +15,11 @@ export declare const DEFAULT_MONTHS: IMonth[];
  */
 export declare const DEFAULT_CLASSES: {
     day: string;
+    year: string;
     disabled: string;
     selected: string;
     month: string;
+    monthName: string;
     monthHeader: string;
     monthContent: string;
     week: string;

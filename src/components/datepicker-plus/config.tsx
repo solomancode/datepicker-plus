@@ -42,9 +42,11 @@ export const DEFAULT_MONTHS: IMonth[] = [
  */
 export const DEFAULT_CLASSES = {
     day: 'day',
+    year: 'year',
     disabled: 'disabled',
     selected: 'selected',
     month: 'month',
+    monthName: 'month-name',
     monthHeader: 'month-header',
     monthContent: 'month-content',
     week: 'week',

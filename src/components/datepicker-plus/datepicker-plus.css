@@ -22,7 +22,7 @@
 }
 
 .single-header {
-    padding: 0 20px;
+    padding: 5px 20px;
 }
 
 .week-header abbr {
@@ -65,4 +65,9 @@
 
 .checkbox {
     display: none;
+}
+
+.month-header {
+    display: flex;
+    justify-content: space-between;
 }

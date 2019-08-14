@@ -39,11 +39,20 @@ export function renderWeek (week: IDateElement[], renderHeader: boolean) {
     )
 }
 
+export function renderMonthHeader(dayFirst: IDateElement) {
+    return (
+        <header class={DEFAULT_CLASSES.monthHeader} part="month-header">
+            <span class={DEFAULT_CLASSES.monthName}>{DEFAULT_MONTHS[dayFirst.month-1].name}</span>
+            {dayFirst.month-1 === 0 && <span class={DEFAULT_CLASSES.year}>{dayFirst.year}</span>}
+        </header>
+    )
+}
+
 export function renderMonth (month: IDateElement[], weekHeader: WeekHeader) {
     const renderHeader = (i: number) => weekHeader === 'per-month' && i === 0;
     return (
         <section part="month" class={DEFAULT_CLASSES.month}>
-            <header class={DEFAULT_CLASSES.monthHeader} part="month-header">{DEFAULT_MONTHS[month[0].month-1].name}</header>
+            { renderMonthHeader(month[0]) }
             <section class={DEFAULT_CLASSES.monthContent}>
                 { monthToWeeks(month).map( (week, i) => renderWeek(week, renderHeader(i) )) }
             </section>
@@ -52,13 +61,16 @@ export function renderMonth (month: IDateElement[], weekHeader: WeekHeader) {
 }
 
 export function renderContainer(dates: IDateElement[][], config: IPlusConfig) {
+    const renderSingleHeader = () => config.weekHeader === 'single' && <header class={DEFAULT_CLASSES.singleHeader}>{ renderWeekHeader() }</header>;
     return ([
         // theme stylesheet
         config.stylesheetUrl ? <link rel="stylesheet" type="text/css" href={config.stylesheetUrl}/> : null,
         // contents
-        config.weekHeader === 'single' ? <header class={DEFAULT_CLASSES.singleHeader}>{ renderWeekHeader() }</header> : null,
         <section class="dpp-container" part="dpp-container">
-            {dates.map((month)=>renderMonth(month, config.weekHeader))}
+            {[
+                renderSingleHeader() || null,
+                dates.map((month)=>renderMonth(month, config.weekHeader))
+            ]}
         </section>
     ])
 }
