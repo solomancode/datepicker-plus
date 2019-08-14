@@ -68,7 +68,7 @@ export class DatepickerPlus {
     // ENABLE CURRENT
     current.forEach(dateString => this.updateDateOptions(dateString, { disabled: false }))
     // DISABLE NEXT
-    next = next.map(tag => this.unfoldTag(tag)).reduce((p,n)=>[...p,...n])
+    next = next.length ? next.map(tag => this.unfoldTag(tag)).reduce((p,n)=>[...p,...n]) : []
     next.forEach(dateString => this.updateDateOptions(dateString, { disabled: true }))
   }
 
@@ -186,6 +186,7 @@ export class DatepickerPlus {
   }
 
   private unfoldSelected = (selected: DateString[], selectMode: SelectMode) => {
+    if (!selected.length) return []
     let unfolded = selected.map(this.unfoldTag).reduce((p,n)=>[...p,...n])
     return selectMode === 'range' ? [unfolded[0],unfolded[unfolded.length-1]] : unfolded;
   }
