@@ -16,7 +16,7 @@ export function renderEmpty(offset) {
     }
     return nodes;
 }
-export function renderWeek(week, renderHeader = false) {
+export function renderWeek(week, renderHeader) {
     return (h("section", { part: "week", class: DEFAULT_CLASSES.week },
         renderHeader && renderWeekHeader(),
         h("section", { class: DEFAULT_CLASSES.weekContent },
@@ -24,16 +24,26 @@ export function renderWeek(week, renderHeader = false) {
             week.map(renderDate),
             renderEmpty(6 - week[week.length - 1].dayOfWeek))));
 }
-export function renderMonth(month) {
-    return (h("section", { part: "month", class: DEFAULT_CLASSES.month },
-        h("header", { class: DEFAULT_CLASSES.monthHeader, part: "month-header" }, DEFAULT_MONTHS[month[0].month - 1].name),
-        h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map((week, i) => renderWeek(week, i === 0)))));
+export function renderMonthHeader(dayFirst) {
+    return (h("header", { class: DEFAULT_CLASSES.monthHeader, part: "month-header" },
+        h("span", { class: DEFAULT_CLASSES.monthName }, DEFAULT_MONTHS[dayFirst.month - 1].name),
+        dayFirst.month - 1 === 0 && h("span", { class: DEFAULT_CLASSES.year }, dayFirst.year)));
 }
-export function renderContainer(dates, stylesheetUrl) {
+export function renderMonth(month, weekHeader) {
+    const renderHeader = (i) => weekHeader === 'per-month' && i === 0;
+    return (h("section", { part: "month", class: DEFAULT_CLASSES.month },
+        renderMonthHeader(month[0]),
+        h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map((week, i) => renderWeek(week, renderHeader(i))))));
+}
+export function renderContainer(dates, config) {
+    const renderSingleHeader = () => config.weekHeader === 'single' && h("header", { class: DEFAULT_CLASSES.singleHeader }, renderWeekHeader());
     return ([
         // theme stylesheet
-        stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: stylesheetUrl }) : null,
+        config.stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: config.stylesheetUrl }) : null,
         // contents
-        h("section", { class: "dpp-container", part: "dpp-container" }, dates.map(month => renderMonth(month)))
+        h("section", { class: "dpp-container", part: "dpp-container" }, [
+            renderSingleHeader() || null,
+            dates.map((month) => renderMonth(month, config.weekHeader))
+        ])
     ]);
 }

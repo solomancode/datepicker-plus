@@ -51,7 +51,7 @@ export class DatepickerPlus {
             const selectedDate = dateElement.dateObject();
             const scope = this.plusConfig.selectScope;
             if (scope > 0 && !this.rangeStart) {
-                this._disabled = this.disabled;
+                this._disabled = this.plusConfig.disabled;
                 const locked = this.viewList.reduce((p, n) => [...p, ...n]).map(dateElement => {
                     const offset = dateOffset(selectedDate, dateElement.dateObject());
                     return Math.abs(offset) > scope ? dateElement.dateString() : false;
@@ -97,6 +97,8 @@ export class DatepickerPlus {
             }
         };
         this.unfoldSelected = (selected, selectMode) => {
+            if (!selected.length)
+                return [];
             let unfolded = selected.map(this.unfoldTag).reduce((p, n) => [...p, ...n]);
             return selectMode === 'range' ? [unfolded[0], unfolded[unfolded.length - 1]] : unfolded;
         };
@@ -127,17 +129,19 @@ export class DatepickerPlus {
             const rangeEnd = index === currentLastIndex ? { rangeEnd: null } : {};
             this.updateDateOptions(dateString, Object.assign({ checked: false }, (rangeMode ? Object.assign({ rangeIndex: null }, rangeEnd) : {})));
         });
+        const isReversed = dateOffset(new Date(next[0]), new Date(next[next.length - 1])) > 0;
         // SELECT NEXT
         next.forEach((dateString, index) => {
-            const rangeEnd = index === nextLastIndex ? { rangeEnd: true } : {};
-            this.updateDateOptions(dateString, Object.assign({ checked: true }, (rangeMode ? Object.assign({ rangeIndex: index }, rangeEnd) : {})));
+            const chronoIndex = isReversed ? (next.length - index) - 1 : index;
+            const rangeEnd = chronoIndex === nextLastIndex ? { rangeEnd: true } : {};
+            this.updateDateOptions(dateString, Object.assign({ checked: true }, (rangeMode ? Object.assign({ rangeIndex: chronoIndex }, rangeEnd) : {})));
         });
     }
     parseDisabled(next, current) {
         // ENABLE CURRENT
         current.forEach(dateString => this.updateDateOptions(dateString, { disabled: false }));
         // DISABLE NEXT
-        next = next.map(tag => this.unfoldTag(tag)).reduce((p, n) => [...p, ...n]);
+        next = next.length ? next.map(tag => this.unfoldTag(tag)).reduce((p, n) => [...p, ...n]) : [];
         next.forEach(dateString => this.updateDateOptions(dateString, { disabled: true }));
     }
     updateDateOptions(dateString, options) {
@@ -195,7 +199,7 @@ export class DatepickerPlus {
     }
     render() {
         console.count('RENDER:');
-        return renderContainer(this.viewList, this.plusConfig.stylesheetUrl);
+        return renderContainer(this.viewList, this.plusConfig);
     }
     static get is() { return "datepicker-plus"; }
     static get encapsulation() { return "shadow"; }

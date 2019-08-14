@@ -27,9 +27,11 @@ export const DEFAULT_MONTHS = [
  */
 export const DEFAULT_CLASSES = {
     day: 'day',
+    year: 'year',
     disabled: 'disabled',
     selected: 'selected',
     month: 'month',
+    monthName: 'month-name',
     monthHeader: 'month-header',
     monthContent: 'month-content',
     week: 'week',
@@ -37,12 +39,14 @@ export const DEFAULT_CLASSES = {
     weekHeader: 'week-header',
     weekContent: 'week-content',
     weekend: 'weekend',
-    checkbox: 'checkbox'
+    checkbox: 'checkbox',
+    singleHeader: 'single-header'
 };
 export const DEFAULT_CONFIG = {
     selectMode: 'range',
     selected: [],
     disabled: [],
     selectScope: 0,
+    weekHeader: 'per-month',
     viewRange: getCurrentMonthRange()
 };

@@ -113,9 +113,11 @@ const DEFAULT_MONTHS = [
  */
 const DEFAULT_CLASSES = {
     day: 'day',
+    year: 'year',
     disabled: 'disabled',
     selected: 'selected',
     month: 'month',
+    monthName: 'month-name',
     monthHeader: 'month-header',
     monthContent: 'month-content',
     week: 'week',
@@ -123,13 +125,15 @@ const DEFAULT_CLASSES = {
     weekHeader: 'week-header',
     weekContent: 'week-content',
     weekend: 'weekend',
-    checkbox: 'checkbox'
+    checkbox: 'checkbox',
+    singleHeader: 'single-header'
 };
 const DEFAULT_CONFIG = {
     selectMode: 'range',
     selected: [],
     disabled: [],
     selectScope: 0,
+    weekHeader: 'per-month',
     viewRange: getCurrentMonthRange()
 };
 
@@ -166,7 +170,7 @@ function renderEmpty(offset) {
     }
     return nodes;
 }
-function renderWeek(week, renderHeader = false) {
+function renderWeek(week, renderHeader) {
     return (h("section", { part: "week", class: DEFAULT_CLASSES.week },
         renderHeader && renderWeekHeader(),
         h("section", { class: DEFAULT_CLASSES.weekContent },
@@ -174,17 +178,27 @@ function renderWeek(week, renderHeader = false) {
             week.map(renderDate),
             renderEmpty(6 - week[week.length - 1].dayOfWeek))));
 }
-function renderMonth(month) {
-    return (h("section", { part: "month", class: DEFAULT_CLASSES.month },
-        h("header", { class: DEFAULT_CLASSES.monthHeader, part: "month-header" }, DEFAULT_MONTHS[month[0].month - 1].name),
-        h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map((week, i) => renderWeek(week, i === 0)))));
+function renderMonthHeader(dayFirst) {
+    return (h("header", { class: DEFAULT_CLASSES.monthHeader, part: "month-header" },
+        h("span", { class: DEFAULT_CLASSES.monthName }, DEFAULT_MONTHS[dayFirst.month - 1].name),
+        dayFirst.month - 1 === 0 && h("span", { class: DEFAULT_CLASSES.year }, dayFirst.year)));
 }
-function renderContainer(dates, stylesheetUrl) {
+function renderMonth(month, weekHeader) {
+    const renderHeader = (i) => weekHeader === 'per-month' && i === 0;
+    return (h("section", { part: "month", class: DEFAULT_CLASSES.month },
+        renderMonthHeader(month[0]),
+        h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map((week, i) => renderWeek(week, renderHeader(i))))));
+}
+function renderContainer(dates, config) {
+    const renderSingleHeader = () => config.weekHeader === 'single' && h("header", { class: DEFAULT_CLASSES.singleHeader }, renderWeekHeader());
     return ([
         // theme stylesheet
-        stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: stylesheetUrl }) : null,
+        config.stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: config.stylesheetUrl }) : null,
         // contents
-        h("section", { class: "dpp-container", part: "dpp-container" }, dates.map(month => renderMonth(month)))
+        h("section", { class: "dpp-container", part: "dpp-container" }, [
+            renderSingleHeader() || null,
+            dates.map((month) => renderMonth(month, config.weekHeader))
+        ])
     ]);
 }
 
@@ -346,7 +360,7 @@ class DatepickerPlus {
             const selectedDate = dateElement.dateObject();
             const scope = this.plusConfig.selectScope;
             if (scope > 0 && !this.rangeStart) {
-                this._disabled = this.disabled;
+                this._disabled = this.plusConfig.disabled;
                 const locked = this.viewList.reduce((p, n) => [...p, ...n]).map(dateElement => {
                     const offset = dateOffset(selectedDate, dateElement.dateObject());
                     return Math.abs(offset) > scope ? dateElement.dateString() : false;
@@ -392,6 +406,8 @@ class DatepickerPlus {
             }
         };
         this.unfoldSelected = (selected, selectMode) => {
+            if (!selected.length)
+                return [];
             let unfolded = selected.map(this.unfoldTag).reduce((p, n) => [...p, ...n]);
             return selectMode === 'range' ? [unfolded[0], unfolded[unfolded.length - 1]] : unfolded;
         };
@@ -425,17 +441,19 @@ class DatepickerPlus {
             const rangeEnd = index === currentLastIndex ? { rangeEnd: null } : {};
             this.updateDateOptions(dateString, Object.assign({ checked: false }, (rangeMode ? Object.assign({ rangeIndex: null }, rangeEnd) : {})));
         });
+        const isReversed = dateOffset(new Date(next[0]), new Date(next[next.length - 1])) > 0;
         // SELECT NEXT
         next.forEach((dateString, index) => {
-            const rangeEnd = index === nextLastIndex ? { rangeEnd: true } : {};
-            this.updateDateOptions(dateString, Object.assign({ checked: true }, (rangeMode ? Object.assign({ rangeIndex: index }, rangeEnd) : {})));
+            const chronoIndex = isReversed ? (next.length - index) - 1 : index;
+            const rangeEnd = chronoIndex === nextLastIndex ? { rangeEnd: true } : {};
+            this.updateDateOptions(dateString, Object.assign({ checked: true }, (rangeMode ? Object.assign({ rangeIndex: chronoIndex }, rangeEnd) : {})));
         });
     }
     parseDisabled(next, current) {
         // ENABLE CURRENT
         current.forEach(dateString => this.updateDateOptions(dateString, { disabled: false }));
         // DISABLE NEXT
-        next = next.map(tag => this.unfoldTag(tag)).reduce((p, n) => [...p, ...n]);
+        next = next.length ? next.map(tag => this.unfoldTag(tag)).reduce((p, n) => [...p, ...n]) : [];
         next.forEach(dateString => this.updateDateOptions(dateString, { disabled: true }));
     }
     updateDateOptions(dateString, options) {
@@ -493,14 +511,14 @@ class DatepickerPlus {
     }
     render() {
         console.count('RENDER:');
-        return renderContainer(this.viewList, this.plusConfig.stylesheetUrl);
+        return renderContainer(this.viewList, this.plusConfig);
     }
     static get watchers() { return {
         "selected": ["parseSelected"],
         "disabled": ["parseDisabled"],
         "plusConfig": ["updateConfig"]
     }; }
-    static get style() { return ".dpp-container{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.week-header{display:-ms-flexbox;display:flex}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day.disabled{background-color:#ccc}.day.selected{background-color:gold}.day.today{background-color:#e45}"; }
+    static get style() { return ".dpp-container{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer}.day.disabled{background-color:#ccc}.day.selected{background-color:gold}.day.today{background-color:#e45}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; }
 }
 
 export { DatepickerPlus as datepicker_plus };

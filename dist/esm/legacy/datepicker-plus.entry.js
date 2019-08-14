@@ -113,9 +113,11 @@ var DEFAULT_MONTHS = [
  */
 var DEFAULT_CLASSES = {
     day: 'day',
+    year: 'year',
     disabled: 'disabled',
     selected: 'selected',
     month: 'month',
+    monthName: 'month-name',
     monthHeader: 'month-header',
     monthContent: 'month-content',
     week: 'week',
@@ -123,13 +125,15 @@ var DEFAULT_CLASSES = {
     weekHeader: 'week-header',
     weekContent: 'week-content',
     weekend: 'weekend',
-    checkbox: 'checkbox'
+    checkbox: 'checkbox',
+    singleHeader: 'single-header'
 };
 var DEFAULT_CONFIG = {
     selectMode: 'range',
     selected: [],
     disabled: [],
     selectScope: 0,
+    weekHeader: 'per-month',
     viewRange: getCurrentMonthRange()
 };
 var DatepickerPlusDate = function (_a) {
@@ -167,18 +171,25 @@ function renderEmpty(offset) {
     return nodes;
 }
 function renderWeek(week, renderHeader) {
-    if (renderHeader === void 0) { renderHeader = false; }
     return (h("section", { part: "week", class: DEFAULT_CLASSES.week }, renderHeader && renderWeekHeader(), h("section", { class: DEFAULT_CLASSES.weekContent }, renderEmpty(week[0].dayOfWeek), week.map(renderDate), renderEmpty(6 - week[week.length - 1].dayOfWeek))));
 }
-function renderMonth(month) {
-    return (h("section", { part: "month", class: DEFAULT_CLASSES.month }, h("header", { class: DEFAULT_CLASSES.monthHeader, part: "month-header" }, DEFAULT_MONTHS[month[0].month - 1].name), h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map(function (week, i) { return renderWeek(week, i === 0); }))));
+function renderMonthHeader(dayFirst) {
+    return (h("header", { class: DEFAULT_CLASSES.monthHeader, part: "month-header" }, h("span", { class: DEFAULT_CLASSES.monthName }, DEFAULT_MONTHS[dayFirst.month - 1].name), dayFirst.month - 1 === 0 && h("span", { class: DEFAULT_CLASSES.year }, dayFirst.year)));
 }
-function renderContainer(dates, stylesheetUrl) {
+function renderMonth(month, weekHeader) {
+    var renderHeader = function (i) { return weekHeader === 'per-month' && i === 0; };
+    return (h("section", { part: "month", class: DEFAULT_CLASSES.month }, renderMonthHeader(month[0]), h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map(function (week, i) { return renderWeek(week, renderHeader(i)); }))));
+}
+function renderContainer(dates, config) {
+    var renderSingleHeader = function () { return config.weekHeader === 'single' && h("header", { class: DEFAULT_CLASSES.singleHeader }, renderWeekHeader()); };
     return ([
         // theme stylesheet
-        stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: stylesheetUrl }) : null,
+        config.stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: config.stylesheetUrl }) : null,
         // contents
-        h("section", { class: "dpp-container", part: "dpp-container" }, dates.map(function (month) { return renderMonth(month); }))
+        h("section", { class: "dpp-container", part: "dpp-container" }, [
+            renderSingleHeader() || null,
+            dates.map(function (month) { return renderMonth(month, config.weekHeader); })
+        ])
     ]);
 }
 var DYNAMIC_CLASSES = {
@@ -338,7 +349,7 @@ var DatepickerPlus = /** @class */ (function () {
             var selectedDate = dateElement.dateObject();
             var scope = _this.plusConfig.selectScope;
             if (scope > 0 && !_this.rangeStart) {
-                _this._disabled = _this.disabled;
+                _this._disabled = _this.plusConfig.disabled;
                 var locked = _this.viewList.reduce(function (p, n) { return p.concat(n); }).map(function (dateElement) {
                     var offset = dateOffset(selectedDate, dateElement.dateObject());
                     return Math.abs(offset) > scope ? dateElement.dateString() : false;
@@ -384,6 +395,8 @@ var DatepickerPlus = /** @class */ (function () {
             }
         };
         this.unfoldSelected = function (selected, selectMode) {
+            if (!selected.length)
+                return [];
             var unfolded = selected.map(_this.unfoldTag).reduce(function (p, n) { return p.concat(n); });
             return selectMode === 'range' ? [unfolded[0], unfolded[unfolded.length - 1]] : unfolded;
         };
@@ -418,10 +431,12 @@ var DatepickerPlus = /** @class */ (function () {
             var rangeEnd = index === currentLastIndex ? { rangeEnd: null } : {};
             _this.updateDateOptions(dateString, Object.assign({ checked: false }, (rangeMode ? Object.assign({ rangeIndex: null }, rangeEnd) : {})));
         });
+        var isReversed = dateOffset(new Date(next[0]), new Date(next[next.length - 1])) > 0;
         // SELECT NEXT
         next.forEach(function (dateString, index) {
-            var rangeEnd = index === nextLastIndex ? { rangeEnd: true } : {};
-            _this.updateDateOptions(dateString, Object.assign({ checked: true }, (rangeMode ? Object.assign({ rangeIndex: index }, rangeEnd) : {})));
+            var chronoIndex = isReversed ? (next.length - index) - 1 : index;
+            var rangeEnd = chronoIndex === nextLastIndex ? { rangeEnd: true } : {};
+            _this.updateDateOptions(dateString, Object.assign({ checked: true }, (rangeMode ? Object.assign({ rangeIndex: chronoIndex }, rangeEnd) : {})));
         });
     };
     DatepickerPlus.prototype.parseDisabled = function (next, current) {
@@ -429,7 +444,7 @@ var DatepickerPlus = /** @class */ (function () {
         // ENABLE CURRENT
         current.forEach(function (dateString) { return _this.updateDateOptions(dateString, { disabled: false }); });
         // DISABLE NEXT
-        next = next.map(function (tag) { return _this.unfoldTag(tag); }).reduce(function (p, n) { return p.concat(n); });
+        next = next.length ? next.map(function (tag) { return _this.unfoldTag(tag); }).reduce(function (p, n) { return p.concat(n); }) : [];
         next.forEach(function (dateString) { return _this.updateDateOptions(dateString, { disabled: true }); });
     };
     DatepickerPlus.prototype.updateDateOptions = function (dateString, options) {
@@ -487,7 +502,7 @@ var DatepickerPlus = /** @class */ (function () {
     };
     DatepickerPlus.prototype.render = function () {
         console.count('RENDER:');
-        return renderContainer(this.viewList, this.plusConfig.stylesheetUrl);
+        return renderContainer(this.viewList, this.plusConfig);
     };
     Object.defineProperty(DatepickerPlus, "watchers", {
         get: function () {
@@ -501,7 +516,7 @@ var DatepickerPlus = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(DatepickerPlus, "style", {
-        get: function () { return ".dpp-container{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.week-header{display:-ms-flexbox;display:flex}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day.disabled{background-color:#ccc}.day.selected{background-color:gold}.day.today{background-color:#e45}"; },
+        get: function () { return ".dpp-container{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer}.day.disabled{background-color:#ccc}.day.selected{background-color:gold}.day.today{background-color:#e45}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; },
         enumerable: true,
         configurable: true
     });
