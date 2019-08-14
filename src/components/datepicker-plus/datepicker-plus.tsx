@@ -106,7 +106,7 @@ export class DatepickerPlus {
     const selectedDate = dateElement.dateObject()
     const scope = this.plusConfig.selectScope
     if (scope > 0 && !this.rangeStart) {
-      this._disabled = this.disabled
+      this._disabled = this.plusConfig.disabled
       const locked = this.viewList.reduce((p,n)=>[...p,...n]).map(
         dateElement => {
           const offset = dateOffset(selectedDate, dateElement.dateObject())
