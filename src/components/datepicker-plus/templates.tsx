@@ -3,6 +3,7 @@ import { IDateElement } from './createDateElement';
 import { monthToWeeks } from './utils';
 import { DEFAULT_MONTHS, DEFAULT_WEEK_DAYS, DEFAULT_CLASSES, IWeekDay } from "./config";
 import { DatepickerPlusDate } from './datepicker-plus-date';
+import { WeekHeader, IPlusConfig } from './datepicker-plus';
 
 export function renderDate (date: IDateElement) {
     return <DatepickerPlusDate date={date}></DatepickerPlusDate>
@@ -25,7 +26,7 @@ export function renderEmpty (offset: number) {
     return nodes;
 }
 
-export function renderWeek (week: IDateElement[], renderHeader: boolean = false) {
+export function renderWeek (week: IDateElement[], renderHeader: boolean) {
     return (
         <section part="week" class={DEFAULT_CLASSES.week}>
             { renderHeader && renderWeekHeader() }
@@ -38,24 +39,26 @@ export function renderWeek (week: IDateElement[], renderHeader: boolean = false)
     )
 }
 
-export function renderMonth (month: IDateElement[]) {
+export function renderMonth (month: IDateElement[], weekHeader: WeekHeader) {
+    const renderHeader = (i: number) => weekHeader === 'per-month' && i === 0;
     return (
         <section part="month" class={DEFAULT_CLASSES.month}>
             <header class={DEFAULT_CLASSES.monthHeader} part="month-header">{DEFAULT_MONTHS[month[0].month-1].name}</header>
             <section class={DEFAULT_CLASSES.monthContent}>
-                { monthToWeeks(month).map( (week, i) => renderWeek(week, i===0)) }
+                { monthToWeeks(month).map( (week, i) => renderWeek(week, renderHeader(i) )) }
             </section>
         </section>
     )
 }
 
-export function renderContainer(dates: IDateElement[][], stylesheetUrl?: string) {
+export function renderContainer(dates: IDateElement[][], config: IPlusConfig) {
     return ([
         // theme stylesheet
-        stylesheetUrl ? <link rel="stylesheet" type="text/css" href={stylesheetUrl}/> : null,
+        config.stylesheetUrl ? <link rel="stylesheet" type="text/css" href={config.stylesheetUrl}/> : null,
         // contents
+        config.weekHeader === 'single' ? <header class={DEFAULT_CLASSES.singleHeader}>{ renderWeekHeader() }</header> : null,
         <section class="dpp-container" part="dpp-container">
-            {dates.map(month=>renderMonth(month))}
+            {dates.map((month)=>renderMonth(month, config.weekHeader))}
         </section>
     ])
 }

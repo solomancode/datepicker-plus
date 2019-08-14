@@ -6,12 +6,14 @@ import { SelectMode, DEFAULT_CONFIG } from './config';
 import * as tags from "./tags";
 
 export type DateString = string
+export type WeekHeader = 'single' | 'per-month'
 
 export interface IPlusConfig {
   selectMode: SelectMode
   viewRange : [DateString, DateString]
   selected  : DateString[]
   disabled  : DateString[]
+  weekHeader: WeekHeader
   selectScope: number // in days
   stylesheetUrl ?: string
 }
@@ -246,7 +248,7 @@ export class DatepickerPlus {
 
   render() {
     console.count('RENDER:')
-    return renderContainer(this.viewList, this.plusConfig.stylesheetUrl)
+    return renderContainer(this.viewList, this.plusConfig)
   }
   
 }

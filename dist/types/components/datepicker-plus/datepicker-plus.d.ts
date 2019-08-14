@@ -2,11 +2,13 @@ import { EventEmitter } from '../../stencil.core';
 import { IDateElement, IDateOptions } from './createDateElement';
 import { SelectMode } from './config';
 export declare type DateString = string;
+export declare type WeekHeader = 'single' | 'per-month';
 export interface IPlusConfig {
     selectMode: SelectMode;
     viewRange: [DateString, DateString];
     selected: DateString[];
     disabled: DateString[];
+    weekHeader: WeekHeader;
     selectScope: number;
     stylesheetUrl?: string;
 }

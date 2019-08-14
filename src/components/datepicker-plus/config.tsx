@@ -52,7 +52,8 @@ export const DEFAULT_CLASSES = {
     weekHeader: 'week-header',
     weekContent: 'week-content',
     weekend: 'weekend',
-    checkbox: 'checkbox'
+    checkbox: 'checkbox',
+    singleHeader: 'single-header'
 }
 
 export type SelectMode = 'single' | 'multiple' | 'range'
@@ -62,5 +63,6 @@ export const DEFAULT_CONFIG: IPlusConfig = {
     selected: [],
     disabled: [],
     selectScope: 0,
+    weekHeader: 'per-month',
     viewRange: getCurrentMonthRange() as [DateString, DateString]
 }

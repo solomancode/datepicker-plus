@@ -26,6 +26,7 @@ export declare const DEFAULT_CLASSES: {
     weekContent: string;
     weekend: string;
     checkbox: string;
+    singleHeader: string;
 };
 export declare type SelectMode = 'single' | 'multiple' | 'range';
 export declare const DEFAULT_CONFIG: IPlusConfig;
