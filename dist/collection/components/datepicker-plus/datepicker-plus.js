@@ -1,13 +1,23 @@
 import { renderContainer } from './templates';
 import { createDateElement, createdDateElements } from './createDateElement';
-import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate, openGithubIssue } from './utils';
+import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate, openGithubIssue, dateOffset } from './utils';
 import { DEFAULT_CONFIG } from './config';
+import * as tags from "./tags";
 export class DatepickerPlus {
     constructor() {
         this.plusConfig = DEFAULT_CONFIG;
         this.selected = [];
         this.disabled = [];
         this.rangeStart = null;
+        /**
+         * Backup disabled before scoping...
+         */
+        this._disabled = [];
+        this.unfoldTag = (tag) => {
+            if (!(tag in tags))
+                return [tag];
+            return this.viewList.map((month) => month.filter(dateElement => (tag in dateElement.tags))).reduce((p, n) => [...p, ...n]).map(el => el.dateString());
+        };
         this.addRangeMark = (dateString) => {
             if (this.rangeStart === null) {
                 this.rangeStart = dateString;
@@ -36,6 +46,21 @@ export class DatepickerPlus {
                     this.onRangeSelect.emit(fullRange);
                 }
             }
+        };
+        this.activateSelectScope = (dateElement) => {
+            const selectedDate = dateElement.dateObject();
+            const scope = this.plusConfig.selectScope;
+            if (scope > 0 && !this.rangeStart) {
+                this._disabled = this.disabled;
+                const locked = this.viewList.reduce((p, n) => [...p, ...n]).map(dateElement => {
+                    const offset = dateOffset(selectedDate, dateElement.dateObject());
+                    return Math.abs(offset) > scope ? dateElement.dateString() : false;
+                }).filter(d => d);
+                this.disabled = locked;
+            }
+        };
+        this.deactivateSelectScope = () => {
+            this.disabled = this._disabled;
         };
         this.resetRangeMarks = () => {
             this.rangeStart = null;
@@ -70,6 +95,10 @@ export class DatepickerPlus {
                 }
                 this.onDateDeselect.emit(dateElement);
             }
+        };
+        this.unfoldSelected = (selected, selectMode) => {
+            let unfolded = selected.map(this.unfoldTag).reduce((p, n) => [...p, ...n]);
+            return selectMode === 'range' ? [unfolded[0], unfolded[unfolded.length - 1]] : unfolded;
         };
         this.getDateElement = (dateString) => {
             if (dateString in createdDateElements) {
@@ -108,6 +137,7 @@ export class DatepickerPlus {
         // ENABLE CURRENT
         current.forEach(dateString => this.updateDateOptions(dateString, { disabled: false }));
         // DISABLE NEXT
+        next = next.map(tag => this.unfoldTag(tag)).reduce((p, n) => [...p, ...n]);
         next.forEach(dateString => this.updateDateOptions(dateString, { disabled: true }));
     }
     updateDateOptions(dateString, options) {
@@ -119,8 +149,9 @@ export class DatepickerPlus {
     }
     updateConfig(config) {
         this.parseViewRange(config.viewRange);
-        this.plusConfig.selected.forEach(this.select);
+        this.unfoldSelected(config.selected, config.selectMode).forEach(this.select);
         this.disabled = this.plusConfig.disabled;
+        this._disabled = this.plusConfig.disabled;
     }
     componentWillLoad() {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);

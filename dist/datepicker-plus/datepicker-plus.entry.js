@@ -89,6 +89,9 @@ const sortDates = ([dateString0, dateString1]) => {
     const dt1 = stringToDate(dateString1);
     return (dt0.valueOf() - dt1.valueOf()) > 0 ? [dateString1, dateString0] : [dateString0, dateString1];
 };
+const dateOffset = (date0, date1) => {
+    return Math.ceil((date0.getTime() - date1.getTime()) / 86400000);
+};
 const openGithubIssue = ({ title, body, label }) => {
     const tl = 'title=' + encodeURIComponent(title);
     const lb = 'labels=' + encodeURIComponent(label);
@@ -141,6 +144,7 @@ const DEFAULT_CONFIG = {
     selectMode: 'range',
     selected: [],
     disabled: [],
+    selectScope: 0,
     viewRange: getCurrentMonthRange()
 };
 
@@ -148,7 +152,14 @@ const DatepickerPlusDate = ({ date }) => {
     const onChange = (e) => {
         const dateString = date.dateString();
         const { select, deselect } = date.datepickerPlus;
-        e.target.checked ? select(dateString) : deselect(dateString);
+        if (e.target.checked) {
+            date.datepickerPlus.activateSelectScope(date);
+            select(dateString);
+        }
+        else {
+            date.datepickerPlus.deactivateSelectScope();
+            deselect(dateString);
+        }
     };
     return (h("time", { part: "day", class: date.classListString, dateTime: date.dateString() },
         h("label", null,
@@ -258,9 +269,9 @@ const composeDateHelpers = (dateString) => ({
         return dateString;
     },
     offset() {
-        const date = this.dateObject().getTime();
-        const now = new Date().getTime();
-        return Math.ceil((date - now) / 86400000);
+        const date = this.dateObject();
+        const now = new Date();
+        return dateOffset(date, now);
     }
 });
 const composeDateClassList = () => ({
@@ -308,6 +319,15 @@ class DatepickerPlus {
         this.selected = [];
         this.disabled = [];
         this.rangeStart = null;
+        /**
+         * Backup disabled before scoping...
+         */
+        this._disabled = [];
+        this.unfoldTag = (tag) => {
+            if (!(tag in tags))
+                return [tag];
+            return this.viewList.map((month) => month.filter(dateElement => (tag in dateElement.tags))).reduce((p, n) => [...p, ...n]).map(el => el.dateString());
+        };
         this.addRangeMark = (dateString) => {
             if (this.rangeStart === null) {
                 this.rangeStart = dateString;
@@ -336,6 +356,21 @@ class DatepickerPlus {
                     this.onRangeSelect.emit(fullRange);
                 }
             }
+        };
+        this.activateSelectScope = (dateElement) => {
+            const selectedDate = dateElement.dateObject();
+            const scope = this.plusConfig.selectScope;
+            if (scope > 0 && !this.rangeStart) {
+                this._disabled = this.disabled;
+                const locked = this.viewList.reduce((p, n) => [...p, ...n]).map(dateElement => {
+                    const offset = dateOffset(selectedDate, dateElement.dateObject());
+                    return Math.abs(offset) > scope ? dateElement.dateString() : false;
+                }).filter(d => d);
+                this.disabled = locked;
+            }
+        };
+        this.deactivateSelectScope = () => {
+            this.disabled = this._disabled;
         };
         this.resetRangeMarks = () => {
             this.rangeStart = null;
@@ -370,6 +405,10 @@ class DatepickerPlus {
                 }
                 this.onDateDeselect.emit(dateElement);
             }
+        };
+        this.unfoldSelected = (selected, selectMode) => {
+            let unfolded = selected.map(this.unfoldTag).reduce((p, n) => [...p, ...n]);
+            return selectMode === 'range' ? [unfolded[0], unfolded[unfolded.length - 1]] : unfolded;
         };
         this.getDateElement = (dateString) => {
             if (dateString in createdDateElements) {
@@ -411,6 +450,7 @@ class DatepickerPlus {
         // ENABLE CURRENT
         current.forEach(dateString => this.updateDateOptions(dateString, { disabled: false }));
         // DISABLE NEXT
+        next = next.map(tag => this.unfoldTag(tag)).reduce((p, n) => [...p, ...n]);
         next.forEach(dateString => this.updateDateOptions(dateString, { disabled: true }));
     }
     updateDateOptions(dateString, options) {
@@ -422,8 +462,9 @@ class DatepickerPlus {
     }
     updateConfig(config) {
         this.parseViewRange(config.viewRange);
-        this.plusConfig.selected.forEach(this.select);
+        this.unfoldSelected(config.selected, config.selectMode).forEach(this.select);
         this.disabled = this.plusConfig.disabled;
+        this._disabled = this.plusConfig.disabled;
     }
     componentWillLoad() {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);

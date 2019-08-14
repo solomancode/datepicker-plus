@@ -1,4 +1,4 @@
-import { getDateComponents, stringToDate } from "./utils";
+import { getDateComponents, stringToDate, dateOffset } from "./utils";
 import { DEFAULT_CLASSES } from "./config";
 import * as tags from "./tags";
 const composeDateOptions = (options) => {
@@ -12,9 +12,9 @@ const composeDateHelpers = (dateString) => ({
         return dateString;
     },
     offset() {
-        const date = this.dateObject().getTime();
-        const now = new Date().getTime();
-        return Math.ceil((date - now) / 86400000);
+        const date = this.dateObject();
+        const now = new Date();
+        return dateOffset(date, now);
     }
 });
 const composeDateClassList = () => ({
