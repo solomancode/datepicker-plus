@@ -3,6 +3,7 @@ import { renderContainer } from './templates';
 import { IDateElement, createDateElement, createdDateElements, IDateOptions } from './createDateElement';
 import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate, openGithubIssue } from './utils';
 import { SelectMode, DEFAULT_CONFIG } from './config';
+import * as tags from "./tags";
 
 export type DateString = string
 
@@ -57,7 +58,15 @@ export class DatepickerPlus {
     // ENABLE CURRENT
     current.forEach(dateString => this.updateDateOptions(dateString, { disabled: false }))
     // DISABLE NEXT
+    next = next.map(tag => this.unfoldTag(tag)).reduce((p,n)=>[...p,...n])
     next.forEach(dateString => this.updateDateOptions(dateString, { disabled: true }))
+  }
+
+  unfoldTag = (tag: string) => {
+    if (!(tag in tags)) return [tag];
+    return this.viewList.map(
+      (month: IDateElement[]) => month.filter(dateElement => (tag in dateElement.tags))
+    ).reduce((p,n)=>[...p,...n]).map(el=>el.dateString())
   }
 
   public addRangeMark = (dateString: DateString) => {
@@ -134,7 +143,7 @@ export class DatepickerPlus {
   @Watch('plusConfig')
   updateConfig(config: IPlusConfig) {
     this.parseViewRange(config.viewRange)
-    this.plusConfig.selected.forEach(this.select)
+    this.unfoldSelected(config.selected, config.selectMode).forEach(this.select)
     this.disabled = this.plusConfig.disabled
   }
     
@@ -144,6 +153,11 @@ export class DatepickerPlus {
 
   componentWillLoad() {
     this.plusConfig = { ...DEFAULT_CONFIG, ...this.plusConfig }
+  }
+
+  private unfoldSelected = (selected: DateString[], selectMode: SelectMode) => {
+    let unfolded = selected.map(this.unfoldTag).reduce((p,n)=>[...p,...n])
+    return selectMode === 'range' ? [unfolded[0],unfolded[unfolded.length-1]] : unfolded;
   }
 
   getDateElement = (dateString: string) => {

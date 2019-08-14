@@ -17,6 +17,7 @@ export declare class DatepickerPlus {
     private rangeStart;
     parseSelected(next: DateString[], current: DateString[]): void;
     parseDisabled(next: DateString[], current: DateString[]): void;
+    unfoldTag: (tag: string) => string[];
     addRangeMark: (dateString: string) => void;
     resetRangeMarks: () => void;
     updateDateOptions(dateString: DateString, options: IDateOptions): void;
@@ -27,6 +28,7 @@ export declare class DatepickerPlus {
     onDateDeselect: EventEmitter<IDateElement>;
     onRangeSelect: EventEmitter<DateString[]>;
     componentWillLoad(): void;
+    private unfoldSelected;
     getDateElement: (dateString: string) => IDateElement;
     private MemProtect;
     protectMemLeak(): void;
