@@ -103,6 +103,10 @@ export const dateOffset = (date0: Date, date1: Date) => {
     return Math.ceil((date0.getTime()-date1.getTime())/86400000)
 }
 
+export const patchArray = (target: any[] = [], source: any) => {
+    return source.map((itm: any, i: any) => target[i] || itm)
+}
+
 export const openGithubIssue = ({ title, body, label }: IGithubIssueParams) => {
     const tl = 'title=' + encodeURIComponent(title)
     const lb = 'labels=' + encodeURIComponent(label)

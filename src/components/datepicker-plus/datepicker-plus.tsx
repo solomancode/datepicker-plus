@@ -1,21 +1,25 @@
 import { Component, Prop, Watch, Event, EventEmitter, State } from '@stencil/core';
 import { renderContainer } from './templates';
 import { IDateElement, createDateElement, createdDateElements, IDateOptions } from './createDateElement';
-import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate, openGithubIssue, dateOffset } from './utils';
-import { SelectMode, DEFAULT_CONFIG } from './config';
+import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate, openGithubIssue, dateOffset, patchArray } from './utils';
+import { SelectMode, DEFAULT_CONFIG, IWeekDay, IMonth } from './config';
 import * as tags from "./tags";
 
 export type DateString = string
 export type WeekHeader = 'single' | 'per-month'
 
 export interface IPlusConfig {
-  selectMode: SelectMode
-  viewRange : [DateString, DateString]
-  selected  : DateString[]
-  disabled  : DateString[]
-  weekHeader: WeekHeader
-  selectScope: number // in days
+  selectMode?: SelectMode
+  viewRange ?: [DateString, DateString]
+  selected  ?: DateString[]
+  disabled  ?: DateString[]
+  weekHeader?: WeekHeader
+  selectScope?: number // in days
   stylesheetUrl ?: string
+  i18n?: {
+    weekDays?: IWeekDay[]
+    months?: IMonth[]
+  }
 }
 
 @Component({
@@ -183,6 +187,14 @@ export class DatepickerPlus {
 
   componentWillLoad() {
     this.plusConfig = { ...DEFAULT_CONFIG, ...this.plusConfig }
+    this.patchConfigLists()
+  }
+
+  private patchConfigLists = () => {
+    const { months: default_months, weekDays: default_weekDays } = DEFAULT_CONFIG.i18n
+    const { months, weekDays } = this.plusConfig.i18n
+    this.plusConfig.i18n.months = patchArray(months, default_months)
+    this.plusConfig.i18n.weekDays = patchArray(weekDays, default_weekDays)
   }
 
   private unfoldSelected = (selected: DateString[], selectMode: SelectMode) => {

@@ -1,16 +1,20 @@
 import { EventEmitter } from '../../stencil.core';
 import { IDateElement, IDateOptions } from './createDateElement';
-import { SelectMode } from './config';
+import { SelectMode, IWeekDay, IMonth } from './config';
 export declare type DateString = string;
 export declare type WeekHeader = 'single' | 'per-month';
 export interface IPlusConfig {
-    selectMode: SelectMode;
-    viewRange: [DateString, DateString];
-    selected: DateString[];
-    disabled: DateString[];
-    weekHeader: WeekHeader;
-    selectScope: number;
+    selectMode?: SelectMode;
+    viewRange?: [DateString, DateString];
+    selected?: DateString[];
+    disabled?: DateString[];
+    weekHeader?: WeekHeader;
+    selectScope?: number;
     stylesheetUrl?: string;
+    i18n?: {
+        weekDays?: IWeekDay[];
+        months?: IMonth[];
+    };
 }
 export declare class DatepickerPlus {
     plusConfig: IPlusConfig;
@@ -37,6 +41,7 @@ export declare class DatepickerPlus {
     onDateDeselect: EventEmitter<IDateElement>;
     onRangeSelect: EventEmitter<DateString[]>;
     componentWillLoad(): void;
+    private patchConfigLists;
     private unfoldSelected;
     getDateElement: (dateString: string) => IDateElement;
     private MemProtect;

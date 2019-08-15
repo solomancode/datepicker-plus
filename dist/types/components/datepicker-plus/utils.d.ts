@@ -16,5 +16,6 @@ interface IGithubIssueParams {
     label: string;
 }
 export declare const dateOffset: (date0: Date, date1: Date) => number;
+export declare const patchArray: (target: any[], source: any) => any;
 export declare const openGithubIssue: ({ title, body, label }: IGithubIssueParams) => never;
 export {};

@@ -66,5 +66,9 @@ export const DEFAULT_CONFIG: IPlusConfig = {
     disabled: [],
     selectScope: 0,
     weekHeader: 'per-month',
-    viewRange: getCurrentMonthRange() as [DateString, DateString]
+    viewRange: getCurrentMonthRange() as [DateString, DateString],
+    i18n: {
+        months: DEFAULT_MONTHS,
+        weekDays: DEFAULT_WEEK_DAYS
+    }
 }
