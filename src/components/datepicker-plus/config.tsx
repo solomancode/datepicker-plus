@@ -55,7 +55,8 @@ export const DEFAULT_CLASSES = {
     weekContent: 'week-content',
     weekend: 'weekend',
     checkbox: 'checkbox',
-    singleHeader: 'single-header'
+    singleHeader: 'single-header',
+    highlight: 'highlight'
 }
 
 export type SelectMode = 'single' | 'multiple' | 'range'

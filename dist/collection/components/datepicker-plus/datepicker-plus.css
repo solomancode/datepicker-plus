@@ -60,6 +60,10 @@
     background-color: gold;
 }
 
+.day.highlight {
+    background-color: #7e5;
+}
+
 .day.today {
     background-color: #e45;
 }

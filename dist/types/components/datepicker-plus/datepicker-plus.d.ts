@@ -21,6 +21,8 @@ export declare class DatepickerPlus {
     viewList: IDateElement[][];
     selected: DateString[];
     disabled: DateString[];
+    highlighted: DateString;
+    highlight(next: DateString, current: DateString): void;
     private rangeStart;
     /**
      * Backup disabled before scoping...
@@ -28,6 +30,7 @@ export declare class DatepickerPlus {
     private _disabled;
     parseSelected(next: DateString[], current: DateString[]): void;
     parseDisabled(next: DateString[], current: DateString[]): void;
+    private setHighlight;
     unfoldTag: (tag: string) => string[];
     addRangeMark: (dateString: string) => void;
     activateSelectScope: (dateElement: IDateElement) => void;

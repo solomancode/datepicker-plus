@@ -7,7 +7,7 @@ export declare const isSameDate: (date1: Date, date2: Date) => boolean;
 export declare const monthToWeeks: (month: IDateElement[]) => any[];
 export declare const dateStringInRange: (dateString: string, dateRange: [string, string]) => boolean;
 export declare const getCurrentMonthRange: () => string[];
-export declare const getDatesBetween: (dateString0: string, dateString1: string) => any[];
+export declare const getDatesBetween: (dateString0: string, dateString1: string) => string[];
 export declare const parsePropJSON: (prop: string) => any;
 export declare const sortDates: ([dateString0, dateString1]: [string, string]) => string[];
 interface IGithubIssueParams {

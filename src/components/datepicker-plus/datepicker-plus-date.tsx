@@ -17,10 +17,13 @@ export const DatepickerPlusDate: FunctionalComponent<IDatepickerPlusDate> = ({ d
       date.datepickerPlus.deactivateSelectScope()
       deselect(dateString)
     }
+    date.datepickerPlus.highlighted = 'rangeSelect'
   }
+  const onEnter = () => date.datepickerPlus.highlighted = date.dateString();
+  const onLeave = () => date.datepickerPlus.highlighted = null;
   return (
     <time part="day" class={date.classListString} dateTime={date.dateString()}>
-      <label>
+      <label onMouseEnter={onEnter.bind(this)} onMouseLeave={onLeave.bind(this)}>
         {date.day}
         <input
           ref={el=>date.el=el}

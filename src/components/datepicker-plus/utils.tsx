@@ -71,7 +71,8 @@ export const getCurrentMonthRange = () => {
     return [ dateToString(firstDay), dateToString(lastDay) ]
 }
 
-export const getDatesBetween = (dateString0: string, dateString1: string) => {
+export const getDatesBetween = (dateString0: string, dateString1: string): string[] => {
+    if (dateString0===dateString1) return [];
     const [start, end] = sortDates([dateString0, dateString1])
     let rangeDates = []
     let currentDateString = getNextDay(start) as string;

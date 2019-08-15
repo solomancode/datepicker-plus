@@ -20,6 +20,7 @@ export interface IDateOptions {
     disabled?: boolean
     rangeIndex?: number
     rangeEnd?: boolean
+    highlight?: boolean
 }
 
 export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateClassList {
@@ -63,6 +64,7 @@ const composeDateClassList = () => ({
         const date = (this as IDateElement)
         const classList = [
             DEFAULT_CLASSES.day,
+            date.highlight && DEFAULT_CLASSES.highlight,
             date.disabled && DEFAULT_CLASSES.disabled,
             date.checked && DEFAULT_CLASSES.selected
         ]

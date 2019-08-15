@@ -35,6 +35,21 @@ export class DatepickerPlus {
   @State() selected: DateString[] = []
   @State() disabled: DateString[] = []
 
+  @State() highlighted: DateString
+
+  @Watch('highlighted')
+  highlight(next: DateString, current: DateString) {
+    if (current==='rangeSelect') return;
+    const target = next === null ? current : next;
+    let start = this.rangeStart;
+    if (next === 'rangeSelect') {
+      this.selected.length && this.selected.forEach(dateString => this.setHighlight(dateString, false));
+    } else if (start) {
+       [start, ...getDatesBetween(start, target), target]
+       .forEach(dateString => this.setHighlight(dateString, next !== null));
+    }
+  }
+  
   private rangeStart: DateString = null
 
   /**
@@ -74,6 +89,12 @@ export class DatepickerPlus {
     // DISABLE NEXT
     next = next.length ? next.map(tag => this.unfoldTag(tag)).reduce((p,n)=>[...p,...n]) : []
     next.forEach(dateString => this.updateDateOptions(dateString, { disabled: true }))
+  }
+
+  private setHighlight = (dateString: DateString, highlight: boolean) => {
+    const dateElement = this.getDateElement(dateString)
+    if (dateElement && !dateElement.disabled) dateElement.highlight = highlight
+    dateElement.updateClassListString()
   }
 
   unfoldTag = (tag: string) => {

@@ -14,6 +14,7 @@ export interface IDateOptions {
     disabled?: boolean;
     rangeIndex?: number;
     rangeEnd?: boolean;
+    highlight?: boolean;
 }
 export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateClassList {
     day: number;
