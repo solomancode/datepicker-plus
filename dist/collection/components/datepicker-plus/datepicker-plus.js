@@ -1,6 +1,6 @@
 import { renderContainer } from './templates';
 import { createDateElement, createdDateElements } from './createDateElement';
-import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate, openGithubIssue, dateOffset } from './utils';
+import { dateToString, isSameDate, getNextDay, getDatesBetween, stringToDate, openGithubIssue, dateOffset, patchArray } from './utils';
 import { DEFAULT_CONFIG } from './config';
 import * as tags from "./tags";
 export class DatepickerPlus {
@@ -13,6 +13,12 @@ export class DatepickerPlus {
          * Backup disabled before scoping...
          */
         this._disabled = [];
+        this.setHighlight = (dateString, highlight) => {
+            const dateElement = this.getDateElement(dateString);
+            if (dateElement && !dateElement.disabled)
+                dateElement.highlight = highlight;
+            dateElement.updateClassListString();
+        };
         this.unfoldTag = (tag) => {
             if (!(tag in tags))
                 return [tag];
@@ -96,6 +102,12 @@ export class DatepickerPlus {
                 this.onDateDeselect.emit(dateElement);
             }
         };
+        this.patchConfigLists = () => {
+            const { months: default_months, weekDays: default_weekDays } = DEFAULT_CONFIG.i18n;
+            const { months, weekDays } = this.plusConfig.i18n;
+            this.plusConfig.i18n.months = patchArray(months, default_months);
+            this.plusConfig.i18n.weekDays = patchArray(weekDays, default_weekDays);
+        };
         this.unfoldSelected = (selected, selectMode) => {
             if (!selected.length)
                 return [];
@@ -120,6 +132,19 @@ export class DatepickerPlus {
             return dateElement;
         };
     }
+    highlight(next, current) {
+        if (current === 'rangeSelect')
+            return;
+        const target = next === null ? current : next;
+        let start = this.rangeStart;
+        if (next === 'rangeSelect') {
+            this.selected.length && this.selected.forEach(dateString => this.setHighlight(dateString, false));
+        }
+        else if (start) {
+            [start, ...getDatesBetween(start, target), target]
+                .forEach(dateString => this.setHighlight(dateString, next !== null));
+        }
+    }
     parseSelected(next, current) {
         const rangeMode = this.plusConfig.selectMode === 'range';
         const currentLastIndex = current.length - 1;
@@ -133,7 +158,7 @@ export class DatepickerPlus {
         // SELECT NEXT
         next.forEach((dateString, index) => {
             const chronoIndex = isReversed ? (next.length - index) - 1 : index;
-            const rangeEnd = chronoIndex === nextLastIndex ? { rangeEnd: true } : {};
+            const rangeEnd = chronoIndex === nextLastIndex && nextLastIndex !== 0 ? { rangeEnd: true } : {};
             this.updateDateOptions(dateString, Object.assign({ checked: true }, (rangeMode ? Object.assign({ rangeIndex: chronoIndex }, rangeEnd) : {})));
         });
     }
@@ -159,6 +184,7 @@ export class DatepickerPlus {
     }
     componentWillLoad() {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
+        this.patchConfigLists();
     }
     protectMemLeak() {
         this.MemProtect++;
@@ -234,7 +260,8 @@ export class DatepickerPlus {
     static get states() { return {
         "viewList": {},
         "selected": {},
-        "disabled": {}
+        "disabled": {},
+        "highlighted": {}
     }; }
     static get events() { return [{
             "method": "onDateSelect",
@@ -297,6 +324,9 @@ export class DatepickerPlus {
             }
         }]; }
     static get watchers() { return [{
+            "propName": "highlighted",
+            "methodName": "highlight"
+        }, {
             "propName": "selected",
             "methodName": "parseSelected"
         }, {

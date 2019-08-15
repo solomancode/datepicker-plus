@@ -57,6 +57,8 @@ var getCurrentMonthRange = function () {
     return [dateToString(firstDay), dateToString(lastDay)];
 };
 var getDatesBetween = function (dateString0, dateString1) {
+    if (dateString0 === dateString1)
+        return [];
     var _a = sortDates([dateString0, dateString1]), start = _a[0], end = _a[1];
     var rangeDates = [];
     var currentDateString = getNextDay(start);
@@ -76,6 +78,10 @@ var sortDates = function (_a) {
 };
 var dateOffset = function (date0, date1) {
     return Math.ceil((date0.getTime() - date1.getTime()) / 86400000);
+};
+var patchArray = function (target, source) {
+    if (target === void 0) { target = []; }
+    return source.map(function (itm, i) { return target[i] || itm; });
 };
 var openGithubIssue = function (_a) {
     var title = _a.title, body = _a.body, label = _a.label;
@@ -126,7 +132,8 @@ var DEFAULT_CLASSES = {
     weekContent: 'week-content',
     weekend: 'weekend',
     checkbox: 'checkbox',
-    singleHeader: 'single-header'
+    singleHeader: 'single-header',
+    highlight: 'highlight'
 };
 var DEFAULT_CONFIG = {
     selectMode: 'range',
@@ -134,7 +141,11 @@ var DEFAULT_CONFIG = {
     disabled: [],
     selectScope: 0,
     weekHeader: 'per-month',
-    viewRange: getCurrentMonthRange()
+    viewRange: getCurrentMonthRange(),
+    i18n: {
+        months: DEFAULT_MONTHS,
+        weekDays: DEFAULT_WEEK_DAYS
+    }
 };
 var DatepickerPlusDate = function (_a) {
     var date = _a.date;
@@ -149,14 +160,16 @@ var DatepickerPlusDate = function (_a) {
             date.datepickerPlus.deactivateSelectScope();
             deselect(dateString);
         }
+        date.datepickerPlus.highlighted = 'rangeSelect';
     };
-    return (h("time", { part: "day", class: date.classListString, dateTime: date.dateString() }, h("label", null, date.day, h("input", { ref: function (el) { return date.el = el; }, onChange: function (e) { return onChange(e); }, checked: date.checked, disabled: date.disabled, class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString() }))));
+    var onEnter = function () { return date.datepickerPlus.highlighted = date.dateString(); };
+    var onLeave = function () { return date.datepickerPlus.highlighted = null; };
+    return (h("time", { part: "day", class: date.classListString, dateTime: date.dateString() }, h("label", { onMouseEnter: onEnter.bind(undefined), onMouseLeave: onLeave.bind(undefined) }, date.day, h("input", { ref: function (el) { return date.el = el; }, onChange: function (e) { return onChange(e); }, checked: date.checked, disabled: date.disabled, class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString() }))));
 };
 function renderDate(date) {
     return h(DatepickerPlusDate, { date: date });
 }
 function renderWeekHeader(weekDays) {
-    if (weekDays === void 0) { weekDays = DEFAULT_WEEK_DAYS; }
     return (h("header", { class: DEFAULT_CLASSES.weekHeader, part: "week-header" }, weekDays.map(function (_a) {
         var name = _a.name, abbr = _a.abbr, isWeekend = _a.isWeekend;
         return h("abbr", { class: isWeekend && DEFAULT_CLASSES.weekend, title: name }, abbr);
@@ -170,25 +183,25 @@ function renderEmpty(offset) {
     }
     return nodes;
 }
-function renderWeek(week, renderHeader) {
-    return (h("section", { part: "week", class: DEFAULT_CLASSES.week }, renderHeader && renderWeekHeader(), h("section", { class: DEFAULT_CLASSES.weekContent }, renderEmpty(week[0].dayOfWeek), week.map(renderDate), renderEmpty(6 - week[week.length - 1].dayOfWeek))));
+function renderWeek(week, renderHeader, weekDays) {
+    return (h("section", { part: "week", class: DEFAULT_CLASSES.week }, renderHeader && renderWeekHeader(weekDays), h("section", { class: DEFAULT_CLASSES.weekContent }, renderEmpty(week[0].dayOfWeek), week.map(renderDate), renderEmpty(6 - week[week.length - 1].dayOfWeek))));
 }
-function renderMonthHeader(dayFirst) {
-    return (h("header", { class: DEFAULT_CLASSES.monthHeader, part: "month-header" }, h("span", { class: DEFAULT_CLASSES.monthName }, DEFAULT_MONTHS[dayFirst.month - 1].name), dayFirst.month - 1 === 0 && h("span", { class: DEFAULT_CLASSES.year }, dayFirst.year)));
+function renderMonthHeader(dayFirst, months) {
+    return (h("header", { class: DEFAULT_CLASSES.monthHeader, part: "month-header" }, h("span", { class: DEFAULT_CLASSES.monthName }, months[dayFirst.month - 1].name), dayFirst.month - 1 === 0 && h("span", { class: DEFAULT_CLASSES.year }, dayFirst.year)));
 }
-function renderMonth(month, weekHeader) {
-    var renderHeader = function (i) { return weekHeader === 'per-month' && i === 0; };
-    return (h("section", { part: "month", class: DEFAULT_CLASSES.month }, renderMonthHeader(month[0]), h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map(function (week, i) { return renderWeek(week, renderHeader(i)); }))));
+function renderMonth(month, config) {
+    var renderHeader = function (i) { return config.weekHeader === 'per-month' && i === 0; };
+    return (h("section", { part: "month", class: DEFAULT_CLASSES.month }, renderMonthHeader(month[0], config.i18n.months), h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map(function (week, i) { return renderWeek(week, renderHeader(i), config.i18n.weekDays); }))));
 }
 function renderContainer(dates, config) {
-    var renderSingleHeader = function () { return config.weekHeader === 'single' && h("header", { class: DEFAULT_CLASSES.singleHeader }, renderWeekHeader()); };
+    var renderSingleHeader = function () { return config.weekHeader === 'single' && h("header", { class: DEFAULT_CLASSES.singleHeader }, renderWeekHeader(config.i18n.weekDays)); };
     return ([
         // theme stylesheet
         config.stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: config.stylesheetUrl }) : null,
         // contents
         h("section", { class: "dpp-container", part: "dpp-container" }, [
             renderSingleHeader() || null,
-            dates.map(function (month) { return renderMonth(month, config.weekHeader); })
+            dates.map(function (month) { return renderMonth(month, config); })
         ])
     ]);
 }
@@ -267,6 +280,7 @@ var composeDateClassList = function () { return ({
         var date = this;
         var classList = [
             DEFAULT_CLASSES.day,
+            date.highlight && DEFAULT_CLASSES.highlight,
             date.disabled && DEFAULT_CLASSES.disabled,
             date.checked && DEFAULT_CLASSES.selected
         ];
@@ -311,6 +325,12 @@ var DatepickerPlus = /** @class */ (function () {
          * Backup disabled before scoping...
          */
         this._disabled = [];
+        this.setHighlight = function (dateString, highlight) {
+            var dateElement = _this.getDateElement(dateString);
+            if (dateElement && !dateElement.disabled)
+                dateElement.highlight = highlight;
+            dateElement.updateClassListString();
+        };
         this.unfoldTag = function (tag) {
             if (!(tag in tags))
                 return [tag];
@@ -394,6 +414,12 @@ var DatepickerPlus = /** @class */ (function () {
                 _this.onDateDeselect.emit(dateElement);
             }
         };
+        this.patchConfigLists = function () {
+            var _a = DEFAULT_CONFIG.i18n, default_months = _a.months, default_weekDays = _a.weekDays;
+            var _b = _this.plusConfig.i18n, months = _b.months, weekDays = _b.weekDays;
+            _this.plusConfig.i18n.months = patchArray(months, default_months);
+            _this.plusConfig.i18n.weekDays = patchArray(weekDays, default_weekDays);
+        };
         this.unfoldSelected = function (selected, selectMode) {
             if (!selected.length)
                 return [];
@@ -421,6 +447,19 @@ var DatepickerPlus = /** @class */ (function () {
         this.onDateDeselect = createEvent(this, "onDateDeselect", 7);
         this.onRangeSelect = createEvent(this, "onRangeSelect", 7);
     }
+    DatepickerPlus.prototype.highlight = function (next, current) {
+        var _this = this;
+        if (current === 'rangeSelect')
+            return;
+        var target = next === null ? current : next;
+        var start = this.rangeStart;
+        if (next === 'rangeSelect') {
+            this.selected.length && this.selected.forEach(function (dateString) { return _this.setHighlight(dateString, false); });
+        }
+        else if (start) {
+            [start].concat(getDatesBetween(start, target), [target]).forEach(function (dateString) { return _this.setHighlight(dateString, next !== null); });
+        }
+    };
     DatepickerPlus.prototype.parseSelected = function (next, current) {
         var _this = this;
         var rangeMode = this.plusConfig.selectMode === 'range';
@@ -435,7 +474,7 @@ var DatepickerPlus = /** @class */ (function () {
         // SELECT NEXT
         next.forEach(function (dateString, index) {
             var chronoIndex = isReversed ? (next.length - index) - 1 : index;
-            var rangeEnd = chronoIndex === nextLastIndex ? { rangeEnd: true } : {};
+            var rangeEnd = chronoIndex === nextLastIndex && nextLastIndex !== 0 ? { rangeEnd: true } : {};
             _this.updateDateOptions(dateString, Object.assign({ checked: true }, (rangeMode ? Object.assign({ rangeIndex: chronoIndex }, rangeEnd) : {})));
         });
     };
@@ -462,6 +501,7 @@ var DatepickerPlus = /** @class */ (function () {
     };
     DatepickerPlus.prototype.componentWillLoad = function () {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
+        this.patchConfigLists();
     };
     DatepickerPlus.prototype.protectMemLeak = function () {
         this.MemProtect++;
@@ -507,6 +547,7 @@ var DatepickerPlus = /** @class */ (function () {
     Object.defineProperty(DatepickerPlus, "watchers", {
         get: function () {
             return {
+                "highlighted": ["highlight"],
                 "selected": ["parseSelected"],
                 "disabled": ["parseDisabled"],
                 "plusConfig": ["updateConfig"]
@@ -516,7 +557,7 @@ var DatepickerPlus = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(DatepickerPlus, "style", {
-        get: function () { return ".dpp-container{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer}.day.disabled{background-color:#ccc}.day.selected{background-color:gold}.day.today{background-color:#e45}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; },
+        get: function () { return ".dpp-container{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{background-color:#ccc}.day.selected{background-color:gold}.day.highlight{background-color:#7e5}.day.today{background-color:#e45}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; },
         enumerable: true,
         configurable: true
     });

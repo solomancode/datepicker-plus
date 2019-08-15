@@ -40,7 +40,8 @@ export const DEFAULT_CLASSES = {
     weekContent: 'week-content',
     weekend: 'weekend',
     checkbox: 'checkbox',
-    singleHeader: 'single-header'
+    singleHeader: 'single-header',
+    highlight: 'highlight'
 };
 export const DEFAULT_CONFIG = {
     selectMode: 'range',
@@ -48,5 +49,9 @@ export const DEFAULT_CONFIG = {
     disabled: [],
     selectScope: 0,
     weekHeader: 'per-month',
-    viewRange: getCurrentMonthRange()
+    viewRange: getCurrentMonthRange(),
+    i18n: {
+        months: DEFAULT_MONTHS,
+        weekDays: DEFAULT_WEEK_DAYS
+    }
 };

@@ -6,7 +6,7 @@ const __chunk_1 = require('./chunk-a0b8771d.js');
 
 const defineCustomElements = (win, options) => {
   return __chunk_1.patchEsm().then(() => {
-    __chunk_1.bootstrapLazy([["datepicker-plus.cjs",[[1,"datepicker-plus",{"plusConfig":[16],"viewList":[32],"selected":[32],"disabled":[32]}]]]], options);
+    __chunk_1.bootstrapLazy([["datepicker-plus.cjs",[[1,"datepicker-plus",{"plusConfig":[16],"viewList":[32],"selected":[32],"disabled":[32],"highlighted":[32]}]]]], options);
   });
 };
 

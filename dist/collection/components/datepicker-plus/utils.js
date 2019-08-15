@@ -68,6 +68,8 @@ export const getCurrentMonthRange = () => {
     return [dateToString(firstDay), dateToString(lastDay)];
 };
 export const getDatesBetween = (dateString0, dateString1) => {
+    if (dateString0 === dateString1)
+        return [];
     const [start, end] = sortDates([dateString0, dateString1]);
     let rangeDates = [];
     let currentDateString = getNextDay(start);
@@ -89,6 +91,9 @@ export const sortDates = ([dateString0, dateString1]) => {
 };
 export const dateOffset = (date0, date1) => {
     return Math.ceil((date0.getTime() - date1.getTime()) / 86400000);
+};
+export const patchArray = (target = [], source) => {
+    return source.map((itm, i) => target[i] || itm);
 };
 export const openGithubIssue = ({ title, body, label }) => {
     const tl = 'title=' + encodeURIComponent(title);

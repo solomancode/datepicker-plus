@@ -62,6 +62,8 @@ const getCurrentMonthRange = () => {
     return [dateToString(firstDay), dateToString(lastDay)];
 };
 const getDatesBetween = (dateString0, dateString1) => {
+    if (dateString0 === dateString1)
+        return [];
     const [start, end] = sortDates([dateString0, dateString1]);
     let rangeDates = [];
     let currentDateString = getNextDay(start);
@@ -80,6 +82,9 @@ const sortDates = ([dateString0, dateString1]) => {
 };
 const dateOffset = (date0, date1) => {
     return Math.ceil((date0.getTime() - date1.getTime()) / 86400000);
+};
+const patchArray = (target = [], source) => {
+    return source.map((itm, i) => target[i] || itm);
 };
 const openGithubIssue = ({ title, body, label }) => {
     const tl = 'title=' + encodeURIComponent(title);
@@ -130,7 +135,8 @@ const DEFAULT_CLASSES = {
     weekContent: 'week-content',
     weekend: 'weekend',
     checkbox: 'checkbox',
-    singleHeader: 'single-header'
+    singleHeader: 'single-header',
+    highlight: 'highlight'
 };
 const DEFAULT_CONFIG = {
     selectMode: 'range',
@@ -138,7 +144,11 @@ const DEFAULT_CONFIG = {
     disabled: [],
     selectScope: 0,
     weekHeader: 'per-month',
-    viewRange: getCurrentMonthRange()
+    viewRange: getCurrentMonthRange(),
+    i18n: {
+        months: DEFAULT_MONTHS,
+        weekDays: DEFAULT_WEEK_DAYS
+    }
 };
 
 const DatepickerPlusDate = ({ date }) => {
@@ -153,9 +163,12 @@ const DatepickerPlusDate = ({ date }) => {
             date.datepickerPlus.deactivateSelectScope();
             deselect(dateString);
         }
+        date.datepickerPlus.highlighted = 'rangeSelect';
     };
+    const onEnter = () => date.datepickerPlus.highlighted = date.dateString();
+    const onLeave = () => date.datepickerPlus.highlighted = null;
     return (__chunk_1.h("time", { part: "day", class: date.classListString, dateTime: date.dateString() },
-        __chunk_1.h("label", null,
+        __chunk_1.h("label", { onMouseEnter: onEnter.bind(undefined), onMouseLeave: onLeave.bind(undefined) },
             date.day,
             __chunk_1.h("input", { ref: el => date.el = el, onChange: (e) => onChange(e), checked: date.checked, disabled: date.disabled, class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString() }))));
 };
@@ -163,7 +176,7 @@ const DatepickerPlusDate = ({ date }) => {
 function renderDate(date) {
     return __chunk_1.h(DatepickerPlusDate, { date: date });
 }
-function renderWeekHeader(weekDays = DEFAULT_WEEK_DAYS) {
+function renderWeekHeader(weekDays) {
     return (__chunk_1.h("header", { class: DEFAULT_CLASSES.weekHeader, part: "week-header" }, weekDays.map(({ name, abbr, isWeekend }) => __chunk_1.h("abbr", { class: isWeekend && DEFAULT_CLASSES.weekend, title: name }, abbr))));
 }
 function renderEmpty(offset) {
@@ -174,34 +187,34 @@ function renderEmpty(offset) {
     }
     return nodes;
 }
-function renderWeek(week, renderHeader) {
+function renderWeek(week, renderHeader, weekDays) {
     return (__chunk_1.h("section", { part: "week", class: DEFAULT_CLASSES.week },
-        renderHeader && renderWeekHeader(),
+        renderHeader && renderWeekHeader(weekDays),
         __chunk_1.h("section", { class: DEFAULT_CLASSES.weekContent },
             renderEmpty(week[0].dayOfWeek),
             week.map(renderDate),
             renderEmpty(6 - week[week.length - 1].dayOfWeek))));
 }
-function renderMonthHeader(dayFirst) {
+function renderMonthHeader(dayFirst, months) {
     return (__chunk_1.h("header", { class: DEFAULT_CLASSES.monthHeader, part: "month-header" },
-        __chunk_1.h("span", { class: DEFAULT_CLASSES.monthName }, DEFAULT_MONTHS[dayFirst.month - 1].name),
+        __chunk_1.h("span", { class: DEFAULT_CLASSES.monthName }, months[dayFirst.month - 1].name),
         dayFirst.month - 1 === 0 && __chunk_1.h("span", { class: DEFAULT_CLASSES.year }, dayFirst.year)));
 }
-function renderMonth(month, weekHeader) {
-    const renderHeader = (i) => weekHeader === 'per-month' && i === 0;
+function renderMonth(month, config) {
+    const renderHeader = (i) => config.weekHeader === 'per-month' && i === 0;
     return (__chunk_1.h("section", { part: "month", class: DEFAULT_CLASSES.month },
-        renderMonthHeader(month[0]),
-        __chunk_1.h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map((week, i) => renderWeek(week, renderHeader(i))))));
+        renderMonthHeader(month[0], config.i18n.months),
+        __chunk_1.h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map((week, i) => renderWeek(week, renderHeader(i), config.i18n.weekDays)))));
 }
 function renderContainer(dates, config) {
-    const renderSingleHeader = () => config.weekHeader === 'single' && __chunk_1.h("header", { class: DEFAULT_CLASSES.singleHeader }, renderWeekHeader());
+    const renderSingleHeader = () => config.weekHeader === 'single' && __chunk_1.h("header", { class: DEFAULT_CLASSES.singleHeader }, renderWeekHeader(config.i18n.weekDays));
     return ([
         // theme stylesheet
         config.stylesheetUrl ? __chunk_1.h("link", { rel: "stylesheet", type: "text/css", href: config.stylesheetUrl }) : null,
         // contents
         __chunk_1.h("section", { class: "dpp-container", part: "dpp-container" }, [
             renderSingleHeader() || null,
-            dates.map((month) => renderMonth(month, config.weekHeader))
+            dates.map((month) => renderMonth(month, config))
         ])
     ]);
 }
@@ -283,6 +296,7 @@ const composeDateClassList = () => ({
         const date = this;
         const classList = [
             DEFAULT_CLASSES.day,
+            date.highlight && DEFAULT_CLASSES.highlight,
             date.disabled && DEFAULT_CLASSES.disabled,
             date.checked && DEFAULT_CLASSES.selected
         ];
@@ -326,6 +340,12 @@ class DatepickerPlus {
          * Backup disabled before scoping...
          */
         this._disabled = [];
+        this.setHighlight = (dateString, highlight) => {
+            const dateElement = this.getDateElement(dateString);
+            if (dateElement && !dateElement.disabled)
+                dateElement.highlight = highlight;
+            dateElement.updateClassListString();
+        };
         this.unfoldTag = (tag) => {
             if (!(tag in tags))
                 return [tag];
@@ -409,6 +429,12 @@ class DatepickerPlus {
                 this.onDateDeselect.emit(dateElement);
             }
         };
+        this.patchConfigLists = () => {
+            const { months: default_months, weekDays: default_weekDays } = DEFAULT_CONFIG.i18n;
+            const { months, weekDays } = this.plusConfig.i18n;
+            this.plusConfig.i18n.months = patchArray(months, default_months);
+            this.plusConfig.i18n.weekDays = patchArray(weekDays, default_weekDays);
+        };
         this.unfoldSelected = (selected, selectMode) => {
             if (!selected.length)
                 return [];
@@ -436,6 +462,19 @@ class DatepickerPlus {
         this.onDateDeselect = __chunk_1.createEvent(this, "onDateDeselect", 7);
         this.onRangeSelect = __chunk_1.createEvent(this, "onRangeSelect", 7);
     }
+    highlight(next, current) {
+        if (current === 'rangeSelect')
+            return;
+        const target = next === null ? current : next;
+        let start = this.rangeStart;
+        if (next === 'rangeSelect') {
+            this.selected.length && this.selected.forEach(dateString => this.setHighlight(dateString, false));
+        }
+        else if (start) {
+            [start, ...getDatesBetween(start, target), target]
+                .forEach(dateString => this.setHighlight(dateString, next !== null));
+        }
+    }
     parseSelected(next, current) {
         const rangeMode = this.plusConfig.selectMode === 'range';
         const currentLastIndex = current.length - 1;
@@ -449,7 +488,7 @@ class DatepickerPlus {
         // SELECT NEXT
         next.forEach((dateString, index) => {
             const chronoIndex = isReversed ? (next.length - index) - 1 : index;
-            const rangeEnd = chronoIndex === nextLastIndex ? { rangeEnd: true } : {};
+            const rangeEnd = chronoIndex === nextLastIndex && nextLastIndex !== 0 ? { rangeEnd: true } : {};
             this.updateDateOptions(dateString, Object.assign({ checked: true }, (rangeMode ? Object.assign({ rangeIndex: chronoIndex }, rangeEnd) : {})));
         });
     }
@@ -475,6 +514,7 @@ class DatepickerPlus {
     }
     componentWillLoad() {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
+        this.patchConfigLists();
     }
     protectMemLeak() {
         this.MemProtect++;
@@ -518,11 +558,12 @@ class DatepickerPlus {
         return renderContainer(this.viewList, this.plusConfig);
     }
     static get watchers() { return {
+        "highlighted": ["highlight"],
         "selected": ["parseSelected"],
         "disabled": ["parseDisabled"],
         "plusConfig": ["updateConfig"]
     }; }
-    static get style() { return ".dpp-container{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer}.day.disabled{background-color:#ccc}.day.selected{background-color:gold}.day.today{background-color:#e45}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; }
+    static get style() { return ".dpp-container{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{background-color:#ccc}.day.selected{background-color:gold}.day.highlight{background-color:#7e5}.day.today{background-color:#e45}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; }
 }
 
 exports.datepicker_plus = DatepickerPlus;

@@ -23,6 +23,7 @@ const composeDateClassList = () => ({
         const date = this;
         const classList = [
             DEFAULT_CLASSES.day,
+            date.highlight && DEFAULT_CLASSES.highlight,
             date.disabled && DEFAULT_CLASSES.disabled,
             date.checked && DEFAULT_CLASSES.selected
         ];
