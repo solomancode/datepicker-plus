@@ -288,9 +288,7 @@ var composeDateClassList = function () { return ({
             var assertion = tags[tag];
             assertion(date, function (c) { return classList.push(c); }) && Object.defineProperty(date.tags, tag, { value: true });
         }
-        var classListString = classList.filter(function (c) { return c; }).join(' ');
-        date.el && date.el.parentElement.parentElement.setAttribute('class', classListString);
-        return this.classListString = classListString;
+        return this.classListString = classList.filter(function (c) { return c; }).join(' ');
     }
 }); };
 var createdDateElements = {
