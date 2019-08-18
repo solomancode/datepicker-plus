@@ -289,7 +289,7 @@ var composeDateClassList = function () { return ({
             assertion(date, function (c) { return classList.push(c); }) && Object.defineProperty(date.tags, tag, { value: true });
         }
         var classListString = classList.filter(function (c) { return c; }).join(' ');
-        this.date.el.setAttribute('class', classListString);
+        date.el && date.el.parentElement.parentElement.setAttribute('class', classListString);
         return this.classListString = classListString;
     }
 }); };

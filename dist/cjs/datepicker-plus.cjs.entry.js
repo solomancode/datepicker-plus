@@ -305,7 +305,7 @@ const composeDateClassList = () => ({
             assertion(date, (c) => classList.push(c)) && Object.defineProperty(date.tags, tag, { value: true });
         }
         const classListString = classList.filter(c => c).join(' ');
-        this.date.el.setAttribute('class', classListString);
+        date.el && date.el.parentElement.parentElement.setAttribute('class', classListString);
         return this.classListString = classListString;
     }
 });

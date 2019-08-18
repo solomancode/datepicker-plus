@@ -29,7 +29,7 @@ export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateCla
     year: number
     dayOfWeek: number
     events: {[key: string]: EventEmitter}
-    el: HTMLInputElement
+    el?: HTMLInputElement
     datepickerPlus: DatepickerPlus
     tags: {[key: string]: string}
 }
@@ -73,7 +73,7 @@ const composeDateClassList = () => ({
             assertion(date, (c: string) => classList.push(c)) && Object.defineProperty(date.tags, tag, { value: true });
         }
         const classListString = classList.filter(c=>c).join(' ')
-        this.date.el.setAttribute('class', classListString)
+        date.el && date.el.parentElement.parentElement.setAttribute('class', classListString)
         return this.classListString = classListString
     }
 })

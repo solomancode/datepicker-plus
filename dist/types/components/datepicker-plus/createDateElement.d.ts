@@ -24,7 +24,7 @@ export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateCla
     events: {
         [key: string]: EventEmitter;
     };
-    el: HTMLInputElement;
+    el?: HTMLInputElement;
     datepickerPlus: DatepickerPlus;
     tags: {
         [key: string]: string;
