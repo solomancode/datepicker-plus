@@ -1,4 +1,4 @@
-import { IDateElement } from './createDateElement';
+import { IDateElement } from './registerDate';
 import { IWeekDay, IMonth } from "./config";
 import { IPlusConfig } from './datepicker-plus';
 export declare function renderDate(date: IDateElement): any;

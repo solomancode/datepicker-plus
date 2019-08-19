@@ -1,9 +1,14 @@
 import { h } from '@stencil/core';
-import { monthToWeeks } from './utils';
+import { monthToWeeks, generateDateClass } from './utils';
 import { DEFAULT_CLASSES } from "./config";
-import { DatepickerPlusDate } from './datepicker-plus-date';
 export function renderDate(date) {
-    return h(DatepickerPlusDate, { date: date });
+    const onChange = (e) => {
+        return e.target.checked ? this.selected = [date.dateString] : this.selected = [];
+    };
+    return (h("time", { part: "day", class: generateDateClass(date), dateTime: date.dateString },
+        h("label", null,
+            date.day,
+            h("input", { checked: date.checked, disabled: date.disabled, onChange: onChange.bind(this), class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString }))));
 }
 export function renderWeekHeader(weekDays) {
     return (h("header", { class: DEFAULT_CLASSES.weekHeader, part: "week-header" }, weekDays.map(({ name, abbr, isWeekend }) => h("abbr", { class: isWeekend && DEFAULT_CLASSES.weekend, title: name }, abbr))));
@@ -21,7 +26,7 @@ export function renderWeek(week, renderHeader, weekDays) {
         renderHeader && renderWeekHeader(weekDays),
         h("section", { class: DEFAULT_CLASSES.weekContent },
             renderEmpty(week[0].dayOfWeek),
-            week.map(renderDate),
+            week.map(renderDate.bind(this)),
             renderEmpty(6 - week[week.length - 1].dayOfWeek))));
 }
 export function renderMonthHeader(dayFirst, months) {
@@ -33,7 +38,7 @@ export function renderMonth(month, config) {
     const renderHeader = (i) => config.weekHeader === 'per-month' && i === 0;
     return (h("section", { part: "month", class: DEFAULT_CLASSES.month },
         renderMonthHeader(month[0], config.i18n.months),
-        h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map((week, i) => renderWeek(week, renderHeader(i), config.i18n.weekDays)))));
+        h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map((week, i) => renderWeek.call(this, week, renderHeader(i), config.i18n.weekDays)))));
 }
 export function renderContainer(dates, config) {
     const renderSingleHeader = () => config.weekHeader === 'single' && h("header", { class: DEFAULT_CLASSES.singleHeader }, renderWeekHeader(config.i18n.weekDays));
@@ -43,7 +48,7 @@ export function renderContainer(dates, config) {
         // contents
         h("section", { class: "dpp-container", part: "dpp-container" }, [
             renderSingleHeader() || null,
-            dates.map((month) => renderMonth(month, config))
+            dates.map((month) => renderMonth.call(this, month, config))
         ])
     ]);
 }

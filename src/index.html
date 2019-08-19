@@ -29,10 +29,11 @@
     // datepicker-plus config ...
     var datepickerPlus = document.querySelector('datepicker-plus')
     datepickerPlus.plusConfig = {
+      selectMode: 'single',
       viewRange: ['2019-8-1','2019-10-31'],
-      selected: ['today','2019-9-10'],
+      selected: ['2019-8-1', '2019-8-2'],
       disabled: ['past','2019-8-30'],
-      weekHeader: 'single',
+      weekHeader: 'range',
       selectScope: 7
     }
   </script>

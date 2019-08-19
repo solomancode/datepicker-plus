@@ -1,12 +1,26 @@
 import { h } from '@stencil/core';
-import { IDateElement } from './createDateElement';
-import { monthToWeeks } from './utils';
+import { IDateElement } from './registerDate';
+import { monthToWeeks, generateDateClass } from './utils';
 import { DEFAULT_CLASSES, IWeekDay, IMonth } from "./config";
-import { DatepickerPlusDate } from './datepicker-plus-date';
 import { IPlusConfig } from './datepicker-plus';
 
 export function renderDate (date: IDateElement) {
-    return <DatepickerPlusDate date={date}></DatepickerPlusDate>
+    const onChange = (e: any) => {
+        return e.target.checked ? this.selected = [date.dateString] : this.selected = []
+    }
+    return (
+        <time part="day" class={generateDateClass(date)} dateTime={date.dateString}>
+            <label>
+                {date.day}
+                <input
+                checked={date.checked}
+                disabled={date.disabled}
+                onChange={onChange.bind(this)}
+                class={DEFAULT_CLASSES.checkbox}
+                type="checkbox" value={date.dateString}/>
+            </label>
+        </time>
+    )
 }
 
 export function renderWeekHeader (weekDays: IWeekDay[]) {
@@ -32,7 +46,7 @@ export function renderWeek (week: IDateElement[], renderHeader: boolean, weekDay
             { renderHeader && renderWeekHeader(weekDays) }
             <section class={DEFAULT_CLASSES.weekContent}>
                 { renderEmpty(week[0].dayOfWeek) }
-                { week.map(renderDate) }
+                { week.map(renderDate.bind(this)) }
                 { renderEmpty(6-week[week.length-1].dayOfWeek) }
             </section>
         </section>
@@ -54,7 +68,7 @@ export function renderMonth (month: IDateElement[], config: IPlusConfig) {
         <section part="month" class={DEFAULT_CLASSES.month}>
             { renderMonthHeader(month[0], config.i18n.months) }
             <section class={DEFAULT_CLASSES.monthContent}>
-                { monthToWeeks(month).map( (week, i) => renderWeek(week, renderHeader(i), config.i18n.weekDays )) }
+                { monthToWeeks(month).map( (week, i) => renderWeek.call(this, week, renderHeader(i), config.i18n.weekDays )) }
             </section>
         </section>
     )
@@ -69,7 +83,7 @@ export function renderContainer(dates: IDateElement[][], config: IPlusConfig) {
         <section class="dpp-container" part="dpp-container">
             {[
                 renderSingleHeader() || null,
-                dates.map((month)=>renderMonth(month, config))
+                dates.map((month)=>renderMonth.call(this, month, config))
             ]}
         </section>
     ])

@@ -1,3 +1,4 @@
+import { DEFAULT_CLASSES } from "./config";
 export const dateToString = (date) => {
     const yyyy = date.getFullYear();
     const month = date.getMonth();
@@ -31,24 +32,6 @@ export const isSameDate = (date1, date2) => {
         return false;
     return true;
 };
-export const monthToWeeks = (month) => {
-    let week = [];
-    let weeks = [];
-    month.forEach(day => {
-        if (day.dayOfWeek === 6) {
-            week.push(day);
-            weeks.push(week);
-            week = [];
-        }
-        else {
-            week.push(day);
-        }
-    });
-    if (week.length) {
-        weeks.push(week);
-    }
-    return weeks;
-};
 export const dateStringInRange = (dateString, dateRange) => {
     const [year, month, day] = getDateComponents(dateString);
     const [year0, month0, day0] = getDateComponents(dateRange[0]);
@@ -67,7 +50,7 @@ export const getCurrentMonthRange = () => {
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     return [dateToString(firstDay), dateToString(lastDay)];
 };
-export const getDatesBetween = (dateString0, dateString1) => {
+export const unfoldRange = (dateString0, dateString1) => {
     if (dateString0 === dateString1)
         return [];
     const [start, end] = sortDates([dateString0, dateString1]);
@@ -79,7 +62,7 @@ export const getDatesBetween = (dateString0, dateString1) => {
         rangeDates.push(currentDateString);
         currentDateString = getNextDay(currentDateString);
     }
-    return rangeDates;
+    return [start, ...rangeDates, end];
 };
 export const parsePropJSON = (prop) => {
     return JSON.parse(prop.replace(/'/g, '"'));
@@ -95,6 +78,50 @@ export const dateOffset = (date0, date1) => {
 export const patchArray = (target = [], source) => {
     return source.map((itm, i) => target[i] || itm);
 };
+export const groupByMonth = (dateString) => {
+    const map = Object.create({
+        flatten() {
+            const flat = [];
+            for (let index = 1; index <= 12; index++) {
+                if (index in this)
+                    flat.push(map[index]);
+            }
+            return flat;
+        }
+    });
+    dateString.forEach(dateString => {
+        const [, month] = getDateComponents(dateString);
+        if (month in map) {
+            map[month].push(dateString);
+        }
+        else {
+            map[month] = [dateString];
+        }
+    });
+    return map;
+};
+export const monthToWeeks = (month) => {
+    let week = [];
+    let weeks = [];
+    month.forEach(day => {
+        if (day.dayOfWeek === 6) {
+            week.push(day);
+            weeks.push(week);
+            week = [];
+        }
+        else {
+            week.push(day);
+        }
+    });
+    if (week.length) {
+        weeks.push(week);
+    }
+    return weeks;
+};
+export const generateDateClass = (dateElement) => [
+    DEFAULT_CLASSES.day,
+    dateElement.checked ? DEFAULT_CLASSES.selected : null
+].filter(c => c).join(' ');
 export const openGithubIssue = ({ title, body, label }) => {
     const tl = 'title=' + encodeURIComponent(title);
     const lb = 'labels=' + encodeURIComponent(label);
