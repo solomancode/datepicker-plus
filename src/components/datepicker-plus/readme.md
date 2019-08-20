@@ -14,11 +14,11 @@
 
 ## Events
 
-| Event            | Description | Type                        |
-| ---------------- | ----------- | --------------------------- |
-| `onDateDeselect` |             | `CustomEvent<IDateElement>` |
-| `onDateSelect`   |             | `CustomEvent<IDateElement>` |
-| `onRangeSelect`  |             | `CustomEvent<string[]>`     |
+| Event            | Description | Type                    |
+| ---------------- | ----------- | ----------------------- |
+| `onDateDeselect` |             | `CustomEvent<string[]>` |
+| `onDateSelect`   |             | `CustomEvent<string[]>` |
+| `onRangeSelect`  |             | `CustomEvent<string[]>` |
 
 
 ----------------------------------------------

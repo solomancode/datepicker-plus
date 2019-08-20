@@ -13,8 +13,12 @@
     margin-bottom: 5px;
 }
 
-.week {
-    
+.day.selected.rangeStart {
+    background-color: #cddc39;
+}
+
+.day.selected.rangeEnd {
+    background-color: #ff9800;
 }
 
 .week-header {
@@ -41,6 +45,7 @@
 }
 
 .day {
+    position: relative;
     line-height: 30px;
 }
 
@@ -53,7 +58,8 @@
 }
 
 .day.disabled {
-    background-color: #ccc;
+    color: #ccc;
+    background-color: #f8f8f8;
 }
 
 .day.selected {
@@ -65,7 +71,7 @@
 }
 
 .day.today {
-    background-color: #e45;
+    outline: 1px solid #ccc;
 }
 
 .checkbox {

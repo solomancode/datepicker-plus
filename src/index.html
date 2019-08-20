@@ -29,11 +29,11 @@
     // datepicker-plus config ...
     var datepickerPlus = document.querySelector('datepicker-plus')
     datepickerPlus.plusConfig = {
-      selectMode: 'single',
+      selectMode: 'range',
       viewRange: ['2019-8-1','2019-10-31'],
-      selected: ['2019-8-1', '2019-8-2'],
+      selected: ['2019-9-1', '2019-9-5'],
       disabled: ['past','2019-8-30'],
-      weekHeader: 'range',
+      weekHeader: 'single',
       selectScope: 7
     }
   </script>
@@ -41,30 +41,24 @@
   <script>
     // On Date Select
     datepickerPlus.addEventListener('onDateSelect', (event) => {
-      console.group()
-      console.count('🐱 selected')
+      console.log(`🐱 %cselected x ${event.detail.length}`,'background: antiquewhite; padding: 2px 5px')
       console.log(event.detail)
-      console.groupEnd()
     })
   </script>
 
   <script>
     // On Date Deselect
     datepickerPlus.addEventListener('onDateDeselect', (event) => {
-      console.group()
-      console.count('🦍 deselected')
+      console.log(`🦍 %cdeselected x ${event.detail.length}`,'background: antiquewhite; padding: 2px 5px')
       console.log(event.detail)
-      console.groupEnd()
     })
   </script>
 
   <script>
     // On Range select
     datepickerPlus.addEventListener('onRangeSelect', (event) => {
-      console.group()
-      console.count('📌 select range')
+      console.log(`🧮 %cselect range x ${event.detail.length}`,'background: antiquewhite; padding: 2px 5px')
       console.log(event.detail)
-      console.groupEnd()
     })
   </script>
 

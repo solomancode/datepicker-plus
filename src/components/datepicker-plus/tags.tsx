@@ -1,49 +1,53 @@
-// import { IDateElement } from "./createDateElement";
+import { IDateElement } from "./registerDate";
+import { dateOffset } from "./utils";
+import { DateString } from "./datepicker-plus";
 
-// type ClassSetter = (c: string) => void
-// type TagAssertion = (dateElement: IDateElement, setClass?: ClassSetter) => boolean
+export type TagPredicate = (dateElement: IDateElement) => boolean
 
-// const DYNAMIC_CLASSES = {
-//     today: 'today',
-//     rangeStart: 'range-start',
-//     rangeEnd: 'range-end',
-//     connector: 'connector'
-// }
+const offsetFromToday = (dateString: DateString) => dateOffset(new Date(dateString), new Date())
 
-// export const today: TagAssertion = (dateElement: IDateElement, setClass: ClassSetter) => {
-//     const isToday = dateElement.offset() === 0;
-//     if (isToday) setClass(DYNAMIC_CLASSES.today)
-//     return isToday
-// }
+const today: TagPredicate = (dateElement: IDateElement) => {
+    const isToday = offsetFromToday(dateElement.dateString) === 0;
+    return isToday
+}
 
-// export const tomorrow: TagAssertion = (dateElement: IDateElement) => dateElement.offset() === 1;
-// export const yesterday: TagAssertion = (dateElement: IDateElement) => dateElement.offset() === -1;
-// export const past: TagAssertion = (dateElement: IDateElement) => dateElement.offset() < 0;
-// export const future: TagAssertion = (dateElement: IDateElement) => dateElement.offset() > 0;
+const tomorrow: TagPredicate = (dateElement: IDateElement) => offsetFromToday(dateElement.dateString) === 1;
+const yesterday: TagPredicate = (dateElement: IDateElement) => offsetFromToday(dateElement.dateString) === -1;
+const past: TagPredicate = (dateElement: IDateElement) => offsetFromToday(dateElement.dateString) < 0;
+const future: TagPredicate = (dateElement: IDateElement) => offsetFromToday(dateElement.dateString) > 0;
 
-// /**
-//  * Range start date
-//  */
-// export const rangeStart: TagAssertion = (dateElement: IDateElement, setClass: ClassSetter) => {
-//     const rangeStart = dateElement.rangeIndex === 0;
-//     if (rangeStart) setClass(DYNAMIC_CLASSES.rangeStart)
-//     return rangeStart
-// }
+/**
+ * Range start date
+ */
+const rangeStart: TagPredicate = (dateElement: IDateElement) => {
+    const rangeStart = dateElement.rangeIndex === 0;
+    return rangeStart
+}
 
-// /**
-//  * Range end date
-//  */
-// export const rangeEnd: TagAssertion = (dateElement: IDateElement, setClass: ClassSetter) => {
-//     if (dateElement.rangeEnd) setClass(DYNAMIC_CLASSES.rangeEnd)
-//     return dateElement.rangeEnd
-// }
+/**
+ * Range end date
+ */
+const rangeEnd: TagPredicate = (dateElement: IDateElement) => {
+    const { rangeIndex, rangeEndIndex } = dateElement
+    return (rangeEndIndex > 0 && rangeIndex === rangeEndIndex )
+}
 
-// /**
-//  * A connector is a date between date start and date end
-//  * in a range select mode.
-//  */
-// export const connector: TagAssertion = (dateElement: IDateElement, setClass: ClassSetter) => {
-//     const isConnector = dateElement.rangeIndex > 0 && (!dateElement.rangeEnd)
-//     if (isConnector) setClass(DYNAMIC_CLASSES.connector)
-//     return isConnector
-// }
+/**
+ * A connector is a date between date start and date end
+ * in a range select mode.
+ */
+const connector: TagPredicate = (dateElement: IDateElement) => {
+    const isConnector = dateElement.rangeIndex > 0 && (dateElement.rangeEndIndex !== dateElement.rangeIndex)
+    return isConnector
+}
+
+export const tags = {
+    today,
+    rangeStart,
+    rangeEnd,
+    connector,
+    tomorrow,
+    yesterday,
+    past,
+    future
+}

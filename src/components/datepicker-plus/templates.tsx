@@ -6,7 +6,7 @@ import { IPlusConfig } from './datepicker-plus';
 
 export function renderDate (date: IDateElement) {
     const onChange = (e: any) => {
-        return e.target.checked ? this.selected = [date.dateString] : this.selected = []
+        return e.target.checked ? this.select(date.dateString) : this.deselect(date.dateString)
     }
     return (
         <time part="day" class={generateDateClass(date)} dateTime={date.dateString}>

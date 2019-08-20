@@ -2,10 +2,13 @@ import { getDateComponents } from "./utils";
 import { DateString } from "./datepicker-plus";
 
 export interface IDateElement {
-    dateString,
-    tags: {[key: string]: string}
+    dateString: DateString,
+    tags: {[key: string]: boolean}
     checked: boolean
     disabled: boolean
+    highlighted: boolean,
+    rangeIndex: number,
+    rangeEndIndex: number,
     year: number
     month: number
     day: number
