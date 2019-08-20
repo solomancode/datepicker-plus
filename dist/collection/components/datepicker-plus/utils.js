@@ -118,10 +118,16 @@ export const monthToWeeks = (month) => {
     }
     return weeks;
 };
-export const generateDateClass = (dateElement) => [
-    DEFAULT_CLASSES.day,
-    dateElement.checked ? DEFAULT_CLASSES.selected : null
-].filter(c => c).join(' ');
+export const generateDateClass = (dateElement) => {
+    let tags = Object.keys(dateElement.tags);
+    const classes = [
+        DEFAULT_CLASSES.day,
+        dateElement.checked ? DEFAULT_CLASSES.selected : null,
+        dateElement.disabled ? DEFAULT_CLASSES.disabled : null,
+        ...tags.filter(tag => dateElement.tags[tag] === true)
+    ];
+    return classes.filter(c => c).join(' ');
+};
 export const openGithubIssue = ({ title, body, label }) => {
     const tl = 'title=' + encodeURIComponent(title);
     const lb = 'labels=' + encodeURIComponent(label);

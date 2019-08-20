@@ -1,6 +1,1 @@
-import { p as patchBrowser, g as globals, b as bootstrapLazy } from './chunk-74afa921.js';
-
-patchBrowser().then(resourcesUrl => {
-  globals();
-  return bootstrapLazy([["datepicker-plus",[[1,"datepicker-plus",{"plusConfig":[16],"viewElements":[32],"selected":[32],"viewList":[32]}]]]], { resourcesUrl });
-});
+import{p as e,b as s}from"./p-9ebf5457.js";e().then(e=>s([["p-w9oqzmaf",[[1,"datepicker-plus",{plusConfig:[16],viewElements:[32],viewList:[32]}]]]],{resourcesUrl:e}));

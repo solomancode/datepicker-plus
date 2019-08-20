@@ -3,7 +3,7 @@ import { monthToWeeks, generateDateClass } from './utils';
 import { DEFAULT_CLASSES } from "./config";
 export function renderDate(date) {
     const onChange = (e) => {
-        return e.target.checked ? this.selected = [date.dateString] : this.selected = [];
+        return e.target.checked ? this.select(date.dateString) : this.deselect(date.dateString);
     };
     return (h("time", { part: "day", class: generateDateClass(date), dateTime: date.dateString },
         h("label", null,

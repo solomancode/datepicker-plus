@@ -1,4 +1,4 @@
-import { h, r as registerInstance } from './chunk-74afa921.js';
+import { h, r as registerInstance, c as createEvent } from './chunk-4f500da2.js';
 
 const dateToString = (date) => {
     const yyyy = date.getFullYear();
@@ -24,27 +24,6 @@ const getNextDay = (date) => {
     nextDay.setDate(nextDay.getDate() + 1);
     return isStringDate ? dateToString(nextDay) : nextDay;
 };
-const isSameDate = (date1, date2) => {
-    if (date1.getDate() !== date2.getDate())
-        return false;
-    if (date1.getUTCMonth() !== date2.getUTCMonth())
-        return false;
-    if (date1.getFullYear() !== date2.getFullYear())
-        return false;
-    return true;
-};
-const dateStringInRange = (dateString, dateRange) => {
-    const [year, month, day] = getDateComponents(dateString);
-    const [year0, month0, day0] = getDateComponents(dateRange[0]);
-    const [year1, month1, day1] = getDateComponents(dateRange[1]);
-    if (day < day0 || day > day1)
-        return false;
-    if (month < month0 || month > month1)
-        return false;
-    if (year < year0 || year > year1)
-        return false;
-    return true;
-};
 const getCurrentMonthRange = () => {
     const date = new Date();
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -64,9 +43,6 @@ const unfoldRange = (dateString0, dateString1) => {
         currentDateString = getNextDay(currentDateString);
     }
     return [start, ...rangeDates, end];
-};
-const parsePropJSON = (prop) => {
-    return JSON.parse(prop.replace(/'/g, '"'));
 };
 const sortDates = ([dateString0, dateString1]) => {
     const dt0 = stringToDate(dateString0);
@@ -119,10 +95,16 @@ const monthToWeeks = (month) => {
     }
     return weeks;
 };
-const generateDateClass = (dateElement) => [
-    DEFAULT_CLASSES.day,
-    dateElement.checked ? DEFAULT_CLASSES.selected : null
-].filter(c => c).join(' ');
+const generateDateClass = (dateElement) => {
+    let tags = Object.keys(dateElement.tags);
+    const classes = [
+        DEFAULT_CLASSES.day,
+        dateElement.checked ? DEFAULT_CLASSES.selected : null,
+        dateElement.disabled ? DEFAULT_CLASSES.disabled : null,
+        ...tags.filter(tag => dateElement.tags[tag] === true)
+    ];
+    return classes.filter(c => c).join(' ');
+};
 const openGithubIssue = ({ title, body, label }) => {
     const tl = 'title=' + encodeURIComponent(title);
     const lb = 'labels=' + encodeURIComponent(label);
@@ -208,7 +190,7 @@ function registerDate(created, dateString) {
 
 function renderDate(date) {
     const onChange = (e) => {
-        return e.target.checked ? this.selected = [date.dateString] : this.selected = [];
+        return e.target.checked ? this.select(date.dateString) : this.deselect(date.dateString);
     };
     return (h("time", { part: "day", class: generateDateClass(date), dateTime: date.dateString },
         h("label", null,
@@ -258,6 +240,48 @@ function renderContainer(dates, config) {
     ]);
 }
 
+const offsetFromToday = (dateString) => dateOffset(new Date(dateString), new Date());
+const today = (dateElement) => {
+    const isToday = offsetFromToday(dateElement.dateString) === 0;
+    return isToday;
+};
+const tomorrow = (dateElement) => offsetFromToday(dateElement.dateString) === 1;
+const yesterday = (dateElement) => offsetFromToday(dateElement.dateString) === -1;
+const past = (dateElement) => offsetFromToday(dateElement.dateString) < 0;
+const future = (dateElement) => offsetFromToday(dateElement.dateString) > 0;
+/**
+ * Range start date
+ */
+const rangeStart = (dateElement) => {
+    const rangeStart = dateElement.rangeIndex === 0;
+    return rangeStart;
+};
+/**
+ * Range end date
+ */
+const rangeEnd = (dateElement) => {
+    const { rangeIndex, rangeEndIndex } = dateElement;
+    return (rangeEndIndex > 0 && rangeIndex === rangeEndIndex);
+};
+/**
+ * A connector is a date between date start and date end
+ * in a range select mode.
+ */
+const connector = (dateElement) => {
+    const isConnector = dateElement.rangeIndex > 0 && (dateElement.rangeEndIndex !== dateElement.rangeIndex);
+    return isConnector;
+};
+const tags = {
+    today,
+    rangeStart,
+    rangeEnd,
+    connector,
+    tomorrow,
+    yesterday,
+    past,
+    future
+};
+
 class DatepickerPlus {
     constructor(hostRef) {
         registerInstance(this, hostRef);
@@ -267,7 +291,10 @@ class DatepickerPlus {
         };
         this.viewElements = [];
         this.selected = [
-        /** SELECTED DATES */
+        /** SELECTED */
+        ];
+        this.disabled = [
+        /** DISABLED */
         ];
         this.viewList = [];
         this.patchConfigLists = () => {
@@ -276,15 +303,52 @@ class DatepickerPlus {
             this.plusConfig.i18n.months = patchArray(months, default_months);
             this.plusConfig.i18n.weekDays = patchArray(weekDays, default_weekDays);
         };
-    }
-    updateViewSelectedElements(next) {
-        switch (this.plusConfig.selectMode) {
-            case 'single':
-                this.viewElements = this.selectDate(next[next.length - 1], this.viewElements);
-                break;
-            default:
-                break;
-        }
+        // mutable(this.selected, this.disabled, this.viewElements)
+        this.select = (dateString) => {
+            const { selectMode } = this.plusConfig;
+            let selectList = [];
+            if (selectMode === 'single') {
+                selectList = [dateString];
+            }
+            else if (selectMode === 'multiple') {
+                selectList = [...this.selected, dateString];
+            }
+            else if (selectMode === 'range') {
+                if (this.selected.length === 1) {
+                    selectList = unfoldRange(this.selected[0], dateString);
+                }
+                else {
+                    selectList = [dateString];
+                }
+            }
+            const hasDisabled = this.checkIfHasDisabled(selectList, this.disabled);
+            if (hasDisabled)
+                return this.viewElements;
+            const selectedViewElements = this.selectMultipleDates(selectList, this.viewElements);
+            this.viewElements = this.updateTags(tags, selectedViewElements);
+            this.selected = selectList;
+            this.onDateSelect.emit(this.selected);
+            if (selectMode === 'range' && this.selected.length > 1)
+                this.onRangeSelect.emit(this.selected);
+        };
+        // mutable(this.selected)
+        this.deselect = (dateString) => {
+            const { selectMode } = this.plusConfig;
+            let selectList = [];
+            if (selectMode === 'multiple') {
+                selectList = this.selected.filter(s => s !== dateString);
+            }
+            this.viewElements = this.selectMultipleDates(selectList, this.viewElements);
+            this.selected = selectList;
+        };
+        this.unfoldTag = (tag, tags) => {
+            if (!(tag in tags))
+                return [tag];
+            return this.viewElements.map((month) => month.filter(dateElement => dateElement.tags[tag] === true)).reduce((p, n) => [...p, ...n]).map(dateElement => dateElement.dateString);
+        };
+        this.onDateSelect = createEvent(this, "onDateSelect", 7);
+        this.onDateDeselect = createEvent(this, "onDateDeselect", 7);
+        this.onRangeSelect = createEvent(this, "onRangeSelect", 7);
     }
     updateViewElements(next) {
         this.registerViewDates(next);
@@ -296,7 +360,10 @@ class DatepickerPlus {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
         this.patchConfigLists();
         this.viewList = this.createViewList(this.plusConfig.viewRange);
-        this.selected = this.plusConfig.selected;
+        this.viewElements = this.updateTags(tags, this.viewElements);
+        this.plusConfig.disabled = this.plusConfig.disabled.map(tag => this.unfoldTag(tag, tags)).reduce((p, n) => [...p, ...n]);
+        this.viewElements = this.disableMultipleDates(this.plusConfig.disabled, this.viewElements);
+        this.plusConfig.selected.forEach(this.select);
     }
     createViewList([start, end]) {
         const dates = unfoldRange(start, end);
@@ -308,21 +375,49 @@ class DatepickerPlus {
             this.registered = registered;
         }));
     }
-    selectDate(dateString, viewElements) {
-        return viewElements.map(month => month.map(dateElement => {
-            dateElement.checked = dateElement.dateString === dateString;
+    checkIfHasDisabled(selected, disabled) {
+        const map = {};
+        disabled.forEach(d => map[d] = true);
+        return selected.some(s => (s in map));
+    }
+    selectMultipleDates(dateStringList, viewElements) {
+        return viewElements.map(month => month.map((dateElement) => {
+            dateElement.checked = dateStringList.includes(dateElement.dateString);
+            dateElement.rangeIndex = dateElement.checked ? dateStringList.indexOf(dateElement.dateString) : null;
+            dateElement.rangeEndIndex = dateElement.checked ? dateStringList.length - 1 : null;
+            return dateElement;
+        }));
+    }
+    // mutable(this.disabled)
+    disableMultipleDates(dateStringList, viewElements) {
+        let disabled = [];
+        const withDisabled = viewElements.map(month => month.map(dateElement => {
+            const isDisabled = dateStringList.includes(dateElement.dateString);
+            dateElement.disabled = isDisabled;
+            if (isDisabled)
+                disabled.push(dateElement.dateString);
+            return dateElement;
+        }));
+        this.disabled = disabled;
+        return withDisabled;
+    }
+    updateTags(tags, viewElements) {
+        console.count('TAG UPDATE --------------------------------');
+        return viewElements.map(month => month.map((dateElement) => {
+            for (const tag in tags) {
+                dateElement.tags[tag] = tags[tag](dateElement);
+            }
             return dateElement;
         }));
     }
     render() {
-        console.count('RENDER:');
+        console.count('🎨 RENDER ');
         return renderContainer.call(this, this.viewElements, this.plusConfig);
     }
     static get watchers() { return {
-        "selected": ["updateViewSelectedElements"],
         "viewList": ["updateViewElements"]
     }; }
-    static get style() { return ".dpp-container {\n    font-family: monospace;\n}\n\n.month {\n    border: 1px solid #ccc;\n    padding: 20px;\n}\n\n.month-header {\n    text-transform: uppercase;\n    font-weight: bold;\n    margin-bottom: 5px;\n}\n\n.week {\n    \n}\n\n.week-header {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.single-header {\n    padding: 5px 20px;\n}\n\n.week-header abbr {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    text-align: center;\n}\n\n.week-content {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.week-content > .day, .week-content > .empty {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    -ms-flex-preferred-size: 80px;\n    flex-basis: 80px;\n    text-align: center;\n}\n\n.day {\n    line-height: 30px;\n}\n\n.day > label {\n    display: block;\n    width: 100%;\n    height: 100%;\n    cursor: pointer;\n    -webkit-box-sizing: border-box;\n    box-sizing: border-box;\n}\n\n.day.disabled {\n    background-color: #ccc;\n}\n\n.day.selected {\n    background-color: gold;\n}\n\n.day.highlight {\n    background-color: #7e5;\n}\n\n.day.today {\n    background-color: #e45;\n}\n\n.checkbox {\n    display: none;\n}\n\n.month-header {\n    display: -ms-flexbox;\n    display: flex;\n    -ms-flex-pack: justify;\n    justify-content: space-between;\n}"; }
+    static get style() { return ".dpp-container{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.day.selected.rangeStart{background-color:#cddc39}.day.selected.rangeEnd{background-color:#ff9800}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{position:relative;line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{color:#ccc;background-color:#f8f8f8}.day.selected{background-color:gold}.day.highlight{background-color:#7e5}.day.today{outline:1px solid #ccc}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; }
 }
 
 export { DatepickerPlus as datepicker_plus };
