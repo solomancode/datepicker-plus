@@ -23,6 +23,13 @@ var getNextDay = function (date) {
     nextDay.setDate(nextDay.getDate() + 1);
     return isStringDate ? dateToString(nextDay) : nextDay;
 };
+var dateStringInRange = function (dateString, dateRange) {
+    var _a = sortDates(dateRange), start = _a[0], end = _a[1];
+    var targetDate = new Date(dateString);
+    var startOffset = dateOffset(targetDate, new Date(start));
+    var endOffset = dateOffset(targetDate, new Date(end));
+    return startOffset >= 0 && endOffset <= 0;
+};
 var getCurrentMonthRange = function () {
     var date = new Date();
     var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -96,6 +103,15 @@ var monthToWeeks = function (month) {
     }
     return weeks;
 };
+var getScopeRange = function (scopeCenter, scopeSize) {
+    var start = new Date(scopeCenter);
+    var startDay = start.getDate();
+    start.setDate(startDay - scopeSize);
+    var end = new Date(scopeCenter);
+    var endDate = end.getDate();
+    end.setDate(endDate + scopeSize);
+    return [start, end].map(function (date) { return dateToString(date); });
+};
 var generateDateClass = function (dateElement) {
     var tags = Object.keys(dateElement.tags);
     var classes = [
@@ -161,7 +177,7 @@ var DEFAULT_CONFIG = {
     selectMode: 'range',
     selected: [],
     disabled: [],
-    selectScope: 0,
+    selectScopeSize: 0,
     weekHeader: 'per-month',
     viewRange: getCurrentMonthRange(),
     i18n: {
@@ -187,6 +203,44 @@ function registerDate(created, dateString) {
         return created;
     return Object.assign({}, created, (_a = {}, _a[dateString] = dateElement, _a));
 }
+var offsetFromToday = function (dateString) { return dateOffset(new Date(dateString), new Date()); };
+var today = function (dateElement) { return offsetFromToday(dateElement.dateString) === 0; };
+var tomorrow = function (dateElement) { return offsetFromToday(dateElement.dateString) === 1; };
+var yesterday = function (dateElement) { return offsetFromToday(dateElement.dateString) === -1; };
+var past = function (dateElement) { return offsetFromToday(dateElement.dateString) < 0; };
+var future = function (dateElement) { return offsetFromToday(dateElement.dateString) > 0; };
+/**
+ * Range start date
+ */
+var rangeStart = function (dateElement) {
+    var rangeStart = dateElement.rangeIndex === 0;
+    return rangeStart;
+};
+/**
+ * Range end date
+ */
+var rangeEnd = function (dateElement) {
+    var rangeIndex = dateElement.rangeIndex, rangeEndIndex = dateElement.rangeEndIndex;
+    return (rangeEndIndex > 0 && rangeIndex === rangeEndIndex);
+};
+/**
+ * A connector is a date between date start and date end
+ * in a range select mode.
+ */
+var connector = function (dateElement) {
+    var isConnector = dateElement.rangeIndex > 0 && (dateElement.rangeEndIndex !== dateElement.rangeIndex);
+    return isConnector;
+};
+var tags = {
+    today: today,
+    rangeStart: rangeStart,
+    rangeEnd: rangeEnd,
+    connector: connector,
+    tomorrow: tomorrow,
+    yesterday: yesterday,
+    past: past,
+    future: future
+};
 function renderDate(date) {
     var _this = this;
     var onChange = function (e) {
@@ -232,47 +286,6 @@ function renderContainer(dates, config) {
         ])
     ]);
 }
-var offsetFromToday = function (dateString) { return dateOffset(new Date(dateString), new Date()); };
-var today = function (dateElement) {
-    var isToday = offsetFromToday(dateElement.dateString) === 0;
-    return isToday;
-};
-var tomorrow = function (dateElement) { return offsetFromToday(dateElement.dateString) === 1; };
-var yesterday = function (dateElement) { return offsetFromToday(dateElement.dateString) === -1; };
-var past = function (dateElement) { return offsetFromToday(dateElement.dateString) < 0; };
-var future = function (dateElement) { return offsetFromToday(dateElement.dateString) > 0; };
-/**
- * Range start date
- */
-var rangeStart = function (dateElement) {
-    var rangeStart = dateElement.rangeIndex === 0;
-    return rangeStart;
-};
-/**
- * Range end date
- */
-var rangeEnd = function (dateElement) {
-    var rangeIndex = dateElement.rangeIndex, rangeEndIndex = dateElement.rangeEndIndex;
-    return (rangeEndIndex > 0 && rangeIndex === rangeEndIndex);
-};
-/**
- * A connector is a date between date start and date end
- * in a range select mode.
- */
-var connector = function (dateElement) {
-    var isConnector = dateElement.rangeIndex > 0 && (dateElement.rangeEndIndex !== dateElement.rangeIndex);
-    return isConnector;
-};
-var tags = {
-    today: today,
-    rangeStart: rangeStart,
-    rangeEnd: rangeEnd,
-    connector: connector,
-    tomorrow: tomorrow,
-    yesterday: yesterday,
-    past: past,
-    future: future
-};
 var DatepickerPlus = /** @class */ (function () {
     function DatepickerPlus(hostRef) {
         var _this = this;
@@ -289,13 +302,18 @@ var DatepickerPlus = /** @class */ (function () {
         /** DISABLED */
         ];
         this.viewList = [];
+        this.activeScope = null;
+        this.unfoldDisabledList = function (disabled) {
+            if (!disabled.length)
+                return [];
+            return disabled.map(function (tag) { return _this.unfoldTag(tag, tags); }).reduce(function (p, n) { return p.concat(n); });
+        };
         this.patchConfigLists = function () {
             var _a = DEFAULT_CONFIG.i18n, default_months = _a.months, default_weekDays = _a.weekDays;
             var _b = _this.plusConfig.i18n, months = _b.months, weekDays = _b.weekDays;
             _this.plusConfig.i18n.months = patchArray(months, default_months);
             _this.plusConfig.i18n.weekDays = patchArray(weekDays, default_weekDays);
         };
-        // mutable(this.selected, this.disabled, this.viewElements)
         this.select = function (dateString) {
             var selectMode = _this.plusConfig.selectMode;
             var selectList = [];
@@ -306,7 +324,10 @@ var DatepickerPlus = /** @class */ (function () {
                 selectList = _this.selected.concat([dateString]);
             }
             else if (selectMode === 'range') {
-                if (_this.selected.length === 1) {
+                if (_this.selected.includes(dateString)) {
+                    selectList = [];
+                }
+                else if (_this.selected.length === 1) {
                     selectList = unfoldRange(_this.selected[0], dateString);
                 }
                 else {
@@ -316,6 +337,15 @@ var DatepickerPlus = /** @class */ (function () {
             var hasDisabled = _this.checkIfHasDisabled(selectList, _this.disabled);
             if (hasDisabled)
                 return _this.viewElements;
+            if (selectMode === 'range') {
+                if (!_this.activeScope) {
+                    _this.activeScope = _this.generateScope(_this.viewElements, _this.disabled);
+                    _this.activeScope.activate(dateString, _this.plusConfig.selectScopeSize);
+                }
+                else {
+                    _this.activeScope.deactivate();
+                }
+            }
             var selectedViewElements = _this.selectMultipleDates(selectList, _this.viewElements);
             _this.viewElements = _this.updateTags(tags, selectedViewElements);
             _this.selected = selectList;
@@ -323,12 +353,15 @@ var DatepickerPlus = /** @class */ (function () {
             if (selectMode === 'range' && _this.selected.length > 1)
                 _this.onRangeSelect.emit(_this.selected);
         };
-        // mutable(this.selected)
         this.deselect = function (dateString) {
             var selectMode = _this.plusConfig.selectMode;
             var selectList = [];
             if (selectMode === 'multiple') {
                 selectList = _this.selected.filter(function (s) { return s !== dateString; });
+            }
+            if (selectMode === 'range') {
+                if (_this.activeScope)
+                    _this.activeScope.deactivate();
             }
             _this.viewElements = _this.selectMultipleDates(selectList, _this.viewElements);
             _this.selected = selectList;
@@ -350,13 +383,12 @@ var DatepickerPlus = /** @class */ (function () {
         }); });
     };
     DatepickerPlus.prototype.componentWillLoad = function () {
-        var _this = this;
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
         this.patchConfigLists();
         this.viewList = this.createViewList(this.plusConfig.viewRange);
-        this.viewElements = this.updateTags(tags, this.viewElements);
-        this.plusConfig.disabled = this.plusConfig.disabled.map(function (tag) { return _this.unfoldTag(tag, tags); }).reduce(function (p, n) { return p.concat(n); });
-        this.viewElements = this.disableMultipleDates(this.plusConfig.disabled, this.viewElements);
+        this.updateTags(tags, this.viewElements);
+        this.plusConfig.disabled = this.unfoldDisabledList(this.plusConfig.disabled);
+        this.disableMultipleDates(this.plusConfig.disabled, this.viewElements);
         this.plusConfig.selected.forEach(this.select);
     };
     DatepickerPlus.prototype.createViewList = function (_a) {
@@ -371,6 +403,33 @@ var DatepickerPlus = /** @class */ (function () {
             _this.registered = registered;
         }); });
     };
+    DatepickerPlus.prototype.generateScope = function (viewElements, disabledCache) {
+        var _this = this;
+        var disabled = [];
+        return {
+            activate: function (dateString, scopeSize) {
+                console.log('ACTIVATE SCOPE...');
+                var scopeRange = getScopeRange(dateString, scopeSize);
+                return viewElements.map(function (month) { return month.map(function (dateElement) {
+                    var inScope = dateStringInRange(dateElement.dateString, scopeRange);
+                    if (inScope) {
+                        dateElement.disabled = false;
+                    }
+                    else {
+                        dateElement.disabled = true;
+                        _this.disabled.push(dateElement.dateString);
+                    }
+                    _this.disabled = disabled;
+                    return dateElement;
+                }); });
+            },
+            deactivate: function () {
+                var disabled = _this.disableMultipleDates(disabledCache, _this.viewElements);
+                _this.activeScope = null;
+                return disabled;
+            }
+        };
+    };
     DatepickerPlus.prototype.checkIfHasDisabled = function (selected, disabled) {
         var map = {};
         disabled.forEach(function (d) { return map[d] = true; });
@@ -384,7 +443,6 @@ var DatepickerPlus = /** @class */ (function () {
             return dateElement;
         }); });
     };
-    // mutable(this.disabled)
     DatepickerPlus.prototype.disableMultipleDates = function (dateStringList, viewElements) {
         var disabled = [];
         var withDisabled = viewElements.map(function (month) { return month.map(function (dateElement) {
@@ -398,7 +456,6 @@ var DatepickerPlus = /** @class */ (function () {
         return withDisabled;
     };
     DatepickerPlus.prototype.updateTags = function (tags, viewElements) {
-        console.count('TAG UPDATE --------------------------------');
         return viewElements.map(function (month) { return month.map(function (dateElement) {
             for (var tag in tags) {
                 dateElement.tags[tag] = tags[tag](dateElement);

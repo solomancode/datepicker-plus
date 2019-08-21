@@ -1,12 +1,17 @@
-import { Component, Prop, State, Watch, Event, EventEmitter } from '@stencil/core';
+import { Component, Event, EventEmitter, Prop, State, Watch } from '@stencil/core';
 import { DEFAULT_CONFIG, IMonth, IWeekDay, SelectMode } from './config';
 import { IDateElement, registerDate } from './registerDate';
+import { TagPredicate, tags } from './tags';
 import { renderContainer } from './templates';
-import { groupByMonth, patchArray, unfoldRange } from './utils';
-import { tags, TagPredicate } from './tags';
+import { dateStringInRange, getScopeRange, groupByMonth, patchArray, unfoldRange } from './utils';
 
 export type DateString = string
 export type WeekHeader = 'single' | 'per-month'
+
+export interface IScopeController {
+  activate: (dateString: DateString, scopeSize: number) => IDateElement[][]
+  deactivate: () => IDateElement[][]
+}
 
 export interface IPlusConfig {
   selectMode?: SelectMode
@@ -14,7 +19,7 @@ export interface IPlusConfig {
   selected  ?: DateString[]
   disabled  ?: DateString[]
   weekHeader?: WeekHeader
-  selectScope?: number // in days
+  selectScopeSize?: number // in days
   stylesheetUrl ?: string
   i18n?: {
     weekDays?: IWeekDay[]
@@ -51,6 +56,8 @@ export class DatepickerPlus {
     /** ...MONTHS */
   ] = []
 
+  public activeScope: IScopeController = null
+  
   @Event() onDateSelect: EventEmitter<DateString[]>
   @Event() onDateDeselect: EventEmitter<DateString[]>
   @Event() onRangeSelect: EventEmitter<DateString[]>
@@ -69,10 +76,15 @@ export class DatepickerPlus {
     this.plusConfig = { ...DEFAULT_CONFIG, ...this.plusConfig }
     this.patchConfigLists()
     this.viewList = this.createViewList(this.plusConfig.viewRange)
-    this.viewElements = this.updateTags(tags, this.viewElements)
-    this.plusConfig.disabled = this.plusConfig.disabled.map(tag => this.unfoldTag(tag, tags)).reduce((p,n)=>[...p,...n])
-    this.viewElements = this.disableMultipleDates(this.plusConfig.disabled, this.viewElements)
+    this.updateTags(tags, this.viewElements)
+    this.plusConfig.disabled = this.unfoldDisabledList(this.plusConfig.disabled)
+    this.disableMultipleDates(this.plusConfig.disabled, this.viewElements)
     this.plusConfig.selected.forEach(this.select)
+  }
+
+  private unfoldDisabledList = (disabled: DateString[]) => {
+    if (!disabled.length) return [];
+    return disabled.map(tag => this.unfoldTag(tag, tags)).reduce((p,n)=>[...p,...n])
   }
 
   private patchConfigLists = () => {
@@ -94,7 +106,6 @@ export class DatepickerPlus {
     }))
   }
 
-  // mutable(this.selected, this.disabled, this.viewElements)
   select = (dateString: DateString) => {
     const { selectMode } = this.plusConfig
     let selectList = []
@@ -103,7 +114,9 @@ export class DatepickerPlus {
     } else if (selectMode === 'multiple') {
       selectList = [...this.selected, dateString]
     } else if (selectMode === 'range') {
-      if (this.selected.length === 1) {
+      if (this.selected.includes(dateString)) {
+        selectList = []
+      } else if (this.selected.length === 1) {
         selectList = unfoldRange(this.selected[0], dateString)
       } else {
         selectList = [dateString]
@@ -111,26 +124,64 @@ export class DatepickerPlus {
     }
     const hasDisabled = this.checkIfHasDisabled(selectList, this.disabled);
     if (hasDisabled) return this.viewElements;
+    if (selectMode==='range') {
+      if (!this.activeScope) {
+        this.activeScope = this.generateScope(this.viewElements, this.disabled)
+        this.activeScope.activate(dateString, this.plusConfig.selectScopeSize)
+      } else {
+        this.activeScope.deactivate()
+      }
+    }
+
     const selectedViewElements = this.selectMultipleDates(
       selectList, this.viewElements
     )
+    
     this.viewElements = this.updateTags(tags, selectedViewElements)
     this.selected = selectList
     this.onDateSelect.emit(this.selected)
     if (selectMode==='range' && this.selected.length > 1) this.onRangeSelect.emit(this.selected)
   }
 
-  // mutable(this.selected)
   deselect = (dateString: DateString) => {
     const { selectMode } = this.plusConfig
     let selectList = []
     if (selectMode === 'multiple') {
       selectList = this.selected.filter(s=>s!==dateString)
     }
+    if (selectMode === 'range') {
+      if (this.activeScope) this.activeScope.deactivate()
+    }
     this.viewElements = this.selectMultipleDates(
       selectList, this.viewElements
     )
     this.selected = selectList
+  }
+
+  generateScope(viewElements: IDateElement[][], disabledCache: DateString[]): IScopeController {
+    let disabled = []
+    return {
+      activate: (dateString: DateString, scopeSize: number) => {
+        console.log('ACTIVATE SCOPE...')
+        const scopeRange = getScopeRange(dateString, scopeSize)
+        return viewElements.map(month => month.map((dateElement) => {
+          const inScope = dateStringInRange(dateElement.dateString, scopeRange)
+          if (inScope) {
+            dateElement.disabled = false
+          } else {
+            dateElement.disabled = true
+            this.disabled.push(dateElement.dateString)
+          }
+          this.disabled = disabled;
+          return dateElement
+        }))
+      },
+      deactivate: () => {
+        const disabled = this.disableMultipleDates(disabledCache, this.viewElements)
+        this.activeScope = null;
+        return disabled
+      }
+    }
   }
   
   checkIfHasDisabled(selected: DateString[], disabled: DateString[]) {
@@ -148,7 +199,6 @@ export class DatepickerPlus {
     }) )
   }
 
-  // mutable(this.disabled)
   disableMultipleDates(dateStringList: DateString[], viewElements: IDateElement[][]) {
     let disabled = []
     const withDisabled = viewElements.map(month => month.map(dateElement => {
@@ -169,7 +219,6 @@ export class DatepickerPlus {
   }
 
   updateTags(tags: {[key: string]: TagPredicate}, viewElements: IDateElement[][]) {
-    console.count('TAG UPDATE --------------------------------')
     return viewElements.map(month => month.map((dateElement) => {
       for (const tag in tags) {
         dateElement.tags[tag] = tags[tag](dateElement)

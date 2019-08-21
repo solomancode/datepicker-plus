@@ -65,7 +65,7 @@ export const DEFAULT_CONFIG: IPlusConfig = {
     selectMode: 'range',
     selected: [],
     disabled: [],
-    selectScope: 0,
+    selectScopeSize: 0,
     weekHeader: 'per-month',
     viewRange: getCurrentMonthRange() as [DateString, DateString],
     i18n: {

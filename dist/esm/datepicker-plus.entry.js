@@ -24,6 +24,13 @@ const getNextDay = (date) => {
     nextDay.setDate(nextDay.getDate() + 1);
     return isStringDate ? dateToString(nextDay) : nextDay;
 };
+const dateStringInRange = (dateString, dateRange) => {
+    const [start, end] = sortDates(dateRange);
+    const targetDate = new Date(dateString);
+    const startOffset = dateOffset(targetDate, new Date(start));
+    const endOffset = dateOffset(targetDate, new Date(end));
+    return startOffset >= 0 && endOffset <= 0;
+};
 const getCurrentMonthRange = () => {
     const date = new Date();
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -95,6 +102,15 @@ const monthToWeeks = (month) => {
     }
     return weeks;
 };
+const getScopeRange = (scopeCenter, scopeSize) => {
+    const start = new Date(scopeCenter);
+    const startDay = start.getDate();
+    start.setDate(startDay - scopeSize);
+    const end = new Date(scopeCenter);
+    const endDate = end.getDate();
+    end.setDate(endDate + scopeSize);
+    return [start, end].map(date => dateToString(date));
+};
 const generateDateClass = (dateElement) => {
     let tags = Object.keys(dateElement.tags);
     const classes = [
@@ -161,7 +177,7 @@ const DEFAULT_CONFIG = {
     selectMode: 'range',
     selected: [],
     disabled: [],
-    selectScope: 0,
+    selectScopeSize: 0,
     weekHeader: 'per-month',
     viewRange: getCurrentMonthRange(),
     i18n: {
@@ -187,6 +203,45 @@ function registerDate(created, dateString) {
         return created;
     return Object.assign({}, created, { [dateString]: dateElement });
 }
+
+const offsetFromToday = (dateString) => dateOffset(new Date(dateString), new Date());
+const today = (dateElement) => offsetFromToday(dateElement.dateString) === 0;
+const tomorrow = (dateElement) => offsetFromToday(dateElement.dateString) === 1;
+const yesterday = (dateElement) => offsetFromToday(dateElement.dateString) === -1;
+const past = (dateElement) => offsetFromToday(dateElement.dateString) < 0;
+const future = (dateElement) => offsetFromToday(dateElement.dateString) > 0;
+/**
+ * Range start date
+ */
+const rangeStart = (dateElement) => {
+    const rangeStart = dateElement.rangeIndex === 0;
+    return rangeStart;
+};
+/**
+ * Range end date
+ */
+const rangeEnd = (dateElement) => {
+    const { rangeIndex, rangeEndIndex } = dateElement;
+    return (rangeEndIndex > 0 && rangeIndex === rangeEndIndex);
+};
+/**
+ * A connector is a date between date start and date end
+ * in a range select mode.
+ */
+const connector = (dateElement) => {
+    const isConnector = dateElement.rangeIndex > 0 && (dateElement.rangeEndIndex !== dateElement.rangeIndex);
+    return isConnector;
+};
+const tags = {
+    today,
+    rangeStart,
+    rangeEnd,
+    connector,
+    tomorrow,
+    yesterday,
+    past,
+    future
+};
 
 function renderDate(date) {
     const onChange = (e) => {
@@ -240,48 +295,6 @@ function renderContainer(dates, config) {
     ]);
 }
 
-const offsetFromToday = (dateString) => dateOffset(new Date(dateString), new Date());
-const today = (dateElement) => {
-    const isToday = offsetFromToday(dateElement.dateString) === 0;
-    return isToday;
-};
-const tomorrow = (dateElement) => offsetFromToday(dateElement.dateString) === 1;
-const yesterday = (dateElement) => offsetFromToday(dateElement.dateString) === -1;
-const past = (dateElement) => offsetFromToday(dateElement.dateString) < 0;
-const future = (dateElement) => offsetFromToday(dateElement.dateString) > 0;
-/**
- * Range start date
- */
-const rangeStart = (dateElement) => {
-    const rangeStart = dateElement.rangeIndex === 0;
-    return rangeStart;
-};
-/**
- * Range end date
- */
-const rangeEnd = (dateElement) => {
-    const { rangeIndex, rangeEndIndex } = dateElement;
-    return (rangeEndIndex > 0 && rangeIndex === rangeEndIndex);
-};
-/**
- * A connector is a date between date start and date end
- * in a range select mode.
- */
-const connector = (dateElement) => {
-    const isConnector = dateElement.rangeIndex > 0 && (dateElement.rangeEndIndex !== dateElement.rangeIndex);
-    return isConnector;
-};
-const tags = {
-    today,
-    rangeStart,
-    rangeEnd,
-    connector,
-    tomorrow,
-    yesterday,
-    past,
-    future
-};
-
 class DatepickerPlus {
     constructor(hostRef) {
         registerInstance(this, hostRef);
@@ -297,13 +310,18 @@ class DatepickerPlus {
         /** DISABLED */
         ];
         this.viewList = [];
+        this.activeScope = null;
+        this.unfoldDisabledList = (disabled) => {
+            if (!disabled.length)
+                return [];
+            return disabled.map(tag => this.unfoldTag(tag, tags)).reduce((p, n) => [...p, ...n]);
+        };
         this.patchConfigLists = () => {
             const { months: default_months, weekDays: default_weekDays } = DEFAULT_CONFIG.i18n;
             const { months, weekDays } = this.plusConfig.i18n;
             this.plusConfig.i18n.months = patchArray(months, default_months);
             this.plusConfig.i18n.weekDays = patchArray(weekDays, default_weekDays);
         };
-        // mutable(this.selected, this.disabled, this.viewElements)
         this.select = (dateString) => {
             const { selectMode } = this.plusConfig;
             let selectList = [];
@@ -314,7 +332,10 @@ class DatepickerPlus {
                 selectList = [...this.selected, dateString];
             }
             else if (selectMode === 'range') {
-                if (this.selected.length === 1) {
+                if (this.selected.includes(dateString)) {
+                    selectList = [];
+                }
+                else if (this.selected.length === 1) {
                     selectList = unfoldRange(this.selected[0], dateString);
                 }
                 else {
@@ -324,6 +345,15 @@ class DatepickerPlus {
             const hasDisabled = this.checkIfHasDisabled(selectList, this.disabled);
             if (hasDisabled)
                 return this.viewElements;
+            if (selectMode === 'range') {
+                if (!this.activeScope) {
+                    this.activeScope = this.generateScope(this.viewElements, this.disabled);
+                    this.activeScope.activate(dateString, this.plusConfig.selectScopeSize);
+                }
+                else {
+                    this.activeScope.deactivate();
+                }
+            }
             const selectedViewElements = this.selectMultipleDates(selectList, this.viewElements);
             this.viewElements = this.updateTags(tags, selectedViewElements);
             this.selected = selectList;
@@ -331,12 +361,15 @@ class DatepickerPlus {
             if (selectMode === 'range' && this.selected.length > 1)
                 this.onRangeSelect.emit(this.selected);
         };
-        // mutable(this.selected)
         this.deselect = (dateString) => {
             const { selectMode } = this.plusConfig;
             let selectList = [];
             if (selectMode === 'multiple') {
                 selectList = this.selected.filter(s => s !== dateString);
+            }
+            if (selectMode === 'range') {
+                if (this.activeScope)
+                    this.activeScope.deactivate();
             }
             this.viewElements = this.selectMultipleDates(selectList, this.viewElements);
             this.selected = selectList;
@@ -360,9 +393,9 @@ class DatepickerPlus {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
         this.patchConfigLists();
         this.viewList = this.createViewList(this.plusConfig.viewRange);
-        this.viewElements = this.updateTags(tags, this.viewElements);
-        this.plusConfig.disabled = this.plusConfig.disabled.map(tag => this.unfoldTag(tag, tags)).reduce((p, n) => [...p, ...n]);
-        this.viewElements = this.disableMultipleDates(this.plusConfig.disabled, this.viewElements);
+        this.updateTags(tags, this.viewElements);
+        this.plusConfig.disabled = this.unfoldDisabledList(this.plusConfig.disabled);
+        this.disableMultipleDates(this.plusConfig.disabled, this.viewElements);
         this.plusConfig.selected.forEach(this.select);
     }
     createViewList([start, end]) {
@@ -374,6 +407,32 @@ class DatepickerPlus {
             const registered = registerDate(this.registered, dateString);
             this.registered = registered;
         }));
+    }
+    generateScope(viewElements, disabledCache) {
+        let disabled = [];
+        return {
+            activate: (dateString, scopeSize) => {
+                console.log('ACTIVATE SCOPE...');
+                const scopeRange = getScopeRange(dateString, scopeSize);
+                return viewElements.map(month => month.map((dateElement) => {
+                    const inScope = dateStringInRange(dateElement.dateString, scopeRange);
+                    if (inScope) {
+                        dateElement.disabled = false;
+                    }
+                    else {
+                        dateElement.disabled = true;
+                        this.disabled.push(dateElement.dateString);
+                    }
+                    this.disabled = disabled;
+                    return dateElement;
+                }));
+            },
+            deactivate: () => {
+                const disabled = this.disableMultipleDates(disabledCache, this.viewElements);
+                this.activeScope = null;
+                return disabled;
+            }
+        };
     }
     checkIfHasDisabled(selected, disabled) {
         const map = {};
@@ -388,7 +447,6 @@ class DatepickerPlus {
             return dateElement;
         }));
     }
-    // mutable(this.disabled)
     disableMultipleDates(dateStringList, viewElements) {
         let disabled = [];
         const withDisabled = viewElements.map(month => month.map(dateElement => {
@@ -402,7 +460,6 @@ class DatepickerPlus {
         return withDisabled;
     }
     updateTags(tags, viewElements) {
-        console.count('TAG UPDATE --------------------------------');
         return viewElements.map(month => month.map((dateElement) => {
             for (const tag in tags) {
                 dateElement.tags[tag] = tags[tag](dateElement);

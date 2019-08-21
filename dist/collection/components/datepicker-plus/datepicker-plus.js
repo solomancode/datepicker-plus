@@ -1,8 +1,8 @@
 import { DEFAULT_CONFIG } from './config';
 import { registerDate } from './registerDate';
-import { renderContainer } from './templates';
-import { groupByMonth, patchArray, unfoldRange } from './utils';
 import { tags } from './tags';
+import { renderContainer } from './templates';
+import { dateStringInRange, getScopeRange, groupByMonth, patchArray, unfoldRange } from './utils';
 export class DatepickerPlus {
     constructor() {
         this.plusConfig = DEFAULT_CONFIG;
@@ -17,13 +17,18 @@ export class DatepickerPlus {
         /** DISABLED */
         ];
         this.viewList = [];
+        this.activeScope = null;
+        this.unfoldDisabledList = (disabled) => {
+            if (!disabled.length)
+                return [];
+            return disabled.map(tag => this.unfoldTag(tag, tags)).reduce((p, n) => [...p, ...n]);
+        };
         this.patchConfigLists = () => {
             const { months: default_months, weekDays: default_weekDays } = DEFAULT_CONFIG.i18n;
             const { months, weekDays } = this.plusConfig.i18n;
             this.plusConfig.i18n.months = patchArray(months, default_months);
             this.plusConfig.i18n.weekDays = patchArray(weekDays, default_weekDays);
         };
-        // mutable(this.selected, this.disabled, this.viewElements)
         this.select = (dateString) => {
             const { selectMode } = this.plusConfig;
             let selectList = [];
@@ -34,7 +39,10 @@ export class DatepickerPlus {
                 selectList = [...this.selected, dateString];
             }
             else if (selectMode === 'range') {
-                if (this.selected.length === 1) {
+                if (this.selected.includes(dateString)) {
+                    selectList = [];
+                }
+                else if (this.selected.length === 1) {
                     selectList = unfoldRange(this.selected[0], dateString);
                 }
                 else {
@@ -44,6 +52,15 @@ export class DatepickerPlus {
             const hasDisabled = this.checkIfHasDisabled(selectList, this.disabled);
             if (hasDisabled)
                 return this.viewElements;
+            if (selectMode === 'range') {
+                if (!this.activeScope) {
+                    this.activeScope = this.generateScope(this.viewElements, this.disabled);
+                    this.activeScope.activate(dateString, this.plusConfig.selectScopeSize);
+                }
+                else {
+                    this.activeScope.deactivate();
+                }
+            }
             const selectedViewElements = this.selectMultipleDates(selectList, this.viewElements);
             this.viewElements = this.updateTags(tags, selectedViewElements);
             this.selected = selectList;
@@ -51,12 +68,15 @@ export class DatepickerPlus {
             if (selectMode === 'range' && this.selected.length > 1)
                 this.onRangeSelect.emit(this.selected);
         };
-        // mutable(this.selected)
         this.deselect = (dateString) => {
             const { selectMode } = this.plusConfig;
             let selectList = [];
             if (selectMode === 'multiple') {
                 selectList = this.selected.filter(s => s !== dateString);
+            }
+            if (selectMode === 'range') {
+                if (this.activeScope)
+                    this.activeScope.deactivate();
             }
             this.viewElements = this.selectMultipleDates(selectList, this.viewElements);
             this.selected = selectList;
@@ -77,9 +97,9 @@ export class DatepickerPlus {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
         this.patchConfigLists();
         this.viewList = this.createViewList(this.plusConfig.viewRange);
-        this.viewElements = this.updateTags(tags, this.viewElements);
-        this.plusConfig.disabled = this.plusConfig.disabled.map(tag => this.unfoldTag(tag, tags)).reduce((p, n) => [...p, ...n]);
-        this.viewElements = this.disableMultipleDates(this.plusConfig.disabled, this.viewElements);
+        this.updateTags(tags, this.viewElements);
+        this.plusConfig.disabled = this.unfoldDisabledList(this.plusConfig.disabled);
+        this.disableMultipleDates(this.plusConfig.disabled, this.viewElements);
         this.plusConfig.selected.forEach(this.select);
     }
     createViewList([start, end]) {
@@ -91,6 +111,32 @@ export class DatepickerPlus {
             const registered = registerDate(this.registered, dateString);
             this.registered = registered;
         }));
+    }
+    generateScope(viewElements, disabledCache) {
+        let disabled = [];
+        return {
+            activate: (dateString, scopeSize) => {
+                console.log('ACTIVATE SCOPE...');
+                const scopeRange = getScopeRange(dateString, scopeSize);
+                return viewElements.map(month => month.map((dateElement) => {
+                    const inScope = dateStringInRange(dateElement.dateString, scopeRange);
+                    if (inScope) {
+                        dateElement.disabled = false;
+                    }
+                    else {
+                        dateElement.disabled = true;
+                        this.disabled.push(dateElement.dateString);
+                    }
+                    this.disabled = disabled;
+                    return dateElement;
+                }));
+            },
+            deactivate: () => {
+                const disabled = this.disableMultipleDates(disabledCache, this.viewElements);
+                this.activeScope = null;
+                return disabled;
+            }
+        };
     }
     checkIfHasDisabled(selected, disabled) {
         const map = {};
@@ -105,7 +151,6 @@ export class DatepickerPlus {
             return dateElement;
         }));
     }
-    // mutable(this.disabled)
     disableMultipleDates(dateStringList, viewElements) {
         let disabled = [];
         const withDisabled = viewElements.map(month => month.map(dateElement => {
@@ -119,7 +164,6 @@ export class DatepickerPlus {
         return withDisabled;
     }
     updateTags(tags, viewElements) {
-        console.count('TAG UPDATE --------------------------------');
         return viewElements.map(month => month.map((dateElement) => {
             for (const tag in tags) {
                 dateElement.tags[tag] = tags[tag](dateElement);

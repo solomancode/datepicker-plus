@@ -6,11 +6,7 @@ export type TagPredicate = (dateElement: IDateElement) => boolean
 
 const offsetFromToday = (dateString: DateString) => dateOffset(new Date(dateString), new Date())
 
-const today: TagPredicate = (dateElement: IDateElement) => {
-    const isToday = offsetFromToday(dateElement.dateString) === 0;
-    return isToday
-}
-
+const today: TagPredicate = (dateElement: IDateElement) => offsetFromToday(dateElement.dateString) === 0;
 const tomorrow: TagPredicate = (dateElement: IDateElement) => offsetFromToday(dateElement.dateString) === 1;
 const yesterday: TagPredicate = (dateElement: IDateElement) => offsetFromToday(dateElement.dateString) === -1;
 const past: TagPredicate = (dateElement: IDateElement) => offsetFromToday(dateElement.dateString) < 0;

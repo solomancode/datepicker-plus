@@ -38,13 +38,11 @@ export const isSameDate = (date1: Date, date2: Date) => {
 }
 
 export const dateStringInRange = (dateString: string, dateRange: [string, string]) => {
-    const [year, month, day] = getDateComponents(dateString)
-    const [year0, month0, day0] = getDateComponents(dateRange[0])
-    const [year1, month1, day1] = getDateComponents(dateRange[1])
-    if (day < day0 || day > day1) return false;
-    if (month < month0 || month > month1) return false;
-    if (year < year0 || year > year1) return false;
-    return true;
+    const [ start, end ] = sortDates(dateRange)
+    const targetDate = new Date(dateString)
+    const startOffset = dateOffset(targetDate, new Date(start))
+    const endOffset = dateOffset(targetDate, new Date(end))
+    return startOffset >= 0 && endOffset <= 0;
 }
 
 export const getCurrentMonthRange = () => {
@@ -131,6 +129,16 @@ export const monthToWeeks = (month: IDateElement[]) => {
         weeks.push(week)
     }
     return weeks;
+}
+
+export const getScopeRange = (scopeCenter: DateString, scopeSize: number) => {
+    const start = new Date(scopeCenter)
+    const startDay = start.getDate()
+    start.setDate(startDay-scopeSize)
+    const end = new Date(scopeCenter)
+    const endDate = end.getDate()
+    end.setDate(endDate + scopeSize)
+    return [start, end].map(date => dateToString(date)) as [DateString, DateString]
 }
 
 export const generateDateClass = (dateElement: IDateElement) => {

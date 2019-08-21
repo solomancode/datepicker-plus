@@ -47,7 +47,7 @@ export const DEFAULT_CONFIG = {
     selectMode: 'range',
     selected: [],
     disabled: [],
-    selectScope: 0,
+    selectScopeSize: 0,
     weekHeader: 'per-month',
     viewRange: getCurrentMonthRange(),
     i18n: {

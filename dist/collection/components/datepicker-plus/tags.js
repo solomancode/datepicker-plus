@@ -1,9 +1,6 @@
 import { dateOffset } from "./utils";
 const offsetFromToday = (dateString) => dateOffset(new Date(dateString), new Date());
-const today = (dateElement) => {
-    const isToday = offsetFromToday(dateElement.dateString) === 0;
-    return isToday;
-};
+const today = (dateElement) => offsetFromToday(dateElement.dateString) === 0;
 const tomorrow = (dateElement) => offsetFromToday(dateElement.dateString) === 1;
 const yesterday = (dateElement) => offsetFromToday(dateElement.dateString) === -1;
 const past = (dateElement) => offsetFromToday(dateElement.dateString) < 0;
