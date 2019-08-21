@@ -1,4 +1,4 @@
-.dpp-container {
+.dpp {
     font-family: monospace;
 }
 
@@ -7,17 +7,17 @@
     padding: 20px;
 }
 
-.month-header {
+.dpp .month-header {
     text-transform: uppercase;
     font-weight: bold;
     margin-bottom: 5px;
 }
 
-.day.selected.rangeStart {
+.dpp .day.selected.rangeStart {
     background-color: #cddc39;
 }
 
-.day.selected.rangeEnd {
+.dpp .day.selected.rangeEnd {
     background-color: #ff9800;
 }
 
@@ -62,15 +62,15 @@
     background-color: #f8f8f8;
 }
 
-.day.selected {
+.dpp .day.selected {
     background-color: gold;
 }
 
-.day.highlight {
+.dpp .day.highlight {
     background-color: #7e5;
 }
 
-.day.today {
+.dpp .day.today {
     outline: 1px solid #ccc;
 }
 

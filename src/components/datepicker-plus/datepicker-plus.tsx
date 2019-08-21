@@ -124,10 +124,11 @@ export class DatepickerPlus {
     }
     const hasDisabled = this.checkIfHasDisabled(selectList, this.disabled);
     if (hasDisabled) return this.viewElements;
-    if (selectMode==='range') {
+    const scopeSize = this.plusConfig.selectScopeSize
+    if (selectMode==='range' && scopeSize > 0) {
       if (!this.activeScope) {
         this.activeScope = this.generateScope(this.viewElements, this.disabled)
-        this.activeScope.activate(dateString, this.plusConfig.selectScopeSize)
+        this.activeScope.activate(dateString, scopeSize)
       } else {
         this.activeScope.deactivate()
       }
@@ -162,7 +163,6 @@ export class DatepickerPlus {
     let disabled = []
     return {
       activate: (dateString: DateString, scopeSize: number) => {
-        console.log('ACTIVATE SCOPE...')
         const scopeRange = getScopeRange(dateString, scopeSize)
         return viewElements.map(month => month.map((dateElement) => {
           const inScope = dateStringInRange(dateElement.dateString, scopeRange)
@@ -228,7 +228,6 @@ export class DatepickerPlus {
   }
 
   render() {
-    console.count('🎨 RENDER ')
     return renderContainer.call(this, this.viewElements, this.plusConfig)
   }
   

@@ -80,7 +80,7 @@ export function renderContainer(dates: IDateElement[][], config: IPlusConfig) {
         // theme stylesheet
         config.stylesheetUrl ? <link rel="stylesheet" type="text/css" href={config.stylesheetUrl}/> : null,
         // contents
-        <section class="dpp-container" part="dpp-container">
+        <section class={config.stylesheetUrl ? '' : 'dpp'} part="dpp-container">
             {[
                 renderSingleHeader() || null,
                 dates.map((month)=>renderMonth.call(this, month, config))
