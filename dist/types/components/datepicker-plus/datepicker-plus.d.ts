@@ -20,6 +20,7 @@ export interface IPlusConfig {
         weekDays?: IWeekDay[];
         months?: IMonth[];
     };
+    layout?: 'vertical' | 'horizontal';
 }
 export declare class DatepickerPlus {
     plusConfig: IPlusConfig;

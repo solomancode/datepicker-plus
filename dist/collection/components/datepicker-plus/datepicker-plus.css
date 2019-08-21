@@ -2,6 +2,14 @@
     font-family: monospace;
 }
 
+.horizontal {
+    overflow-x: scroll;
+}
+
+.horizontal .month {
+    display: inline-block;
+}
+
 .month {
     border: 1px solid #ccc;
     padding: 20px;

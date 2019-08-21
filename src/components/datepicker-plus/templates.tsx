@@ -63,9 +63,12 @@ export function renderMonthHeader(dayFirst: IDateElement, months: IMonth[]) {
 }
 
 export function renderMonth (month: IDateElement[], config: IPlusConfig) {
+    const styles = config.layout === 'horizontal' ? {
+        width: (window.innerWidth - 60) + 'px'
+    } : {}
     const renderHeader = (i: number) => config.weekHeader === 'per-month' && i === 0;
     return (
-        <section part="month" class={DEFAULT_CLASSES.month}>
+        <section style={styles} part="month" class={DEFAULT_CLASSES.month}>
             { renderMonthHeader(month[0], config.i18n.months) }
             <section class={DEFAULT_CLASSES.monthContent}>
                 { monthToWeeks(month).map( (week, i) => renderWeek.call(this, week, renderHeader(i), config.i18n.weekDays )) }
@@ -75,16 +78,21 @@ export function renderMonth (month: IDateElement[], config: IPlusConfig) {
 }
 
 export function renderContainer(dates: IDateElement[][], config: IPlusConfig) {
+    const styles = config.layout === 'horizontal' ? {
+        width: (window.innerWidth * dates.length) + 'px'
+    } : {}
     const renderSingleHeader = () => config.weekHeader === 'single' && <header class={DEFAULT_CLASSES.singleHeader}>{ renderWeekHeader(config.i18n.weekDays) }</header>;
     return ([
         // theme stylesheet
         config.stylesheetUrl ? <link rel="stylesheet" type="text/css" href={config.stylesheetUrl}/> : null,
         // contents
-        <section class={config.stylesheetUrl ? '' : 'dpp'} part="dpp-container">
-            {[
-                renderSingleHeader() || null,
-                dates.map((month)=>renderMonth.call(this, month, config))
-            ]}
+        <section class={(config.stylesheetUrl ? '' : 'dpp ') + config.layout} part="dpp-container">
+            <section style={styles} class="viewport">
+                {[
+                    renderSingleHeader() || null,
+                    dates.map((month)=>renderMonth.call(this, month, config))
+                ]}
+            </section>
         </section>
     ])
 }

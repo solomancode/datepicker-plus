@@ -19,6 +19,7 @@ export declare const DEFAULT_CLASSES: {
     disabled: string;
     selected: string;
     month: string;
+    months: string;
     monthName: string;
     monthHeader: string;
     monthContent: string;

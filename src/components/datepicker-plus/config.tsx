@@ -46,6 +46,7 @@ export const DEFAULT_CLASSES = {
     disabled: 'disabled',
     selected: 'selected',
     month: 'month',
+    months: 'months',
     monthName: 'month-name',
     monthHeader: 'month-header',
     monthContent: 'month-content',
@@ -71,5 +72,6 @@ export const DEFAULT_CONFIG: IPlusConfig = {
     i18n: {
         months: DEFAULT_MONTHS,
         weekDays: DEFAULT_WEEK_DAYS
-    }
+    },
+    layout: 'vertical'
 }

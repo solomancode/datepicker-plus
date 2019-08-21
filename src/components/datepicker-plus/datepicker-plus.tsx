@@ -25,6 +25,7 @@ export interface IPlusConfig {
     weekDays?: IWeekDay[]
     months?: IMonth[]
   }
+  layout?: 'vertical' | 'horizontal'
 }
 
 @Component({
@@ -80,6 +81,9 @@ export class DatepickerPlus {
     this.plusConfig.disabled = this.unfoldDisabledList(this.plusConfig.disabled)
     this.disableMultipleDates(this.plusConfig.disabled, this.viewElements)
     this.plusConfig.selected.forEach(this.select)
+    if (this.plusConfig.layout==='horizontal') {
+      this.plusConfig.weekHeader = 'per-month'
+    }
   }
 
   private unfoldDisabledList = (disabled: DateString[]) => {
@@ -153,9 +157,10 @@ export class DatepickerPlus {
     if (selectMode === 'range') {
       if (this.activeScope) this.activeScope.deactivate()
     }
-    this.viewElements = this.selectMultipleDates(
+    const selected = this.selectMultipleDates(
       selectList, this.viewElements
     )
+    this.viewElements = this.updateTags(tags, selected)
     this.selected = selectList
   }
 
@@ -193,8 +198,10 @@ export class DatepickerPlus {
   selectMultipleDates(dateStringList: DateString[], viewElements: IDateElement[][]) {
     return viewElements.map(month => month.map((dateElement) => {
       dateElement.checked = dateStringList.includes(dateElement.dateString);
-      dateElement.rangeIndex = dateElement.checked ? dateStringList.indexOf(dateElement.dateString) : null;
-      dateElement.rangeEndIndex = dateElement.checked ? dateStringList.length - 1 : null;
+      if (dateStringList.length > 1) {
+        dateElement.rangeIndex = dateElement.checked ? dateStringList.indexOf(dateElement.dateString) : null;
+        dateElement.rangeEndIndex = dateElement.checked ? dateStringList.length - 1 : null;
+      }
       return dateElement
     }) )
   }
