@@ -46,7 +46,7 @@ export function renderContainer(dates, config) {
         // theme stylesheet
         config.stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: config.stylesheetUrl }) : null,
         // contents
-        h("section", { class: "dpp-container", part: "dpp-container" }, [
+        h("section", { class: config.stylesheetUrl ? '' : 'dpp', part: "dpp-container" }, [
             renderSingleHeader() || null,
             dates.map((month) => renderMonth.call(this, month, config))
         ])

@@ -288,7 +288,7 @@ function renderContainer(dates, config) {
         // theme stylesheet
         config.stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: config.stylesheetUrl }) : null,
         // contents
-        h("section", { class: "dpp-container", part: "dpp-container" }, [
+        h("section", { class: config.stylesheetUrl ? '' : 'dpp', part: "dpp-container" }, [
             renderSingleHeader() || null,
             dates.map((month) => renderMonth.call(this, month, config))
         ])
@@ -345,10 +345,11 @@ class DatepickerPlus {
             const hasDisabled = this.checkIfHasDisabled(selectList, this.disabled);
             if (hasDisabled)
                 return this.viewElements;
-            if (selectMode === 'range') {
+            const scopeSize = this.plusConfig.selectScopeSize;
+            if (selectMode === 'range' && scopeSize > 0) {
                 if (!this.activeScope) {
                     this.activeScope = this.generateScope(this.viewElements, this.disabled);
-                    this.activeScope.activate(dateString, this.plusConfig.selectScopeSize);
+                    this.activeScope.activate(dateString, scopeSize);
                 }
                 else {
                     this.activeScope.deactivate();
@@ -412,7 +413,6 @@ class DatepickerPlus {
         let disabled = [];
         return {
             activate: (dateString, scopeSize) => {
-                console.log('ACTIVATE SCOPE...');
                 const scopeRange = getScopeRange(dateString, scopeSize);
                 return viewElements.map(month => month.map((dateElement) => {
                     const inScope = dateStringInRange(dateElement.dateString, scopeRange);
@@ -468,13 +468,12 @@ class DatepickerPlus {
         }));
     }
     render() {
-        console.count('🎨 RENDER ');
         return renderContainer.call(this, this.viewElements, this.plusConfig);
     }
     static get watchers() { return {
         "viewList": ["updateViewElements"]
     }; }
-    static get style() { return ".dpp-container{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.day.selected.rangeStart{background-color:#cddc39}.day.selected.rangeEnd{background-color:#ff9800}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{position:relative;line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{color:#ccc;background-color:#f8f8f8}.day.selected{background-color:gold}.day.highlight{background-color:#7e5}.day.today{outline:1px solid #ccc}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; }
+    static get style() { return ".dpp{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.dpp .month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.dpp .day.selected.rangeStart{background-color:#cddc39}.dpp .day.selected.rangeEnd{background-color:#ff9800}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{position:relative;line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{color:#ccc;background-color:#f8f8f8}.dpp .day.selected{background-color:gold}.dpp .day.highlight{background-color:#7e5}.dpp .day.today{outline:1px solid #ccc}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; }
 }
 
 export { DatepickerPlus as datepicker_plus };
