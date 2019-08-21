@@ -79,7 +79,8 @@ export class DatepickerPlus {
                 if (this.activeScope)
                     this.activeScope.deactivate();
             }
-            this.viewElements = this.selectMultipleDates(selectList, this.viewElements);
+            const selected = this.selectMultipleDates(selectList, this.viewElements);
+            this.viewElements = this.updateTags(tags, selected);
             this.selected = selectList;
         };
         this.unfoldTag = (tag, tags) => {
@@ -102,6 +103,9 @@ export class DatepickerPlus {
         this.plusConfig.disabled = this.unfoldDisabledList(this.plusConfig.disabled);
         this.disableMultipleDates(this.plusConfig.disabled, this.viewElements);
         this.plusConfig.selected.forEach(this.select);
+        if (this.plusConfig.layout === 'horizontal') {
+            this.plusConfig.weekHeader = 'per-month';
+        }
     }
     createViewList([start, end]) {
         const dates = unfoldRange(start, end);
@@ -146,8 +150,10 @@ export class DatepickerPlus {
     selectMultipleDates(dateStringList, viewElements) {
         return viewElements.map(month => month.map((dateElement) => {
             dateElement.checked = dateStringList.includes(dateElement.dateString);
-            dateElement.rangeIndex = dateElement.checked ? dateStringList.indexOf(dateElement.dateString) : null;
-            dateElement.rangeEndIndex = dateElement.checked ? dateStringList.length - 1 : null;
+            if (dateStringList.length > 1) {
+                dateElement.rangeIndex = dateElement.checked ? dateStringList.indexOf(dateElement.dateString) : null;
+                dateElement.rangeEndIndex = dateElement.checked ? dateStringList.length - 1 : null;
+            }
             return dateElement;
         }));
     }

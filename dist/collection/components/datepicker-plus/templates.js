@@ -35,20 +35,27 @@ export function renderMonthHeader(dayFirst, months) {
         dayFirst.month - 1 === 0 && h("span", { class: DEFAULT_CLASSES.year }, dayFirst.year)));
 }
 export function renderMonth(month, config) {
+    const styles = config.layout === 'horizontal' ? {
+        width: (window.innerWidth - 60) + 'px'
+    } : {};
     const renderHeader = (i) => config.weekHeader === 'per-month' && i === 0;
-    return (h("section", { part: "month", class: DEFAULT_CLASSES.month },
+    return (h("section", { style: styles, part: "month", class: DEFAULT_CLASSES.month },
         renderMonthHeader(month[0], config.i18n.months),
         h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map((week, i) => renderWeek.call(this, week, renderHeader(i), config.i18n.weekDays)))));
 }
 export function renderContainer(dates, config) {
+    const styles = config.layout === 'horizontal' ? {
+        width: (window.innerWidth * dates.length) + 'px'
+    } : {};
     const renderSingleHeader = () => config.weekHeader === 'single' && h("header", { class: DEFAULT_CLASSES.singleHeader }, renderWeekHeader(config.i18n.weekDays));
     return ([
         // theme stylesheet
         config.stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: config.stylesheetUrl }) : null,
         // contents
-        h("section", { class: config.stylesheetUrl ? '' : 'dpp', part: "dpp-container" }, [
-            renderSingleHeader() || null,
-            dates.map((month) => renderMonth.call(this, month, config))
-        ])
+        h("section", { class: (config.stylesheetUrl ? '' : 'dpp ') + config.layout, part: "dpp-container" },
+            h("section", { style: styles, class: "viewport" }, [
+                renderSingleHeader() || null,
+                dates.map((month) => renderMonth.call(this, month, config))
+            ]))
     ]);
 }

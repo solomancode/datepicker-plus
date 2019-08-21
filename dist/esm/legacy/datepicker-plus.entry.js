@@ -161,6 +161,7 @@ var DEFAULT_CLASSES = {
     disabled: 'disabled',
     selected: 'selected',
     month: 'month',
+    months: 'months',
     monthName: 'month-name',
     monthHeader: 'month-header',
     monthContent: 'month-content',
@@ -183,7 +184,8 @@ var DEFAULT_CONFIG = {
     i18n: {
         months: DEFAULT_MONTHS,
         weekDays: DEFAULT_WEEK_DAYS
-    }
+    },
+    layout: 'vertical'
 };
 function registerDate(created, dateString) {
     var _a;
@@ -270,20 +272,26 @@ function renderMonthHeader(dayFirst, months) {
 }
 function renderMonth(month, config) {
     var _this = this;
+    var styles = config.layout === 'horizontal' ? {
+        width: (window.innerWidth - 60) + 'px'
+    } : {};
     var renderHeader = function (i) { return config.weekHeader === 'per-month' && i === 0; };
-    return (h("section", { part: "month", class: DEFAULT_CLASSES.month }, renderMonthHeader(month[0], config.i18n.months), h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map(function (week, i) { return renderWeek.call(_this, week, renderHeader(i), config.i18n.weekDays); }))));
+    return (h("section", { style: styles, part: "month", class: DEFAULT_CLASSES.month }, renderMonthHeader(month[0], config.i18n.months), h("section", { class: DEFAULT_CLASSES.monthContent }, monthToWeeks(month).map(function (week, i) { return renderWeek.call(_this, week, renderHeader(i), config.i18n.weekDays); }))));
 }
 function renderContainer(dates, config) {
     var _this = this;
+    var styles = config.layout === 'horizontal' ? {
+        width: (window.innerWidth * dates.length) + 'px'
+    } : {};
     var renderSingleHeader = function () { return config.weekHeader === 'single' && h("header", { class: DEFAULT_CLASSES.singleHeader }, renderWeekHeader(config.i18n.weekDays)); };
     return ([
         // theme stylesheet
         config.stylesheetUrl ? h("link", { rel: "stylesheet", type: "text/css", href: config.stylesheetUrl }) : null,
         // contents
-        h("section", { class: config.stylesheetUrl ? '' : 'dpp', part: "dpp-container" }, [
+        h("section", { class: (config.stylesheetUrl ? '' : 'dpp ') + config.layout, part: "dpp-container" }, h("section", { style: styles, class: "viewport" }, [
             renderSingleHeader() || null,
             dates.map(function (month) { return renderMonth.call(_this, month, config); })
-        ])
+        ]))
     ]);
 }
 var DatepickerPlus = /** @class */ (function () {
@@ -364,7 +372,8 @@ var DatepickerPlus = /** @class */ (function () {
                 if (_this.activeScope)
                     _this.activeScope.deactivate();
             }
-            _this.viewElements = _this.selectMultipleDates(selectList, _this.viewElements);
+            var selected = _this.selectMultipleDates(selectList, _this.viewElements);
+            _this.viewElements = _this.updateTags(tags, selected);
             _this.selected = selectList;
         };
         this.unfoldTag = function (tag, tags) {
@@ -391,6 +400,9 @@ var DatepickerPlus = /** @class */ (function () {
         this.plusConfig.disabled = this.unfoldDisabledList(this.plusConfig.disabled);
         this.disableMultipleDates(this.plusConfig.disabled, this.viewElements);
         this.plusConfig.selected.forEach(this.select);
+        if (this.plusConfig.layout === 'horizontal') {
+            this.plusConfig.weekHeader = 'per-month';
+        }
     };
     DatepickerPlus.prototype.createViewList = function (_a) {
         var start = _a[0], end = _a[1];
@@ -438,8 +450,10 @@ var DatepickerPlus = /** @class */ (function () {
     DatepickerPlus.prototype.selectMultipleDates = function (dateStringList, viewElements) {
         return viewElements.map(function (month) { return month.map(function (dateElement) {
             dateElement.checked = dateStringList.includes(dateElement.dateString);
-            dateElement.rangeIndex = dateElement.checked ? dateStringList.indexOf(dateElement.dateString) : null;
-            dateElement.rangeEndIndex = dateElement.checked ? dateStringList.length - 1 : null;
+            if (dateStringList.length > 1) {
+                dateElement.rangeIndex = dateElement.checked ? dateStringList.indexOf(dateElement.dateString) : null;
+                dateElement.rangeEndIndex = dateElement.checked ? dateStringList.length - 1 : null;
+            }
             return dateElement;
         }); });
     };
@@ -476,7 +490,7 @@ var DatepickerPlus = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(DatepickerPlus, "style", {
-        get: function () { return ".dpp{font-family:monospace}.month{border:1px solid #ccc;padding:20px}.dpp .month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.dpp .day.selected.rangeStart{background-color:#cddc39}.dpp .day.selected.rangeEnd{background-color:#ff9800}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{position:relative;line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{color:#ccc;background-color:#f8f8f8}.dpp .day.selected{background-color:gold}.dpp .day.highlight{background-color:#7e5}.dpp .day.today{outline:1px solid #ccc}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; },
+        get: function () { return ".dpp{font-family:monospace}.horizontal{overflow-x:scroll}.horizontal .month{display:inline-block}.month{border:1px solid #ccc;padding:20px}.dpp .month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.dpp .day.selected.rangeStart{background-color:#cddc39}.dpp .day.selected.rangeEnd{background-color:#ff9800}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{position:relative;line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{color:#ccc;background-color:#f8f8f8}.dpp .day.selected{background-color:gold}.dpp .day.highlight{background-color:#7e5}.dpp .day.today{outline:1px solid #ccc}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; },
         enumerable: true,
         configurable: true
     });
