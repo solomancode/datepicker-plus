@@ -3,13 +3,18 @@ import { IDateElement } from './registerDate';
 import { monthToWeeks, generateDateClass } from './utils';
 import { DEFAULT_CLASSES, IWeekDay, IMonth } from "./config";
 import { IPlusConfig } from './datepicker-plus';
+import { tags } from './tags';
 
 export function renderDate (date: IDateElement) {
     const onChange = (e: any) => {
         return e.target.checked ? this.select(date.dateString) : this.deselect(date.dateString)
     }
+    const genDateClass = () => {
+        this.updateTags(tags, this.viewElements)
+        return generateDateClass(date)
+    }
     return (
-        <time part="day" class={generateDateClass(date)} dateTime={date.dateString}>
+        <time part="day" class={genDateClass()} dateTime={date.dateString}>
             <label>
                 {date.day}
                 <input

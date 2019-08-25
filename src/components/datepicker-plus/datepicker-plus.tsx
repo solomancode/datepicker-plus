@@ -226,12 +226,14 @@ export class DatepickerPlus {
   }
 
   updateTags(tags: {[key: string]: TagPredicate}, viewElements: IDateElement[][]) {
-    return viewElements.map(month => month.map((dateElement) => {
-      for (const tag in tags) {
-        dateElement.tags[tag] = tags[tag](dateElement)
-      }
-      return dateElement
-    }) )
+    if (viewElements) {
+      return viewElements.map(month => month.map((dateElement) => {
+        for (const tag in tags) {
+          dateElement.tags[tag] = tags[tag](dateElement)
+        }
+        return dateElement
+      }) )
+    }
   }
 
   render() {
