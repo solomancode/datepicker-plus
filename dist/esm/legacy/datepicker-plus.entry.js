@@ -248,7 +248,11 @@ function renderDate(date) {
     var onChange = function (e) {
         return e.target.checked ? _this.select(date.dateString) : _this.deselect(date.dateString);
     };
-    return (h("time", { part: "day", class: generateDateClass(date), dateTime: date.dateString }, h("label", null, date.day, h("input", { checked: date.checked, disabled: date.disabled, onChange: onChange.bind(this), class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString }))));
+    var genDateClass = function () {
+        _this.updateTags(tags, _this.viewElements);
+        return generateDateClass(date);
+    };
+    return (h("time", { part: "day", class: genDateClass(), dateTime: date.dateString }, h("label", null, date.day, h("input", { checked: date.checked, disabled: date.disabled, onChange: onChange.bind(this), class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString }))));
 }
 function renderWeekHeader(weekDays) {
     return (h("header", { class: DEFAULT_CLASSES.weekHeader, part: "week-header" }, weekDays.map(function (_a) {
@@ -470,12 +474,14 @@ var DatepickerPlus = /** @class */ (function () {
         return withDisabled;
     };
     DatepickerPlus.prototype.updateTags = function (tags, viewElements) {
-        return viewElements.map(function (month) { return month.map(function (dateElement) {
-            for (var tag in tags) {
-                dateElement.tags[tag] = tags[tag](dateElement);
-            }
-            return dateElement;
-        }); });
+        if (viewElements) {
+            return viewElements.map(function (month) { return month.map(function (dateElement) {
+                for (var tag in tags) {
+                    dateElement.tags[tag] = tags[tag](dateElement);
+                }
+                return dateElement;
+            }); });
+        }
     };
     DatepickerPlus.prototype.render = function () {
         return renderContainer.call(this, this.viewElements, this.plusConfig);

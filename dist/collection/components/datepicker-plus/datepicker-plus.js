@@ -170,12 +170,14 @@ export class DatepickerPlus {
         return withDisabled;
     }
     updateTags(tags, viewElements) {
-        return viewElements.map(month => month.map((dateElement) => {
-            for (const tag in tags) {
-                dateElement.tags[tag] = tags[tag](dateElement);
-            }
-            return dateElement;
-        }));
+        if (viewElements) {
+            return viewElements.map(month => month.map((dateElement) => {
+                for (const tag in tags) {
+                    dateElement.tags[tag] = tags[tag](dateElement);
+                }
+                return dateElement;
+            }));
+        }
     }
     render() {
         return renderContainer.call(this, this.viewElements, this.plusConfig);

@@ -1,11 +1,16 @@
 import { h } from '@stencil/core';
 import { monthToWeeks, generateDateClass } from './utils';
 import { DEFAULT_CLASSES } from "./config";
+import { tags } from './tags';
 export function renderDate(date) {
     const onChange = (e) => {
         return e.target.checked ? this.select(date.dateString) : this.deselect(date.dateString);
     };
-    return (h("time", { part: "day", class: generateDateClass(date), dateTime: date.dateString },
+    const genDateClass = () => {
+        this.updateTags(tags, this.viewElements);
+        return generateDateClass(date);
+    };
+    return (h("time", { part: "day", class: genDateClass(), dateTime: date.dateString },
         h("label", null,
             date.day,
             h("input", { checked: date.checked, disabled: date.disabled, onChange: onChange.bind(this), class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString }))));

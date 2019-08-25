@@ -249,7 +249,11 @@ function renderDate(date) {
     const onChange = (e) => {
         return e.target.checked ? this.select(date.dateString) : this.deselect(date.dateString);
     };
-    return (h("time", { part: "day", class: generateDateClass(date), dateTime: date.dateString },
+    const genDateClass = () => {
+        this.updateTags(tags, this.viewElements);
+        return generateDateClass(date);
+    };
+    return (h("time", { part: "day", class: genDateClass(), dateTime: date.dateString },
         h("label", null,
             date.day,
             h("input", { checked: date.checked, disabled: date.disabled, onChange: onChange.bind(this), class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString }))));
@@ -475,12 +479,14 @@ class DatepickerPlus {
         return withDisabled;
     }
     updateTags(tags, viewElements) {
-        return viewElements.map(month => month.map((dateElement) => {
-            for (const tag in tags) {
-                dateElement.tags[tag] = tags[tag](dateElement);
-            }
-            return dateElement;
-        }));
+        if (viewElements) {
+            return viewElements.map(month => month.map((dateElement) => {
+                for (const tag in tags) {
+                    dateElement.tags[tag] = tags[tag](dateElement);
+                }
+                return dateElement;
+            }));
+        }
     }
     render() {
         return renderContainer.call(this, this.viewElements, this.plusConfig);
