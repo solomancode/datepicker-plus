@@ -73,27 +73,46 @@ export const dateOffset = (date0, date1) => {
 export const patchArray = (target = [], source) => {
     return source.map((itm, i) => target[i] || itm);
 };
-export const groupByMonth = (dateString) => {
-    const map = Object.create({
-        flatten() {
-            const flat = [];
-            for (let index = 1; index <= 12; index++) {
-                if (index in this)
-                    flat.push(map[index]);
+export const groupDates = (dateStringList) => {
+    const group = Object.create({
+        sorted: { years: [], months: {} },
+        // [key: year]: { month: [...days] },
+        toArray() {
+            let sorted = [];
+            this.sorted.years.forEach(year => {
+                const month = Object.values(this[year]);
+                if (month.length)
+                    sorted = [...sorted, ...month];
+            });
+            return sorted;
+        }
+    });
+    dateStringList.forEach(dateString => {
+        const [year, month] = getDateComponents(dateString);
+        if (group.hasOwnProperty(year) === false) {
+            group[year] = {};
+            group.sorted.years.push(year);
+        }
+        if (group[year].hasOwnProperty(month) === false) {
+            group[year][month] = [];
+            if (group.sorted.months.hasOwnProperty(year)) {
+                group.sorted.months[year].push(month);
             }
-            return flat;
+            else {
+                group.sorted.months[year] = [month];
+            }
         }
+        group[year][month].push(dateString);
     });
-    dateString.forEach(dateString => {
-        const [, month] = getDateComponents(dateString);
-        if (month in map) {
-            map[month].push(dateString);
-        }
-        else {
-            map[month] = [dateString];
-        }
-    });
-    return map;
+    group.sorted.years = group.sorted.years.sort((a, b) => a - b);
+    for (const year in group.sorted.months) {
+        group.sorted.months[year] = group.sorted.months[year].sort((a, b) => a - b);
+    }
+    return group;
+};
+export const checkIfValidDateString = (dateString) => {
+    let date = new Date(dateString);
+    return isNaN(date.getDate()) ? false : true;
 };
 export const monthToWeeks = (month) => {
     let week = [];

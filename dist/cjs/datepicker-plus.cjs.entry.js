@@ -66,27 +66,42 @@ const dateOffset = (date0, date1) => {
 const patchArray = (target = [], source) => {
     return source.map((itm, i) => target[i] || itm);
 };
-const groupByMonth = (dateString) => {
-    const map = Object.create({
-        flatten() {
-            const flat = [];
-            for (let index = 1; index <= 12; index++) {
-                if (index in this)
-                    flat.push(map[index]);
+const groupDates = (dateStringList) => {
+    const group = Object.create({
+        sorted: { years: [], months: {} },
+        // [key: year]: { month: [...days] },
+        toArray() {
+            let sorted = [];
+            this.sorted.years.forEach(year => {
+                const month = Object.values(this[year]);
+                if (month.length)
+                    sorted = [...sorted, ...month];
+            });
+            return sorted;
+        }
+    });
+    dateStringList.forEach(dateString => {
+        const [year, month] = getDateComponents(dateString);
+        if (group.hasOwnProperty(year) === false) {
+            group[year] = {};
+            group.sorted.years.push(year);
+        }
+        if (group[year].hasOwnProperty(month) === false) {
+            group[year][month] = [];
+            if (group.sorted.months.hasOwnProperty(year)) {
+                group.sorted.months[year].push(month);
             }
-            return flat;
+            else {
+                group.sorted.months[year] = [month];
+            }
         }
+        group[year][month].push(dateString);
     });
-    dateString.forEach(dateString => {
-        const [, month] = getDateComponents(dateString);
-        if (month in map) {
-            map[month].push(dateString);
-        }
-        else {
-            map[month] = [dateString];
-        }
-    });
-    return map;
+    group.sorted.years = group.sorted.years.sort((a, b) => a - b);
+    for (const year in group.sorted.months) {
+        group.sorted.months[year] = group.sorted.months[year].sort((a, b) => a - b);
+    }
+    return group;
 };
 const monthToWeeks = (month) => {
     let week = [];
@@ -396,7 +411,12 @@ class DatepickerPlus {
         this.unfoldTag = (tag, tags) => {
             if (!(tag in tags))
                 return [tag];
-            return this.viewElements.map((month) => month.filter(dateElement => dateElement.tags[tag] === true)).reduce((p, n) => [...p, ...n]).map(dateElement => dateElement.dateString);
+            if (this.viewElements.length !== 0) {
+                return this.viewElements.map((month) => month.filter(dateElement => dateElement.tags[tag] === true)).reduce((p, n) => [...p, ...n]).map(dateElement => dateElement.dateString);
+            }
+            else {
+                return [];
+            }
         };
         this.onDateSelect = __chunk_1.createEvent(this, "onDateSelect", 7);
         this.onDateDeselect = __chunk_1.createEvent(this, "onDateDeselect", 7);
@@ -422,7 +442,7 @@ class DatepickerPlus {
     }
     createViewList([start, end]) {
         const dates = unfoldRange(start, end);
-        return groupByMonth(dates).flatten();
+        return groupDates(dates).toArray();
     }
     registerViewDates(viewList) {
         return viewList.forEach(month => month.forEach(dateString => {

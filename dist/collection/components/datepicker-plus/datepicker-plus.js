@@ -2,7 +2,7 @@ import { DEFAULT_CONFIG } from './config';
 import { registerDate } from './registerDate';
 import { tags } from './tags';
 import { renderContainer } from './templates';
-import { dateStringInRange, getScopeRange, groupByMonth, patchArray, unfoldRange } from './utils';
+import { dateStringInRange, getScopeRange, groupDates, patchArray, unfoldRange } from './utils';
 export class DatepickerPlus {
     constructor() {
         this.plusConfig = DEFAULT_CONFIG;
@@ -86,7 +86,12 @@ export class DatepickerPlus {
         this.unfoldTag = (tag, tags) => {
             if (!(tag in tags))
                 return [tag];
-            return this.viewElements.map((month) => month.filter(dateElement => dateElement.tags[tag] === true)).reduce((p, n) => [...p, ...n]).map(dateElement => dateElement.dateString);
+            if (this.viewElements.length !== 0) {
+                return this.viewElements.map((month) => month.filter(dateElement => dateElement.tags[tag] === true)).reduce((p, n) => [...p, ...n]).map(dateElement => dateElement.dateString);
+            }
+            else {
+                return [];
+            }
         };
     }
     updateViewElements(next) {
@@ -109,7 +114,7 @@ export class DatepickerPlus {
     }
     createViewList([start, end]) {
         const dates = unfoldRange(start, end);
-        return groupByMonth(dates).flatten();
+        return groupDates(dates).toArray();
     }
     registerViewDates(viewList) {
         return viewList.forEach(month => month.forEach(dateString => {

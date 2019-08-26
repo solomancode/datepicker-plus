@@ -63,27 +63,43 @@ var patchArray = function (target, source) {
     if (target === void 0) { target = []; }
     return source.map(function (itm, i) { return target[i] || itm; });
 };
-var groupByMonth = function (dateString) {
-    var map = Object.create({
-        flatten: function () {
-            var flat = [];
-            for (var index = 1; index <= 12; index++) {
-                if (index in this)
-                    flat.push(map[index]);
+var groupDates = function (dateStringList) {
+    var group = Object.create({
+        sorted: { years: [], months: {} },
+        // [key: year]: { month: [...days] },
+        toArray: function () {
+            var _this = this;
+            var sorted = [];
+            this.sorted.years.forEach(function (year) {
+                var month = Object.values(_this[year]);
+                if (month.length)
+                    sorted = sorted.concat(month);
+            });
+            return sorted;
+        }
+    });
+    dateStringList.forEach(function (dateString) {
+        var _a = getDateComponents(dateString), year = _a[0], month = _a[1];
+        if (group.hasOwnProperty(year) === false) {
+            group[year] = {};
+            group.sorted.years.push(year);
+        }
+        if (group[year].hasOwnProperty(month) === false) {
+            group[year][month] = [];
+            if (group.sorted.months.hasOwnProperty(year)) {
+                group.sorted.months[year].push(month);
             }
-            return flat;
+            else {
+                group.sorted.months[year] = [month];
+            }
         }
+        group[year][month].push(dateString);
     });
-    dateString.forEach(function (dateString) {
-        var _a = getDateComponents(dateString), month = _a[1];
-        if (month in map) {
-            map[month].push(dateString);
-        }
-        else {
-            map[month] = [dateString];
-        }
-    });
-    return map;
+    group.sorted.years = group.sorted.years.sort(function (a, b) { return a - b; });
+    for (var year in group.sorted.months) {
+        group.sorted.months[year] = group.sorted.months[year].sort(function (a, b) { return a - b; });
+    }
+    return group;
 };
 var monthToWeeks = function (month) {
     var week = [];
@@ -383,7 +399,12 @@ var DatepickerPlus = /** @class */ (function () {
         this.unfoldTag = function (tag, tags) {
             if (!(tag in tags))
                 return [tag];
-            return _this.viewElements.map(function (month) { return month.filter(function (dateElement) { return dateElement.tags[tag] === true; }); }).reduce(function (p, n) { return p.concat(n); }).map(function (dateElement) { return dateElement.dateString; });
+            if (_this.viewElements.length !== 0) {
+                return _this.viewElements.map(function (month) { return month.filter(function (dateElement) { return dateElement.tags[tag] === true; }); }).reduce(function (p, n) { return p.concat(n); }).map(function (dateElement) { return dateElement.dateString; });
+            }
+            else {
+                return [];
+            }
         };
         this.onDateSelect = createEvent(this, "onDateSelect", 7);
         this.onDateDeselect = createEvent(this, "onDateDeselect", 7);
@@ -411,7 +432,7 @@ var DatepickerPlus = /** @class */ (function () {
     DatepickerPlus.prototype.createViewList = function (_a) {
         var start = _a[0], end = _a[1];
         var dates = unfoldRange(start, end);
-        return groupByMonth(dates).flatten();
+        return groupDates(dates).toArray();
     };
     DatepickerPlus.prototype.registerViewDates = function (viewList) {
         var _this = this;
