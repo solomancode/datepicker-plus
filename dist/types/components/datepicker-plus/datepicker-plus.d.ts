@@ -37,7 +37,7 @@ export declare class DatepickerPlus {
     componentWillLoad(): void;
     private unfoldDisabledList;
     private patchConfigLists;
-    createViewList([start, end]: [DateString, DateString]): any;
+    createViewList([start, end]: [DateString, DateString]): string[][];
     registerViewDates(viewList: DateString[][]): void;
     select: (dateString: string) => IDateElement[][];
     deselect: (dateString: string) => void;

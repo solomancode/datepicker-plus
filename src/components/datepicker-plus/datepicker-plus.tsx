@@ -3,7 +3,7 @@ import { DEFAULT_CONFIG, IMonth, IWeekDay, SelectMode } from './config';
 import { IDateElement, registerDate } from './registerDate';
 import { TagPredicate, tags } from './tags';
 import { renderContainer } from './templates';
-import { dateStringInRange, getScopeRange, groupByMonth, patchArray, unfoldRange } from './utils';
+import { dateStringInRange, getScopeRange, groupDates, patchArray, unfoldRange } from './utils';
 
 export type DateString = string
 export type WeekHeader = 'single' | 'per-month'
@@ -100,7 +100,7 @@ export class DatepickerPlus {
 
   createViewList([ start, end ]: [DateString, DateString]) {
     const dates = unfoldRange(start, end)
-    return groupByMonth(dates).flatten()
+    return groupDates(dates).toArray()
   }
 
   registerViewDates(viewList: DateString[][/** [...months] */]) {
@@ -220,9 +220,13 @@ export class DatepickerPlus {
 
   unfoldTag = (tag: string, tags: {[key: string]: TagPredicate}) => {
     if (!(tag in tags)) return [tag];
-    return this.viewElements.map(
-      (month: IDateElement[]) => month.filter(dateElement => dateElement.tags[tag]===true)
-    ).reduce((p,n)=>[...p,...n]).map(dateElement=>dateElement.dateString)
+    if (this.viewElements.length!==0) {
+      return this.viewElements.map(
+        (month: IDateElement[]) => month.filter(dateElement => dateElement.tags[tag]===true)
+      ).reduce((p,n)=>[...p,...n]).map(dateElement=>dateElement.dateString)
+    } else {
+      return []
+    }
   }
 
   updateTags(tags: {[key: string]: TagPredicate}, viewElements: IDateElement[][]) {

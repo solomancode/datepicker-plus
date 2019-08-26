@@ -1,4 +1,5 @@
 import { IDateElement } from "./registerDate";
+import { DateString } from "./datepicker-plus";
 export declare const dateToString: (date: Date) => string;
 export declare const getDateComponents: (dateString: string) => number[];
 export declare const stringToDate: (dateString: string) => Date;
@@ -16,7 +17,17 @@ interface IGithubIssueParams {
 }
 export declare const dateOffset: (date0: Date, date1: Date) => number;
 export declare const patchArray: (target: any[], source: any) => any;
-export declare const groupByMonth: (dateString: string[]) => any;
+interface IDateGroup {
+    sorted: {
+        years: number[];
+        months: {
+            [key: number]: number[];
+        };
+    };
+    toArray(): DateString[][];
+}
+export declare const groupDates: (dateStringList: string[]) => IDateGroup;
+export declare const checkIfValidDateString: (dateString: string) => boolean;
 export declare const monthToWeeks: (month: IDateElement[]) => any[];
 export declare const getScopeRange: (scopeCenter: string, scopeSize: number) => [string, string];
 export declare const generateDateClass: (dateElement: IDateElement) => string;
