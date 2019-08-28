@@ -294,6 +294,7 @@ var DateElement = /** @class */ (function () {
     };
     DateElement.prototype.removeAttr = function (attr) {
         delete this.attributes[attr];
+        this.updateDateClasses();
     };
     DateElement.prototype.resetRangeAttributes = function () {
         this.removeAttr('rangeIndex');
@@ -319,7 +320,8 @@ function renderDate(dateElement) {
     var onChange = function (e) {
         return e.target.checked ? _this.select(dateElement.dateString) : _this.deselect([dateElement.dateString]);
     };
-    return (h("time", { part: "day", dateTime: dateElement.dateString, ref: function (element) { return dateElement.hookDOMElement(element); } }, h("label", null, dateElement.day, h("input", { ref: function (element) { return dateElement.hookDOMElement(element); }, onChange: onChange.bind(this), class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: dateElement.dateString }))));
+    var onEnter = function () { return dateElement.getAttr('disabled') === false && _this.highlightON(dateElement.dateString); };
+    return (h("time", { part: "day", dateTime: dateElement.dateString, onMouseEnter: onEnter.bind(this), ref: function (element) { return dateElement.hookDOMElement(element); } }, h("label", null, dateElement.day, h("input", { ref: function (element) { return dateElement.hookDOMElement(element); }, onChange: onChange.bind(this), class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: dateElement.dateString }))));
 }
 function renderWeekHeader(weekDays) {
     return (h("header", { class: DEFAULT_CLASSES.weekHeader, part: "week-header" }, weekDays.map(function (_a) {
@@ -379,6 +381,9 @@ var DatepickerPlus = /** @class */ (function () {
         ];
         this.disabled = [
         /** DISABLED */
+        ];
+        this.highlighted = [
+        /** HIGHLIGHTED */
         ];
         this.activeScope = null;
         this.unfoldDateStringList = function (disabled) {
@@ -443,7 +448,7 @@ var DatepickerPlus = /** @class */ (function () {
             var selectMode = _this.plusConfig.selectMode;
             if (selectMode === 'range') {
                 dateStringList = _this.selected;
-                if (_this.activeScope)
+                if (_this.activeScope && dateStringList.length === 1)
                     _this.activeScope.deactivate();
             }
             dateStringList.forEach(function (dateString) {
@@ -456,6 +461,7 @@ var DatepickerPlus = /** @class */ (function () {
                 dateElement.updateDateClasses();
             });
             _this.selected = _this.selected.filter(function (s) { return !(dateStringList.includes(s)); });
+            _this.clearHighlighted();
         };
         this.getDateElement = function (dateString) {
             return _this.dateRegistry[dateString];
@@ -526,6 +532,26 @@ var DatepickerPlus = /** @class */ (function () {
             }
         };
     };
+    DatepickerPlus.prototype.highlightON = function (dateString) {
+        var _this = this;
+        if (this.plusConfig.selectMode === 'range' && this.selected.length === 1) {
+            this.clearHighlighted();
+            this.highlighted = unfoldRange(this.selected[0], dateString);
+            this.highlighted.forEach(function (dateString) {
+                var dateElement = _this.getDateElement(dateString);
+                dateElement.setAttr('highlighted', true);
+            });
+        }
+    };
+    DatepickerPlus.prototype.clearHighlighted = function () {
+        var _this = this;
+        this.highlighted.forEach(function (dateString) {
+            var dateElement = _this.getDateElement(dateString);
+            if (dateElement)
+                dateElement.removeAttr('highlighted');
+        });
+        this.highlighted = [];
+    };
     DatepickerPlus.prototype.checkIfHasDisabled = function (selected, disabled) {
         var map = {};
         disabled.forEach(function (d) { return map[d] = true; });
@@ -575,7 +601,7 @@ var DatepickerPlus = /** @class */ (function () {
         return renderContainer.call(this, this.viewElements, this.plusConfig);
     };
     Object.defineProperty(DatepickerPlus, "style", {
-        get: function () { return ".dpp{font-family:monospace}.horizontal{overflow-x:scroll}.horizontal .month{display:inline-block}.month{border:1px solid #ccc;padding:20px}.dpp .month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.dpp .day.checked.rangeStart{background-color:#cddc39}.dpp .day.checked.rangeEnd{background-color:#ff9800}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{position:relative;line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{color:#ccc;background-color:#f8f8f8}.dpp .day.checked{background-color:gold}.dpp .day.highlight{background-color:#7e5}.dpp .day.today{outline:1px solid #ccc}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; },
+        get: function () { return ".dpp{font-family:monospace}.horizontal{overflow-x:scroll}.horizontal .month{display:inline-block}.month{border:1px solid #ccc;padding:20px}.dpp .month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.dpp .day.checked.rangeStart{background-color:#cddc39}.dpp .day.checked.rangeEnd{background-color:#ff9800}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{position:relative;line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{color:#ccc;background-color:#f8f8f8}.dpp .day.checked,.dpp .day.highlighted{background-color:gold}.dpp .day.today{outline:1px solid #ccc}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; },
         enumerable: true,
         configurable: true
     });

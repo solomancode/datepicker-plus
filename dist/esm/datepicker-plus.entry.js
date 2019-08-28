@@ -291,6 +291,7 @@ class DateElement {
     }
     removeAttr(attr) {
         delete this.attributes[attr];
+        this.updateDateClasses();
     }
     resetRangeAttributes() {
         this.removeAttr('rangeIndex');
@@ -315,7 +316,8 @@ function renderDate(dateElement) {
     const onChange = (e) => {
         return e.target.checked ? this.select(dateElement.dateString) : this.deselect([dateElement.dateString]);
     };
-    return (h("time", { part: "day", dateTime: dateElement.dateString, ref: element => dateElement.hookDOMElement(element) },
+    const onEnter = () => dateElement.getAttr('disabled') === false && this.highlightON(dateElement.dateString);
+    return (h("time", { part: "day", dateTime: dateElement.dateString, onMouseEnter: onEnter.bind(this), ref: element => dateElement.hookDOMElement(element) },
         h("label", null,
             dateElement.day,
             h("input", { ref: element => dateElement.hookDOMElement(element), onChange: onChange.bind(this), class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: dateElement.dateString }))));
@@ -384,6 +386,9 @@ class DatepickerPlus {
         this.disabled = [
         /** DISABLED */
         ];
+        this.highlighted = [
+        /** HIGHLIGHTED */
+        ];
         this.activeScope = null;
         this.unfoldDateStringList = (disabled) => {
             if (!disabled.length)
@@ -447,7 +452,7 @@ class DatepickerPlus {
             const { selectMode } = this.plusConfig;
             if (selectMode === 'range') {
                 dateStringList = this.selected;
-                if (this.activeScope)
+                if (this.activeScope && dateStringList.length === 1)
                     this.activeScope.deactivate();
             }
             dateStringList.forEach(dateString => {
@@ -460,6 +465,7 @@ class DatepickerPlus {
                 dateElement.updateDateClasses();
             });
             this.selected = this.selected.filter(s => !(dateStringList.includes(s)));
+            this.clearHighlighted();
         };
         this.getDateElement = (dateString) => {
             return this.dateRegistry[dateString];
@@ -530,6 +536,24 @@ class DatepickerPlus {
             }
         };
     }
+    highlightON(dateString) {
+        if (this.plusConfig.selectMode === 'range' && this.selected.length === 1) {
+            this.clearHighlighted();
+            this.highlighted = unfoldRange(this.selected[0], dateString);
+            this.highlighted.forEach(dateString => {
+                const dateElement = this.getDateElement(dateString);
+                dateElement.setAttr('highlighted', true);
+            });
+        }
+    }
+    clearHighlighted() {
+        this.highlighted.forEach(dateString => {
+            const dateElement = this.getDateElement(dateString);
+            if (dateElement)
+                dateElement.removeAttr('highlighted');
+        });
+        this.highlighted = [];
+    }
     checkIfHasDisabled(selected, disabled) {
         const map = {};
         disabled.forEach(d => map[d] = true);
@@ -575,7 +599,7 @@ class DatepickerPlus {
         console.count('RENDER...');
         return renderContainer.call(this, this.viewElements, this.plusConfig);
     }
-    static get style() { return ".dpp{font-family:monospace}.horizontal{overflow-x:scroll}.horizontal .month{display:inline-block}.month{border:1px solid #ccc;padding:20px}.dpp .month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.dpp .day.checked.rangeStart{background-color:#cddc39}.dpp .day.checked.rangeEnd{background-color:#ff9800}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{position:relative;line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{color:#ccc;background-color:#f8f8f8}.dpp .day.checked{background-color:gold}.dpp .day.highlight{background-color:#7e5}.dpp .day.today{outline:1px solid #ccc}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; }
+    static get style() { return ".dpp{font-family:monospace}.horizontal{overflow-x:scroll}.horizontal .month{display:inline-block}.month{border:1px solid #ccc;padding:20px}.dpp .month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.dpp .day.checked.rangeStart{background-color:#cddc39}.dpp .day.checked.rangeEnd{background-color:#ff9800}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{position:relative;line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{color:#ccc;background-color:#f8f8f8}.dpp .day.checked,.dpp .day.highlighted{background-color:gold}.dpp .day.today{outline:1px solid #ccc}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; }
 }
 
 export { DatepickerPlus as datepicker_plus };

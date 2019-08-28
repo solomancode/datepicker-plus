@@ -16,6 +16,9 @@ export class DatepickerPlus {
         this.disabled = [
         /** DISABLED */
         ];
+        this.highlighted = [
+        /** HIGHLIGHTED */
+        ];
         this.activeScope = null;
         this.unfoldDateStringList = (disabled) => {
             if (!disabled.length)
@@ -79,7 +82,7 @@ export class DatepickerPlus {
             const { selectMode } = this.plusConfig;
             if (selectMode === 'range') {
                 dateStringList = this.selected;
-                if (this.activeScope)
+                if (this.activeScope && dateStringList.length === 1)
                     this.activeScope.deactivate();
             }
             dateStringList.forEach(dateString => {
@@ -92,6 +95,7 @@ export class DatepickerPlus {
                 dateElement.updateDateClasses();
             });
             this.selected = this.selected.filter(s => !(dateStringList.includes(s)));
+            this.clearHighlighted();
         };
         this.getDateElement = (dateString) => {
             return this.dateRegistry[dateString];
@@ -158,6 +162,24 @@ export class DatepickerPlus {
                 this.activeScope = null;
             }
         };
+    }
+    highlightON(dateString) {
+        if (this.plusConfig.selectMode === 'range' && this.selected.length === 1) {
+            this.clearHighlighted();
+            this.highlighted = unfoldRange(this.selected[0], dateString);
+            this.highlighted.forEach(dateString => {
+                const dateElement = this.getDateElement(dateString);
+                dateElement.setAttr('highlighted', true);
+            });
+        }
+    }
+    clearHighlighted() {
+        this.highlighted.forEach(dateString => {
+            const dateElement = this.getDateElement(dateString);
+            if (dateElement)
+                dateElement.removeAttr('highlighted');
+        });
+        this.highlighted = [];
     }
     checkIfHasDisabled(selected, disabled) {
         const map = {};

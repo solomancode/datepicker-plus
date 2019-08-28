@@ -5,7 +5,8 @@ export function renderDate(dateElement) {
     const onChange = (e) => {
         return e.target.checked ? this.select(dateElement.dateString) : this.deselect([dateElement.dateString]);
     };
-    return (h("time", { part: "day", dateTime: dateElement.dateString, ref: element => dateElement.hookDOMElement(element) },
+    const onEnter = () => dateElement.getAttr('disabled') === false && this.highlightON(dateElement.dateString);
+    return (h("time", { part: "day", dateTime: dateElement.dateString, onMouseEnter: onEnter.bind(this), ref: element => dateElement.hookDOMElement(element) },
         h("label", null,
             dateElement.day,
             h("input", { ref: element => dateElement.hookDOMElement(element), onChange: onChange.bind(this), class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: dateElement.dateString }))));
