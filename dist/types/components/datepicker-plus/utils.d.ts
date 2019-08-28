@@ -1,9 +1,7 @@
-import { IDateElement } from "./registerDate";
 import { DateString } from "./datepicker-plus";
+import { DateElement } from "./DateElement";
 export declare const dateToString: (date: Date) => string;
-export declare const getDateComponents: (dateString: string) => number[];
-export declare const stringToDate: (dateString: string) => Date;
-export declare const getNextDay: (date: string | Date) => string | Date;
+export declare const getNextDayString: (dateString: string) => string;
 export declare const isSameDate: (date1: Date, date2: Date) => boolean;
 export declare const dateStringInRange: (dateString: string, dateRange: [string, string]) => boolean;
 export declare const getCurrentMonthRange: () => string[];
@@ -28,8 +26,7 @@ interface IDateGroup {
 }
 export declare const groupDates: (dateStringList: string[]) => IDateGroup;
 export declare const checkIfValidDateString: (dateString: string) => boolean;
-export declare const monthToWeeks: (month: IDateElement[]) => any[];
+export declare const monthToWeeks: (month: DateElement[]) => any[];
 export declare const getScopeRange: (scopeCenter: string, scopeSize: number) => [string, string];
-export declare const generateDateClass: (dateElement: IDateElement) => string;
 export declare const openGithubIssue: ({ title, body, label }: IGithubIssueParams) => never;
 export {};

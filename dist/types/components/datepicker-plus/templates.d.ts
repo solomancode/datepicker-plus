@@ -1,10 +1,10 @@
-import { IDateElement } from './registerDate';
 import { IWeekDay, IMonth } from "./config";
 import { IPlusConfig } from './datepicker-plus';
-export declare function renderDate(date: IDateElement): any;
+import { DateElement } from './DateElement';
+export declare function renderDate(dateElement: DateElement): any;
 export declare function renderWeekHeader(weekDays: IWeekDay[]): any;
 export declare function renderEmpty(offset: number): any[];
-export declare function renderWeek(week: IDateElement[], renderHeader: boolean, weekDays: IWeekDay[]): any;
-export declare function renderMonthHeader(dayFirst: IDateElement, months: IMonth[]): any;
-export declare function renderMonth(month: IDateElement[], config: IPlusConfig): any;
-export declare function renderContainer(dates: IDateElement[][], config: IPlusConfig): any[];
+export declare function renderWeek(week: DateElement[], renderHeader: boolean, weekDays: IWeekDay[]): any;
+export declare function renderMonthHeader(dayFirst: DateElement, months: IMonth[]): any;
+export declare function renderMonth(month: DateElement[], config: IPlusConfig): any;
+export declare function renderContainer(dates: DateElement[][], config: IPlusConfig): any[];

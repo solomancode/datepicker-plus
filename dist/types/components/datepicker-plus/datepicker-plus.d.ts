@@ -1,12 +1,11 @@
 import { EventEmitter } from '../../stencil.core';
 import { IMonth, IWeekDay, SelectMode } from './config';
-import { IDateElement } from './registerDate';
-import { TagPredicate } from './tags';
+import { DateElement } from './DateElement';
 export declare type DateString = string;
 export declare type WeekHeader = 'single' | 'per-month';
 export interface IScopeController {
-    activate: (dateString: DateString, scopeSize: number) => IDateElement[][];
-    deactivate: () => IDateElement[][];
+    activate: (dateString: DateString, scopeSize: number) => void;
+    deactivate: () => void;
 }
 export interface IPlusConfig {
     selectMode?: SelectMode;
@@ -24,32 +23,28 @@ export interface IPlusConfig {
 }
 export declare class DatepickerPlus {
     plusConfig: IPlusConfig;
-    private registered;
-    viewElements: IDateElement[][];
+    private dateRegistry;
+    viewElements: DateElement[][];
     private selected;
     disabled: DateString[];
-    viewList: DateString[][];
     activeScope: IScopeController;
     onDateSelect: EventEmitter<DateString[]>;
     onDateDeselect: EventEmitter<DateString[]>;
     onRangeSelect: EventEmitter<DateString[]>;
-    updateViewElements(next: DateString[][]): void;
     componentWillLoad(): void;
-    private unfoldDisabledList;
+    componentDidLoad(): void;
+    private unfoldDateStringList;
     private patchConfigLists;
-    createViewList([start, end]: [DateString, DateString]): string[][];
-    registerViewDates(viewList: DateString[][]): void;
-    select: (dateString: string) => IDateElement[][];
-    deselect: (dateString: string) => void;
-    generateScope(viewElements: IDateElement[][], disabledCache: DateString[]): IScopeController;
+    unfoldViewRange([start, end]: [DateString, DateString]): string[][];
+    select: (dateString: string) => DateElement[][];
+    deselect: (dateStringList: string[]) => void;
+    generateScope(disabledSnapshot: DateString[]): IScopeController;
     checkIfHasDisabled(selected: DateString[], disabled: DateString[]): boolean;
-    selectMultipleDates(dateStringList: DateString[], viewElements: IDateElement[][]): IDateElement[][];
-    disableMultipleDates(dateStringList: DateString[], viewElements: IDateElement[][]): IDateElement[][];
-    unfoldTag: (tag: string, tags: {
-        [key: string]: TagPredicate;
-    }) => string[];
-    updateTags(tags: {
-        [key: string]: TagPredicate;
-    }, viewElements: IDateElement[][]): IDateElement[][];
+    getDateElement: (dateString: string) => DateElement;
+    selectMultipleDates(dateStringList: DateString[]): void;
+    disableMultipleDates(dateStringList: DateString[]): void;
+    enableMultipleDates(dateStringList: DateString[]): void;
+    unfoldAttribute: (attr: string) => string[];
+    registerDate: (dateString: string) => DateElement;
     render(): any;
 }

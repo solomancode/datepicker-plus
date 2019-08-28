@@ -1,16 +1,16 @@
-import { Component, Event, EventEmitter, Prop, State, Watch } from '@stencil/core';
+import { Component, Event, EventEmitter, Prop, State } from '@stencil/core';
 import { DEFAULT_CONFIG, IMonth, IWeekDay, SelectMode } from './config';
-import { IDateElement, registerDate } from './registerDate';
-import { TagPredicate, tags } from './tags';
+import { DateElement } from './DateElement';
 import { renderContainer } from './templates';
-import { dateStringInRange, getScopeRange, groupDates, patchArray, unfoldRange } from './utils';
+import { checkIfValidDateString, getScopeRange, groupDates, patchArray, unfoldRange } from './utils';
+import { attributeChecks } from './attributes';
 
 export type DateString = string
 export type WeekHeader = 'single' | 'per-month'
 
 export interface IScopeController {
-  activate: (dateString: DateString, scopeSize: number) => IDateElement[][]
-  deactivate: () => IDateElement[][]
+  activate: (dateString: DateString, scopeSize: number) => void
+  deactivate: () => void
 }
 
 export interface IPlusConfig {
@@ -37,11 +37,11 @@ export class DatepickerPlus {
 
   @Prop() plusConfig: IPlusConfig = DEFAULT_CONFIG;
 
-  private registered: {[key: string]: IDateElement} = {
+  private dateRegistry: {[key: string]: DateElement} = {
     /** LOOKUP ELEMENTS */
   }
 
-  @State() viewElements: IDateElement[][
+  @State() viewElements: DateElement[][
     /** ...MONTHS */
   ] = []
 
@@ -53,42 +53,44 @@ export class DatepickerPlus {
     /** DISABLED */
   ];
   
-  @State() viewList: DateString[][
-    /** ...MONTHS */
-  ] = []
-
   public activeScope: IScopeController = null
   
   @Event() onDateSelect: EventEmitter<DateString[]>
   @Event() onDateDeselect: EventEmitter<DateString[]>
   @Event() onRangeSelect: EventEmitter<DateString[]>
 
-  @Watch('viewList')
-  updateViewElements(next: DateString[][]) {
-    this.registerViewDates(next)
-    this.viewElements = next.map(
-      month => month.map(dateString => {
-        return this.registered[dateString]
-      })
-    )
-  }
-
   componentWillLoad() {
     this.plusConfig = { ...DEFAULT_CONFIG, ...this.plusConfig }
     this.patchConfigLists()
-    this.viewList = this.createViewList(this.plusConfig.viewRange)
-    this.updateTags(tags, this.viewElements)
-    this.plusConfig.disabled = this.unfoldDisabledList(this.plusConfig.disabled)
-    this.disableMultipleDates(this.plusConfig.disabled, this.viewElements)
-    this.plusConfig.selected.forEach(this.select)
     if (this.plusConfig.layout==='horizontal') {
       this.plusConfig.weekHeader = 'per-month'
     }
   }
 
-  private unfoldDisabledList = (disabled: DateString[]) => {
+  componentDidLoad() {
+
+    /**
+     * UNFOLD DATE STRING RANGE
+     * CREATE & REGISTER
+     * UPDATE VIEW ELEMENTS
+     */
+    const viewRange = this.unfoldViewRange(this.plusConfig.viewRange)
+    const createdElements = viewRange.map(month => month.map(this.registerDate))
+    this.viewElements = createdElements
+    
+    // disable
+    const disabled = this.unfoldDateStringList(this.plusConfig.disabled)
+    this.disableMultipleDates(disabled)
+    
+    // select
+    this.plusConfig.selected.forEach(this.select)
+  }
+  
+  private unfoldDateStringList = (disabled: DateString[]) => {
     if (!disabled.length) return [];
-    return disabled.map(tag => this.unfoldTag(tag, tags)).reduce((p,n)=>[...p,...n])
+    return disabled.map(dateString => {
+      return checkIfValidDateString(dateString) ? [dateString]: this.unfoldAttribute(dateString)
+    }).reduce((p,n)=>[...p,...n])
   }
 
   private patchConfigLists = () => {
@@ -98,20 +100,16 @@ export class DatepickerPlus {
     this.plusConfig.i18n.weekDays = patchArray(weekDays, default_weekDays)
   }
 
-  createViewList([ start, end ]: [DateString, DateString]) {
+  unfoldViewRange([ start, end ]: [DateString, DateString]) {
     const dates = unfoldRange(start, end)
     return groupDates(dates).toArray()
   }
 
-  registerViewDates(viewList: DateString[][/** [...months] */]) {
-    return viewList.forEach(month => month.forEach( dateString => {
-      const registered = registerDate(this.registered, dateString)
-      this.registered = registered
-    }))
-  }
-
   select = (dateString: DateString) => {
+
     const { selectMode } = this.plusConfig
+
+    // generate selected list
     let selectList = []
     if (selectMode === 'single') {
       selectList = [dateString]
@@ -126,65 +124,66 @@ export class DatepickerPlus {
         selectList = [dateString]
       }
     }
+
+    // check if has disabled or return prev. state
     const hasDisabled = this.checkIfHasDisabled(selectList, this.disabled);
     if (hasDisabled) return this.viewElements;
+    
+    // generate select scope if range mode active
     const scopeSize = this.plusConfig.selectScopeSize
     if (selectMode==='range' && scopeSize > 0) {
       if (!this.activeScope) {
-        this.activeScope = this.generateScope(this.viewElements, this.disabled)
+        this.activeScope = this.generateScope(this.disabled)
         this.activeScope.activate(dateString, scopeSize)
       } else {
         this.activeScope.deactivate()
       }
     }
 
-    const selectedViewElements = this.selectMultipleDates(
-      selectList, this.viewElements
-    )
+    // reset selected
+    this.deselect(this.selected)
     
-    this.viewElements = this.updateTags(tags, selectedViewElements)
-    this.selected = selectList
+    // apply selected
+    this.selectMultipleDates(selectList)
+
+    // emit
     this.onDateSelect.emit(this.selected)
     if (selectMode==='range' && this.selected.length > 1) this.onRangeSelect.emit(this.selected)
   }
 
-  deselect = (dateString: DateString) => {
+  deselect = (dateStringList: DateString[]) => {
     const { selectMode } = this.plusConfig
-    let selectList = []
-    if (selectMode === 'multiple') {
-      selectList = this.selected.filter(s=>s!==dateString)
-    }
-    if (selectMode === 'range') {
+    if (selectMode==='range') {
+      dateStringList = this.selected
       if (this.activeScope) this.activeScope.deactivate()
     }
-    const selected = this.selectMultipleDates(
-      selectList, this.viewElements
-    )
-    this.viewElements = this.updateTags(tags, selected)
-    this.selected = selectList
+    dateStringList.forEach(dateString => {
+      const dateElement = this.getDateElement(dateString)
+      dateElement.setAttr('checked', false)
+      // clean range attributes
+      if (selectMode==='range') {
+        dateElement.resetRangeAttributes()
+      }
+      dateElement.updateDateClasses()
+    })
+    this.selected = this.selected.filter(s => !(dateStringList.includes(s)))
   }
 
-  generateScope(viewElements: IDateElement[][], disabledCache: DateString[]): IScopeController {
-    let disabled = []
+  generateScope(disabledSnapshot: DateString[]): IScopeController {
     return {
       activate: (dateString: DateString, scopeSize: number) => {
-        const scopeRange = getScopeRange(dateString, scopeSize)
-        return viewElements.map(month => month.map((dateElement) => {
-          const inScope = dateStringInRange(dateElement.dateString, scopeRange)
-          if (inScope) {
-            dateElement.disabled = false
-          } else {
-            dateElement.disabled = true
-            this.disabled.push(dateElement.dateString)
-          }
-          this.disabled = disabled;
-          return dateElement
-        }))
+        const [scopeStart, scopeEnd] = getScopeRange(dateString, scopeSize)
+        const [viewStart, viewEnd] = this.plusConfig.viewRange
+        const disableTargets = [
+          ...unfoldRange(viewStart, scopeStart),
+          ...unfoldRange(scopeEnd, viewEnd)
+        ];
+        this.disableMultipleDates(disableTargets);
       },
       deactivate: () => {
-        const disabled = this.disableMultipleDates(disabledCache, this.viewElements)
+        this.enableMultipleDates(this.disabled)
+        this.disableMultipleDates(disabledSnapshot)
         this.activeScope = null;
-        return disabled
       }
     }
   }
@@ -195,52 +194,67 @@ export class DatepickerPlus {
     return selected.some(s=>(s in map))
   }
   
-  selectMultipleDates(dateStringList: DateString[], viewElements: IDateElement[][]) {
-    return viewElements.map(month => month.map((dateElement) => {
-      dateElement.checked = dateStringList.includes(dateElement.dateString);
+  getDateElement = (dateString: DateString): DateElement => {
+    return this.dateRegistry[dateString]
+  }
+  
+  selectMultipleDates(dateStringList: DateString[]) {
+    dateStringList.forEach(dateString => {
+      const dateElement = this.getDateElement(dateString);
+      if (!dateElement) return;
+      dateElement.setAttr('checked', true);
       if (dateStringList.length > 1) {
-        dateElement.rangeIndex = dateElement.checked ? dateStringList.indexOf(dateElement.dateString) : null;
-        dateElement.rangeEndIndex = dateElement.checked ? dateStringList.length - 1 : null;
+        const checked = dateElement.getAttr('checked')
+        dateElement.setAttr('rangeIndex', checked ? dateStringList.indexOf(dateElement.dateString) : null )
+        dateElement.setAttr('rangeEndIndex', checked ? dateStringList.length - 1 : null )
       }
-      return dateElement
-    }) )
+      if (this.plusConfig.selectMode==='range') {
+        const { rangeStart, rangeEnd, connector } = attributeChecks
+        dateElement.updateAttributes({ rangeStart, rangeEnd, connector })
+      }
+    })
+    this.selected = dateStringList;
   }
 
-  disableMultipleDates(dateStringList: DateString[], viewElements: IDateElement[][]) {
-    let disabled = []
-    const withDisabled = viewElements.map(month => month.map(dateElement => {
-      const isDisabled = dateStringList.includes(dateElement.dateString)
-      dateElement.disabled = isDisabled
-      if (isDisabled) disabled.push(dateElement.dateString);
-      return dateElement
-    }) )
-    this.disabled = disabled
-    return withDisabled
+  disableMultipleDates(dateStringList: DateString[]) {
+    this.disabled = dateStringList.filter(dateString => {
+      const dateElement = this.getDateElement(dateString);
+      if (!dateElement) return false;
+      dateElement.setAttr('disabled', true);
+      return true;
+    })
   }
 
-  unfoldTag = (tag: string, tags: {[key: string]: TagPredicate}) => {
-    if (!(tag in tags)) return [tag];
-    if (this.viewElements.length!==0) {
-      return this.viewElements.map(
-        (month: IDateElement[]) => month.filter(dateElement => dateElement.tags[tag]===true)
-      ).reduce((p,n)=>[...p,...n]).map(dateElement=>dateElement.dateString)
-    } else {
-      return []
-    }
+  enableMultipleDates(dateStringList: DateString[]) {
+    dateStringList.forEach(dateString => {
+      const dateElement = this.getDateElement(dateString);
+      if (!dateElement) return;
+      dateElement.setAttr('disabled', false);
+    })
+    this.disabled = this.disabled.filter(dateString => !dateStringList.includes(dateString))
   }
 
-  updateTags(tags: {[key: string]: TagPredicate}, viewElements: IDateElement[][]) {
-    if (viewElements) {
-      return viewElements.map(month => month.map((dateElement) => {
-        for (const tag in tags) {
-          dateElement.tags[tag] = tags[tag](dateElement)
-        }
-        return dateElement
-      }) )
-    }
+  unfoldAttribute = (attr: string): DateString[] => {
+    const unfolded = []
+    this.viewElements
+        .reduce((p,n)=>[...p,...n])
+        .forEach(dateElement => {
+          if (dateElement.getAttr(attr)) {
+            unfolded.push(dateElement.dateString)
+          }
+        });
+    return unfolded;
+  }
+
+  registerDate = (dateString: DateString) => {
+    if (dateString in this.dateRegistry) return this.dateRegistry[dateString];
+    const dateElement = new DateElement(dateString)
+    this.dateRegistry[dateString] = dateElement
+    return dateElement
   }
 
   render() {
+    console.count('RENDER...')
     return renderContainer.call(this, this.viewElements, this.plusConfig)
   }
   

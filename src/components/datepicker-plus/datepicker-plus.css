@@ -21,11 +21,11 @@
     margin-bottom: 5px;
 }
 
-.dpp .day.selected.rangeStart {
+.dpp .day.checked.rangeStart {
     background-color: #cddc39;
 }
 
-.dpp .day.selected.rangeEnd {
+.dpp .day.checked.rangeEnd {
     background-color: #ff9800;
 }
 
@@ -70,7 +70,7 @@
     background-color: #f8f8f8;
 }
 
-.dpp .day.selected {
+.dpp .day.checked {
     background-color: gold;
 }
 

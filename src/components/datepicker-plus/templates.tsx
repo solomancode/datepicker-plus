@@ -1,28 +1,24 @@
 import { h } from '@stencil/core';
-import { IDateElement } from './registerDate';
-import { monthToWeeks, generateDateClass } from './utils';
+import { monthToWeeks } from './utils';
 import { DEFAULT_CLASSES, IWeekDay, IMonth } from "./config";
 import { IPlusConfig } from './datepicker-plus';
-import { tags } from './tags';
+import { DateElement } from './DateElement';
 
-export function renderDate (date: IDateElement) {
+export function renderDate (dateElement: DateElement) {
     const onChange = (e: any) => {
-        return e.target.checked ? this.select(date.dateString) : this.deselect(date.dateString)
-    }
-    const genDateClass = () => {
-        this.updateTags(tags, this.viewElements)
-        return generateDateClass(date)
+        return e.target.checked ? this.select(dateElement.dateString) : this.deselect([dateElement.dateString])
     }
     return (
-        <time part="day" class={genDateClass()} dateTime={date.dateString}>
-            <label>
-                {date.day}
+        <time part="day"
+              dateTime={dateElement.dateString}
+              ref={element => dateElement.hookDOMElement(element)}>
+             <label>
+                {dateElement.day}
                 <input
-                checked={date.checked}
-                disabled={date.disabled}
-                onChange={onChange.bind(this)}
-                class={DEFAULT_CLASSES.checkbox}
-                type="checkbox" value={date.dateString}/>
+                    ref={element => dateElement.hookDOMElement(element)}
+                    onChange={onChange.bind(this)}
+                    class={DEFAULT_CLASSES.checkbox}
+                    type="checkbox" value={dateElement.dateString}/>
             </label>
         </time>
     )
@@ -45,7 +41,7 @@ export function renderEmpty (offset: number) {
     return nodes;
 }
 
-export function renderWeek (week: IDateElement[], renderHeader: boolean, weekDays: IWeekDay[]) {
+export function renderWeek (week: DateElement[], renderHeader: boolean, weekDays: IWeekDay[]) {
     return (
         <section part="week" class={DEFAULT_CLASSES.week}>
             { renderHeader && renderWeekHeader(weekDays) }
@@ -58,7 +54,7 @@ export function renderWeek (week: IDateElement[], renderHeader: boolean, weekDay
     )
 }
 
-export function renderMonthHeader(dayFirst: IDateElement, months: IMonth[]) {
+export function renderMonthHeader(dayFirst: DateElement, months: IMonth[]) {
     return (
         <header class={DEFAULT_CLASSES.monthHeader} part="month-header">
             <span class={DEFAULT_CLASSES.monthName}>{months[dayFirst.month-1].name}</span>
@@ -67,7 +63,7 @@ export function renderMonthHeader(dayFirst: IDateElement, months: IMonth[]) {
     )
 }
 
-export function renderMonth (month: IDateElement[], config: IPlusConfig) {
+export function renderMonth (month: DateElement[], config: IPlusConfig) {
     const styles = config.layout === 'horizontal' ? {
         width: (window.innerWidth - 60) + 'px'
     } : {}
@@ -82,7 +78,7 @@ export function renderMonth (month: IDateElement[], config: IPlusConfig) {
     )
 }
 
-export function renderContainer(dates: IDateElement[][], config: IPlusConfig) {
+export function renderContainer(dates: DateElement[][], config: IPlusConfig) {
     const styles = config.layout === 'horizontal' ? {
         width: (window.innerWidth * dates.length) + 'px'
     } : {}

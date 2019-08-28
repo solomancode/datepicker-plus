@@ -1,6 +1,5 @@
-import { IDateElement } from "./registerDate";
 import { DateString } from "./datepicker-plus";
-import { DEFAULT_CLASSES } from "./config";
+import { DateElement } from "./DateElement";
 
 export const dateToString = (date: Date) => {
     const yyyy = date.getFullYear()
@@ -10,26 +9,12 @@ export const dateToString = (date: Date) => {
     return `${yyyy}-${mm}-${dd}`
 }
 
-export const getDateComponents = (dateString: string) => {
-    return dateString.split('-').map(s => parseInt(s))
+export const getNextDayString = (dateString: DateString) => {
+    const next = new Date(dateString)
+    next.setDate(next.getDate() + 1);
+    return dateToString(next);
 }
 
-export const stringToDate = (dateString: string) => {
-    const [year, month, day] = getDateComponents(dateString)
-    const date = new Date()
-    date.setFullYear(year)
-    date.setMonth(month - 1)
-    date.setDate(day)
-    return date;
-}
-
-export const getNextDay = (date: Date | string) => {
-    const isStringDate = typeof date === 'string';
-    const nextDay = isStringDate ? stringToDate(date as string) : new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1)
-    return isStringDate ? dateToString(nextDay) : nextDay
-}
-  
 export const isSameDate = (date1: Date, date2: Date) => {
     if (date1.getDate() !== date2.getDate()) return false;
     if (date1.getUTCMonth() !== date2.getUTCMonth()) return false;
@@ -56,11 +41,11 @@ export const unfoldRange = (dateString0: string, dateString1: string): string[] 
     if (dateString0===dateString1) return [];
     const [start, end] = sortDates([dateString0, dateString1])
     let rangeDates = []
-    let currentDateString = getNextDay(start) as string;
+    let currentDateString = getNextDayString(start);
     while (currentDateString!==end) {
-        if (rangeDates.length>3000) openGithubIssue({ title: 'Memory leak @ getDatesBetween', label: 'bug', body: JSON.stringify({dateString0,dateString1},null,2)})
+        if (rangeDates.length>3000) openGithubIssue({ title: 'Memory leak @ utils.unfoldRange()', label: 'bug', body: JSON.stringify({dateString0,dateString1},null,2)})
         rangeDates.push(currentDateString)
-        currentDateString = getNextDay(currentDateString) as string;
+        currentDateString = getNextDayString(currentDateString);
     }
     return [start, ...rangeDates, end];
 }
@@ -70,8 +55,8 @@ export const parsePropJSON = (prop: string) => {
 }
 
 export const sortDates = ([dateString0, dateString1]: [DateString, DateString]) => {
-    const dt0 = stringToDate(dateString0)
-    const dt1 = stringToDate(dateString1)
+    const dt0 = new Date(dateString0)
+    const dt1 = new Date(dateString1)
     return (dt0.valueOf() - dt1.valueOf()) > 0 ? [dateString1, dateString0] : [dateString0, dateString1];
 }
 
@@ -111,7 +96,8 @@ export const groupDates = (dateStringList: DateString[]): IDateGroup => {
         }
     });
     dateStringList.forEach(dateString => {
-        const [year, month] = getDateComponents(dateString)
+        const date = new Date(dateString)
+        const year = date.getFullYear(), month = date.getMonth() + 1;
         if (group.hasOwnProperty(year) === false) {
             group[year] = {}
             group.sorted.years.push(year)
@@ -138,7 +124,7 @@ export const checkIfValidDateString = (dateString: DateString) => {
     return isNaN(date.getDate()) ? false : true; 
 }
 
-export const monthToWeeks = (month: IDateElement[]) => {
+export const monthToWeeks = (month: DateElement[]) => {
     let week = [];
     let weeks = [];
     month.forEach(day => {
@@ -164,17 +150,6 @@ export const getScopeRange = (scopeCenter: DateString, scopeSize: number) => {
     const endDate = end.getDate()
     end.setDate(endDate + scopeSize)
     return [start, end].map(date => dateToString(date)) as [DateString, DateString]
-}
-
-export const generateDateClass = (dateElement: IDateElement) => {
-    let tags = Object.keys(dateElement.tags)
-    const classes = [
-        DEFAULT_CLASSES.day,
-        dateElement.checked ? DEFAULT_CLASSES.selected : null,
-        dateElement.disabled ? DEFAULT_CLASSES.disabled : null,
-        ...tags.filter(tag => dateElement.tags[tag]===true)
-    ];
-    return classes.filter(c=>c).join(' ')
 }
 
 export const openGithubIssue = ({ title, body, label }: IGithubIssueParams) => {
