@@ -131,6 +131,7 @@ export class DatepickerPlus {
     
     // generate select scope if range mode active
     const scopeSize = this.plusConfig.selectScopeSize
+
     if (selectMode==='range' && scopeSize > 0) {
       if (!this.activeScope) {
         this.activeScope = this.generateScope(this.disabled)
@@ -155,7 +156,7 @@ export class DatepickerPlus {
     const { selectMode } = this.plusConfig
     if (selectMode==='range') {
       dateStringList = this.selected
-      if (this.activeScope) this.activeScope.deactivate()
+      if (this.activeScope && dateStringList.length===1) this.activeScope.deactivate()
     }
     dateStringList.forEach(dateString => {
       const dateElement = this.getDateElement(dateString)
