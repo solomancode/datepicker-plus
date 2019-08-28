@@ -1,19 +1,14 @@
 import { h } from '@stencil/core';
-import { monthToWeeks, generateDateClass } from './utils';
+import { monthToWeeks } from './utils';
 import { DEFAULT_CLASSES } from "./config";
-import { tags } from './tags';
-export function renderDate(date) {
+export function renderDate(dateElement) {
     const onChange = (e) => {
-        return e.target.checked ? this.select(date.dateString) : this.deselect(date.dateString);
+        return e.target.checked ? this.select(dateElement.dateString) : this.deselect([dateElement.dateString]);
     };
-    const genDateClass = () => {
-        this.updateTags(tags, this.viewElements);
-        return generateDateClass(date);
-    };
-    return (h("time", { part: "day", class: genDateClass(), dateTime: date.dateString },
+    return (h("time", { part: "day", dateTime: dateElement.dateString, ref: element => dateElement.hookDOMElement(element) },
         h("label", null,
-            date.day,
-            h("input", { checked: date.checked, disabled: date.disabled, onChange: onChange.bind(this), class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString }))));
+            dateElement.day,
+            h("input", { ref: element => dateElement.hookDOMElement(element), onChange: onChange.bind(this), class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: dateElement.dateString }))));
 }
 export function renderWeekHeader(weekDays) {
     return (h("header", { class: DEFAULT_CLASSES.weekHeader, part: "week-header" }, weekDays.map(({ name, abbr, isWeekend }) => h("abbr", { class: isWeekend && DEFAULT_CLASSES.weekend, title: name }, abbr))));

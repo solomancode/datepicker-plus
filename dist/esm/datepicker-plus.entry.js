@@ -1,4 +1,4 @@
-import { h, r as registerInstance, c as createEvent } from './chunk-4f500da2.js';
+import { h, r as registerInstance, c as createEvent } from './chunk-fcdf5eaf.js';
 
 const dateToString = (date) => {
     const yyyy = date.getFullYear();
@@ -7,29 +7,10 @@ const dateToString = (date) => {
     const dd = date.getDate();
     return `${yyyy}-${mm}-${dd}`;
 };
-const getDateComponents = (dateString) => {
-    return dateString.split('-').map(s => parseInt(s));
-};
-const stringToDate = (dateString) => {
-    const [year, month, day] = getDateComponents(dateString);
-    const date = new Date();
-    date.setFullYear(year);
-    date.setMonth(month - 1);
-    date.setDate(day);
-    return date;
-};
-const getNextDay = (date) => {
-    const isStringDate = typeof date === 'string';
-    const nextDay = isStringDate ? stringToDate(date) : new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1);
-    return isStringDate ? dateToString(nextDay) : nextDay;
-};
-const dateStringInRange = (dateString, dateRange) => {
-    const [start, end] = sortDates(dateRange);
-    const targetDate = new Date(dateString);
-    const startOffset = dateOffset(targetDate, new Date(start));
-    const endOffset = dateOffset(targetDate, new Date(end));
-    return startOffset >= 0 && endOffset <= 0;
+const getNextDayString = (dateString) => {
+    const next = new Date(dateString);
+    next.setDate(next.getDate() + 1);
+    return dateToString(next);
 };
 const getCurrentMonthRange = () => {
     const date = new Date();
@@ -42,18 +23,18 @@ const unfoldRange = (dateString0, dateString1) => {
         return [];
     const [start, end] = sortDates([dateString0, dateString1]);
     let rangeDates = [];
-    let currentDateString = getNextDay(start);
+    let currentDateString = getNextDayString(start);
     while (currentDateString !== end) {
         if (rangeDates.length > 3000)
-            openGithubIssue({ title: 'Memory leak @ getDatesBetween', label: 'bug', body: JSON.stringify({ dateString0, dateString1 }, null, 2) });
+            openGithubIssue({ title: 'Memory leak @ utils.unfoldRange()', label: 'bug', body: JSON.stringify({ dateString0, dateString1 }, null, 2) });
         rangeDates.push(currentDateString);
-        currentDateString = getNextDay(currentDateString);
+        currentDateString = getNextDayString(currentDateString);
     }
     return [start, ...rangeDates, end];
 };
 const sortDates = ([dateString0, dateString1]) => {
-    const dt0 = stringToDate(dateString0);
-    const dt1 = stringToDate(dateString1);
+    const dt0 = new Date(dateString0);
+    const dt1 = new Date(dateString1);
     return (dt0.valueOf() - dt1.valueOf()) > 0 ? [dateString1, dateString0] : [dateString0, dateString1];
 };
 const dateOffset = (date0, date1) => {
@@ -77,7 +58,8 @@ const groupDates = (dateStringList) => {
         }
     });
     dateStringList.forEach(dateString => {
-        const [year, month] = getDateComponents(dateString);
+        const date = new Date(dateString);
+        const year = date.getFullYear(), month = date.getMonth() + 1;
         if (group.hasOwnProperty(year) === false) {
             group[year] = {};
             group.sorted.years.push(year);
@@ -98,6 +80,10 @@ const groupDates = (dateStringList) => {
         group.sorted.months[year] = group.sorted.months[year].sort((a, b) => a - b);
     }
     return group;
+};
+const checkIfValidDateString = (dateString) => {
+    let date = new Date(dateString);
+    return isNaN(date.getDate()) ? false : true;
 };
 const monthToWeeks = (month) => {
     let week = [];
@@ -125,16 +111,6 @@ const getScopeRange = (scopeCenter, scopeSize) => {
     const endDate = end.getDate();
     end.setDate(endDate + scopeSize);
     return [start, end].map(date => dateToString(date));
-};
-const generateDateClass = (dateElement) => {
-    let tags = Object.keys(dateElement.tags);
-    const classes = [
-        DEFAULT_CLASSES.day,
-        dateElement.checked ? DEFAULT_CLASSES.selected : null,
-        dateElement.disabled ? DEFAULT_CLASSES.disabled : null,
-        ...tags.filter(tag => dateElement.tags[tag] === true)
-    ];
-    return classes.filter(c => c).join(' ');
 };
 const openGithubIssue = ({ title, body, label }) => {
     const tl = 'title=' + encodeURIComponent(title);
@@ -203,24 +179,6 @@ const DEFAULT_CONFIG = {
     layout: 'vertical'
 };
 
-function registerDate(created, dateString) {
-    const dayOfWeek = new Date(dateString).getDay();
-    const [year, month, day] = getDateComponents(dateString);
-    const dateElement = Object.create({
-        tags: {},
-        checked: false,
-        disabled: false,
-        year,
-        month,
-        day,
-        dateString,
-        dayOfWeek
-    });
-    if (dateString in created)
-        return created;
-    return Object.assign({}, created, { [dateString]: dateElement });
-}
-
 const offsetFromToday = (dateString) => dateOffset(new Date(dateString), new Date());
 const today = (dateElement) => offsetFromToday(dateElement.dateString) === 0;
 const tomorrow = (dateElement) => offsetFromToday(dateElement.dateString) === 1;
@@ -231,14 +189,15 @@ const future = (dateElement) => offsetFromToday(dateElement.dateString) > 0;
  * Range start date
  */
 const rangeStart = (dateElement) => {
-    const rangeStart = dateElement.rangeIndex === 0;
+    const rangeStart = dateElement.getAttr('rangeIndex') === 0;
     return rangeStart;
 };
 /**
  * Range end date
  */
 const rangeEnd = (dateElement) => {
-    const { rangeIndex, rangeEndIndex } = dateElement;
+    const rangeIndex = dateElement.getAttr('rangeIndex');
+    const rangeEndIndex = dateElement.getAttr('rangeEndIndex');
     return (rangeEndIndex > 0 && rangeIndex === rangeEndIndex);
 };
 /**
@@ -246,10 +205,9 @@ const rangeEnd = (dateElement) => {
  * in a range select mode.
  */
 const connector = (dateElement) => {
-    const isConnector = dateElement.rangeIndex > 0 && (dateElement.rangeEndIndex !== dateElement.rangeIndex);
-    return isConnector;
+    return dateElement.getAttr('rangeIndex') > 0 && (dateElement.getAttr('rangeEndIndex') !== dateElement.getAttr('rangeIndex'));
 };
-const tags = {
+const attributeChecks = {
     today,
     rangeStart,
     rangeEnd,
@@ -260,18 +218,107 @@ const tags = {
     future
 };
 
-function renderDate(date) {
+class DateElement {
+    constructor(dateString) {
+        this.dateString = dateString;
+        this.pendingQueue = [];
+        /**
+         * DATE ATTRIBUTES
+         */
+        this.attributes = {} = {
+        /**
+         * DATE ATTRIBUTES
+         */
+        };
+        this.date = new Date(dateString);
+        this.day = this.date.getDate();
+        this.month = this.date.getMonth() + 1;
+        this.year = this.date.getFullYear();
+        this.dayOfWeek = this.date.getDay();
+        this.updateAttributes(attributeChecks);
+    }
+    hookDOMElement(element) {
+        if (element instanceof HTMLTimeElement) {
+            this.DateDOMElement = element;
+        }
+        else if (element instanceof HTMLInputElement) {
+            this.checkboxDOMElement = element;
+        }
+        this.pendingQueue = this.pendingQueue.filter(fn => fn.call(this) === false);
+    }
+    updateDateClasses() {
+        if (this.DateDOMElement) {
+            this.DateDOMElement.setAttribute('class', DEFAULT_CLASSES.day + ' ' +
+                Object.keys(this.attributes)
+                    .filter(attr => this.attributes[attr] === true).join(' '));
+            return true;
+        }
+        else {
+            this.pendingQueue.push(this.updateDateClasses);
+        }
+        return true; // success, remove from queue
+    }
+    updateCheckboxAttribute(attr, value) {
+        if (this.checkboxDOMElement) {
+            this.checkboxDOMElement[attr] = value;
+        }
+        else {
+            this.pendingQueue.push(() => {
+                if (!this.checkboxDOMElement)
+                    return false;
+                this.checkboxDOMElement[attr] = value;
+                this.updateDateClasses();
+                return true; // success, remove from queue
+            });
+        }
+        this.updateDateClasses();
+    }
+    updateDOMAttribute(attr, value) {
+        if (attr === 'checked' || attr === 'disabled') {
+            this.updateCheckboxAttribute(attr, value);
+        }
+        this.updateDateClasses();
+    }
+    setAttr(attr, value) {
+        this.attributes[attr] = value;
+        this.updateDOMAttribute(attr, value);
+    }
+    getAttr(attr) {
+        return this.attributes[attr];
+    }
+    hasAttr(attr) {
+        return attr in this.attributes;
+    }
+    removeAttr(attr) {
+        delete this.attributes[attr];
+    }
+    resetRangeAttributes() {
+        this.removeAttr('rangeIndex');
+        this.removeAttr('rangeEndIndex');
+        this.removeAttr('rangeStart');
+        this.removeAttr('rangeEnd');
+        this.removeAttr('connector');
+    }
+    updateAttributes(attributes) {
+        for (const attr in attributes) {
+            if (attributes.hasOwnProperty(attr)) {
+                const attributeCheck = attributes[attr];
+                if (attributeCheck(this) === true) {
+                    this.setAttr(attr, true);
+                }
+            }
+        }
+    }
+}
+
+function renderDate(dateElement) {
     const onChange = (e) => {
-        return e.target.checked ? this.select(date.dateString) : this.deselect(date.dateString);
+        return e.target.checked ? this.select(dateElement.dateString) : this.deselect([dateElement.dateString]);
     };
-    const genDateClass = () => {
-        this.updateTags(tags, this.viewElements);
-        return generateDateClass(date);
-    };
-    return (h("time", { part: "day", class: genDateClass(), dateTime: date.dateString },
+    return (h("time", { part: "day", dateTime: dateElement.dateString, ref: element => dateElement.hookDOMElement(element) },
         h("label", null,
-            date.day,
-            h("input", { checked: date.checked, disabled: date.disabled, onChange: onChange.bind(this), class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: date.dateString }))));
+            dateElement.day,
+            h("input", { ref: element => dateElement.hookDOMElement(element), onChange: onChange.bind(this), class: DEFAULT_CLASSES.checkbox, type: "checkbox", value: dateElement.dateString }))));
 }
 function renderWeekHeader(weekDays) {
     return (h("header", { class: DEFAULT_CLASSES.weekHeader, part: "week-header" }, weekDays.map(({ name, abbr, isWeekend }) => h("abbr", { class: isWeekend && DEFAULT_CLASSES.weekend, title: name }, abbr))));
@@ -327,7 +374,7 @@ class DatepickerPlus {
     constructor(hostRef) {
         registerInstance(this, hostRef);
         this.plusConfig = DEFAULT_CONFIG;
-        this.registered = {
+        this.dateRegistry = {
         /** LOOKUP ELEMENTS */
         };
         this.viewElements = [];
@@ -337,12 +384,13 @@ class DatepickerPlus {
         this.disabled = [
         /** DISABLED */
         ];
-        this.viewList = [];
         this.activeScope = null;
-        this.unfoldDisabledList = (disabled) => {
+        this.unfoldDateStringList = (disabled) => {
             if (!disabled.length)
                 return [];
-            return disabled.map(tag => this.unfoldTag(tag, tags)).reduce((p, n) => [...p, ...n]);
+            return disabled.map(dateString => {
+                return checkIfValidDateString(dateString) ? [dateString] : this.unfoldAttribute(dateString);
+            }).reduce((p, n) => [...p, ...n]);
         };
         this.patchConfigLists = () => {
             const { months: default_months, weekDays: default_weekDays } = DEFAULT_CONFIG.i18n;
@@ -352,6 +400,7 @@ class DatepickerPlus {
         };
         this.select = (dateString) => {
             const { selectMode } = this.plusConfig;
+            // generate selected list
             let selectList = [];
             if (selectMode === 'single') {
                 selectList = [dateString];
@@ -370,104 +419,114 @@ class DatepickerPlus {
                     selectList = [dateString];
                 }
             }
+            // check if has disabled or return prev. state
             const hasDisabled = this.checkIfHasDisabled(selectList, this.disabled);
             if (hasDisabled)
                 return this.viewElements;
+            // generate select scope if range mode active
             const scopeSize = this.plusConfig.selectScopeSize;
             if (selectMode === 'range' && scopeSize > 0) {
                 if (!this.activeScope) {
-                    this.activeScope = this.generateScope(this.viewElements, this.disabled);
+                    this.activeScope = this.generateScope(this.disabled);
                     this.activeScope.activate(dateString, scopeSize);
                 }
                 else {
                     this.activeScope.deactivate();
                 }
             }
-            const selectedViewElements = this.selectMultipleDates(selectList, this.viewElements);
-            this.viewElements = this.updateTags(tags, selectedViewElements);
-            this.selected = selectList;
+            // reset selected
+            this.deselect(this.selected);
+            // apply selected
+            this.selectMultipleDates(selectList);
+            // emit
             this.onDateSelect.emit(this.selected);
             if (selectMode === 'range' && this.selected.length > 1)
                 this.onRangeSelect.emit(this.selected);
         };
-        this.deselect = (dateString) => {
+        this.deselect = (dateStringList) => {
             const { selectMode } = this.plusConfig;
-            let selectList = [];
-            if (selectMode === 'multiple') {
-                selectList = this.selected.filter(s => s !== dateString);
-            }
             if (selectMode === 'range') {
+                dateStringList = this.selected;
                 if (this.activeScope)
                     this.activeScope.deactivate();
             }
-            const selected = this.selectMultipleDates(selectList, this.viewElements);
-            this.viewElements = this.updateTags(tags, selected);
-            this.selected = selectList;
+            dateStringList.forEach(dateString => {
+                const dateElement = this.getDateElement(dateString);
+                dateElement.setAttr('checked', false);
+                // clean range attributes
+                if (selectMode === 'range') {
+                    dateElement.resetRangeAttributes();
+                }
+                dateElement.updateDateClasses();
+            });
+            this.selected = this.selected.filter(s => !(dateStringList.includes(s)));
         };
-        this.unfoldTag = (tag, tags) => {
-            if (!(tag in tags))
-                return [tag];
-            if (this.viewElements.length !== 0) {
-                return this.viewElements.map((month) => month.filter(dateElement => dateElement.tags[tag] === true)).reduce((p, n) => [...p, ...n]).map(dateElement => dateElement.dateString);
-            }
-            else {
-                return [];
-            }
+        this.getDateElement = (dateString) => {
+            return this.dateRegistry[dateString];
+        };
+        this.unfoldAttribute = (attr) => {
+            const unfolded = [];
+            this.viewElements
+                .reduce((p, n) => [...p, ...n])
+                .forEach(dateElement => {
+                if (dateElement.getAttr(attr)) {
+                    unfolded.push(dateElement.dateString);
+                }
+            });
+            return unfolded;
+        };
+        this.registerDate = (dateString) => {
+            if (dateString in this.dateRegistry)
+                return this.dateRegistry[dateString];
+            const dateElement = new DateElement(dateString);
+            this.dateRegistry[dateString] = dateElement;
+            return dateElement;
         };
         this.onDateSelect = createEvent(this, "onDateSelect", 7);
         this.onDateDeselect = createEvent(this, "onDateDeselect", 7);
         this.onRangeSelect = createEvent(this, "onRangeSelect", 7);
     }
-    updateViewElements(next) {
-        this.registerViewDates(next);
-        this.viewElements = next.map(month => month.map(dateString => {
-            return this.registered[dateString];
-        }));
-    }
     componentWillLoad() {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
         this.patchConfigLists();
-        this.viewList = this.createViewList(this.plusConfig.viewRange);
-        this.updateTags(tags, this.viewElements);
-        this.plusConfig.disabled = this.unfoldDisabledList(this.plusConfig.disabled);
-        this.disableMultipleDates(this.plusConfig.disabled, this.viewElements);
-        this.plusConfig.selected.forEach(this.select);
         if (this.plusConfig.layout === 'horizontal') {
             this.plusConfig.weekHeader = 'per-month';
         }
     }
-    createViewList([start, end]) {
+    componentDidLoad() {
+        /**
+         * UNFOLD DATE STRING RANGE
+         * CREATE & REGISTER
+         * UPDATE VIEW ELEMENTS
+         */
+        const viewRange = this.unfoldViewRange(this.plusConfig.viewRange);
+        const createdElements = viewRange.map(month => month.map(this.registerDate));
+        this.viewElements = createdElements;
+        // disable
+        const disabled = this.unfoldDateStringList(this.plusConfig.disabled);
+        this.disableMultipleDates(disabled);
+        // select
+        this.plusConfig.selected.forEach(this.select);
+    }
+    unfoldViewRange([start, end]) {
         const dates = unfoldRange(start, end);
         return groupDates(dates).toArray();
     }
-    registerViewDates(viewList) {
-        return viewList.forEach(month => month.forEach(dateString => {
-            const registered = registerDate(this.registered, dateString);
-            this.registered = registered;
-        }));
-    }
-    generateScope(viewElements, disabledCache) {
-        let disabled = [];
+    generateScope(disabledSnapshot) {
         return {
             activate: (dateString, scopeSize) => {
-                const scopeRange = getScopeRange(dateString, scopeSize);
-                return viewElements.map(month => month.map((dateElement) => {
-                    const inScope = dateStringInRange(dateElement.dateString, scopeRange);
-                    if (inScope) {
-                        dateElement.disabled = false;
-                    }
-                    else {
-                        dateElement.disabled = true;
-                        this.disabled.push(dateElement.dateString);
-                    }
-                    this.disabled = disabled;
-                    return dateElement;
-                }));
+                const [scopeStart, scopeEnd] = getScopeRange(dateString, scopeSize);
+                const [viewStart, viewEnd] = this.plusConfig.viewRange;
+                const disableTargets = [
+                    ...unfoldRange(viewStart, scopeStart),
+                    ...unfoldRange(scopeEnd, viewEnd)
+                ];
+                this.disableMultipleDates(disableTargets);
             },
             deactivate: () => {
-                const disabled = this.disableMultipleDates(disabledCache, this.viewElements);
+                this.enableMultipleDates(this.disabled);
+                this.disableMultipleDates(disabledSnapshot);
                 this.activeScope = null;
-                return disabled;
             }
         };
     }
@@ -476,45 +535,47 @@ class DatepickerPlus {
         disabled.forEach(d => map[d] = true);
         return selected.some(s => (s in map));
     }
-    selectMultipleDates(dateStringList, viewElements) {
-        return viewElements.map(month => month.map((dateElement) => {
-            dateElement.checked = dateStringList.includes(dateElement.dateString);
+    selectMultipleDates(dateStringList) {
+        dateStringList.forEach(dateString => {
+            const dateElement = this.getDateElement(dateString);
+            if (!dateElement)
+                return;
+            dateElement.setAttr('checked', true);
             if (dateStringList.length > 1) {
-                dateElement.rangeIndex = dateElement.checked ? dateStringList.indexOf(dateElement.dateString) : null;
-                dateElement.rangeEndIndex = dateElement.checked ? dateStringList.length - 1 : null;
+                const checked = dateElement.getAttr('checked');
+                dateElement.setAttr('rangeIndex', checked ? dateStringList.indexOf(dateElement.dateString) : null);
+                dateElement.setAttr('rangeEndIndex', checked ? dateStringList.length - 1 : null);
             }
-            return dateElement;
-        }));
+            if (this.plusConfig.selectMode === 'range') {
+                const { rangeStart, rangeEnd, connector } = attributeChecks;
+                dateElement.updateAttributes({ rangeStart, rangeEnd, connector });
+            }
+        });
+        this.selected = dateStringList;
     }
-    disableMultipleDates(dateStringList, viewElements) {
-        let disabled = [];
-        const withDisabled = viewElements.map(month => month.map(dateElement => {
-            const isDisabled = dateStringList.includes(dateElement.dateString);
-            dateElement.disabled = isDisabled;
-            if (isDisabled)
-                disabled.push(dateElement.dateString);
-            return dateElement;
-        }));
-        this.disabled = disabled;
-        return withDisabled;
+    disableMultipleDates(dateStringList) {
+        this.disabled = dateStringList.filter(dateString => {
+            const dateElement = this.getDateElement(dateString);
+            if (!dateElement)
+                return false;
+            dateElement.setAttr('disabled', true);
+            return true;
+        });
     }
-    updateTags(tags, viewElements) {
-        if (viewElements) {
-            return viewElements.map(month => month.map((dateElement) => {
-                for (const tag in tags) {
-                    dateElement.tags[tag] = tags[tag](dateElement);
-                }
-                return dateElement;
-            }));
-        }
+    enableMultipleDates(dateStringList) {
+        dateStringList.forEach(dateString => {
+            const dateElement = this.getDateElement(dateString);
+            if (!dateElement)
+                return;
+            dateElement.setAttr('disabled', false);
+        });
+        this.disabled = this.disabled.filter(dateString => !dateStringList.includes(dateString));
     }
     render() {
+        console.count('RENDER...');
         return renderContainer.call(this, this.viewElements, this.plusConfig);
     }
-    static get watchers() { return {
-        "viewList": ["updateViewElements"]
-    }; }
-    static get style() { return ".dpp{font-family:monospace}.horizontal{overflow-x:scroll}.horizontal .month{display:inline-block}.month{border:1px solid #ccc;padding:20px}.dpp .month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.dpp .day.selected.rangeStart{background-color:#cddc39}.dpp .day.selected.rangeEnd{background-color:#ff9800}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{position:relative;line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{color:#ccc;background-color:#f8f8f8}.dpp .day.selected{background-color:gold}.dpp .day.highlight{background-color:#7e5}.dpp .day.today{outline:1px solid #ccc}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; }
+    static get style() { return ".dpp{font-family:monospace}.horizontal{overflow-x:scroll}.horizontal .month{display:inline-block}.month{border:1px solid #ccc;padding:20px}.dpp .month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.dpp .day.checked.rangeStart{background-color:#cddc39}.dpp .day.checked.rangeEnd{background-color:#ff9800}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{position:relative;line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{color:#ccc;background-color:#f8f8f8}.dpp .day.checked{background-color:gold}.dpp .day.highlight{background-color:#7e5}.dpp .day.today{outline:1px solid #ccc}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; }
 }
 
 export { DatepickerPlus as datepicker_plus };

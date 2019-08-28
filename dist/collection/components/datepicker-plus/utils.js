@@ -1,4 +1,3 @@
-import { DEFAULT_CLASSES } from "./config";
 export const dateToString = (date) => {
     const yyyy = date.getFullYear();
     const month = date.getMonth();
@@ -6,22 +5,10 @@ export const dateToString = (date) => {
     const dd = date.getDate();
     return `${yyyy}-${mm}-${dd}`;
 };
-export const getDateComponents = (dateString) => {
-    return dateString.split('-').map(s => parseInt(s));
-};
-export const stringToDate = (dateString) => {
-    const [year, month, day] = getDateComponents(dateString);
-    const date = new Date();
-    date.setFullYear(year);
-    date.setMonth(month - 1);
-    date.setDate(day);
-    return date;
-};
-export const getNextDay = (date) => {
-    const isStringDate = typeof date === 'string';
-    const nextDay = isStringDate ? stringToDate(date) : new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1);
-    return isStringDate ? dateToString(nextDay) : nextDay;
+export const getNextDayString = (dateString) => {
+    const next = new Date(dateString);
+    next.setDate(next.getDate() + 1);
+    return dateToString(next);
 };
 export const isSameDate = (date1, date2) => {
     if (date1.getDate() !== date2.getDate())
@@ -50,12 +37,12 @@ export const unfoldRange = (dateString0, dateString1) => {
         return [];
     const [start, end] = sortDates([dateString0, dateString1]);
     let rangeDates = [];
-    let currentDateString = getNextDay(start);
+    let currentDateString = getNextDayString(start);
     while (currentDateString !== end) {
         if (rangeDates.length > 3000)
-            openGithubIssue({ title: 'Memory leak @ getDatesBetween', label: 'bug', body: JSON.stringify({ dateString0, dateString1 }, null, 2) });
+            openGithubIssue({ title: 'Memory leak @ utils.unfoldRange()', label: 'bug', body: JSON.stringify({ dateString0, dateString1 }, null, 2) });
         rangeDates.push(currentDateString);
-        currentDateString = getNextDay(currentDateString);
+        currentDateString = getNextDayString(currentDateString);
     }
     return [start, ...rangeDates, end];
 };
@@ -63,8 +50,8 @@ export const parsePropJSON = (prop) => {
     return JSON.parse(prop.replace(/'/g, '"'));
 };
 export const sortDates = ([dateString0, dateString1]) => {
-    const dt0 = stringToDate(dateString0);
-    const dt1 = stringToDate(dateString1);
+    const dt0 = new Date(dateString0);
+    const dt1 = new Date(dateString1);
     return (dt0.valueOf() - dt1.valueOf()) > 0 ? [dateString1, dateString0] : [dateString0, dateString1];
 };
 export const dateOffset = (date0, date1) => {
@@ -88,7 +75,8 @@ export const groupDates = (dateStringList) => {
         }
     });
     dateStringList.forEach(dateString => {
-        const [year, month] = getDateComponents(dateString);
+        const date = new Date(dateString);
+        const year = date.getFullYear(), month = date.getMonth() + 1;
         if (group.hasOwnProperty(year) === false) {
             group[year] = {};
             group.sorted.years.push(year);
@@ -140,16 +128,6 @@ export const getScopeRange = (scopeCenter, scopeSize) => {
     const endDate = end.getDate();
     end.setDate(endDate + scopeSize);
     return [start, end].map(date => dateToString(date));
-};
-export const generateDateClass = (dateElement) => {
-    let tags = Object.keys(dateElement.tags);
-    const classes = [
-        DEFAULT_CLASSES.day,
-        dateElement.checked ? DEFAULT_CLASSES.selected : null,
-        dateElement.disabled ? DEFAULT_CLASSES.disabled : null,
-        ...tags.filter(tag => dateElement.tags[tag] === true)
-    ];
-    return classes.filter(c => c).join(' ');
 };
 export const openGithubIssue = ({ title, body, label }) => {
     const tl = 'title=' + encodeURIComponent(title);

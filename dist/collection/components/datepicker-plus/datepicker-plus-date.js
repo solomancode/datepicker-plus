@@ -1,8 +1,8 @@
 // import { FunctionalComponent, h } from '@stencil/core';
-// import { IDateElement } from './createDateElement';
+// import { DateElement } from './createDateElement';
 // import { DEFAULT_CLASSES } from './config';
 // export interface IDatepickerPlusDate {
-//   date: IDateElement;
+//   date: DateElement;
 // }
 // export const DatepickerPlusDate: FunctionalComponent<IDatepickerPlusDate> = ({ date }) => {
 //   const onChange = (e) => {

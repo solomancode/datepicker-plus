@@ -9,14 +9,15 @@ const future = (dateElement) => offsetFromToday(dateElement.dateString) > 0;
  * Range start date
  */
 const rangeStart = (dateElement) => {
-    const rangeStart = dateElement.rangeIndex === 0;
+    const rangeStart = dateElement.getAttr('rangeIndex') === 0;
     return rangeStart;
 };
 /**
  * Range end date
  */
 const rangeEnd = (dateElement) => {
-    const { rangeIndex, rangeEndIndex } = dateElement;
+    const rangeIndex = dateElement.getAttr('rangeIndex');
+    const rangeEndIndex = dateElement.getAttr('rangeEndIndex');
     return (rangeEndIndex > 0 && rangeIndex === rangeEndIndex);
 };
 /**
@@ -24,10 +25,9 @@ const rangeEnd = (dateElement) => {
  * in a range select mode.
  */
 const connector = (dateElement) => {
-    const isConnector = dateElement.rangeIndex > 0 && (dateElement.rangeEndIndex !== dateElement.rangeIndex);
-    return isConnector;
+    return dateElement.getAttr('rangeIndex') > 0 && (dateElement.getAttr('rangeEndIndex') !== dateElement.getAttr('rangeIndex'));
 };
-export const tags = {
+export const attributeChecks = {
     today,
     rangeStart,
     rangeEnd,

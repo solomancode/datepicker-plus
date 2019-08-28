@@ -1,12 +1,12 @@
 import { DEFAULT_CONFIG } from './config';
-import { registerDate } from './registerDate';
-import { tags } from './tags';
+import { DateElement } from './DateElement';
 import { renderContainer } from './templates';
-import { dateStringInRange, getScopeRange, groupDates, patchArray, unfoldRange } from './utils';
+import { checkIfValidDateString, getScopeRange, groupDates, patchArray, unfoldRange } from './utils';
+import { attributeChecks } from './attributes';
 export class DatepickerPlus {
     constructor() {
         this.plusConfig = DEFAULT_CONFIG;
-        this.registered = {
+        this.dateRegistry = {
         /** LOOKUP ELEMENTS */
         };
         this.viewElements = [];
@@ -16,12 +16,13 @@ export class DatepickerPlus {
         this.disabled = [
         /** DISABLED */
         ];
-        this.viewList = [];
         this.activeScope = null;
-        this.unfoldDisabledList = (disabled) => {
+        this.unfoldDateStringList = (disabled) => {
             if (!disabled.length)
                 return [];
-            return disabled.map(tag => this.unfoldTag(tag, tags)).reduce((p, n) => [...p, ...n]);
+            return disabled.map(dateString => {
+                return checkIfValidDateString(dateString) ? [dateString] : this.unfoldAttribute(dateString);
+            }).reduce((p, n) => [...p, ...n]);
         };
         this.patchConfigLists = () => {
             const { months: default_months, weekDays: default_weekDays } = DEFAULT_CONFIG.i18n;
@@ -31,6 +32,7 @@ export class DatepickerPlus {
         };
         this.select = (dateString) => {
             const { selectMode } = this.plusConfig;
+            // generate selected list
             let selectList = [];
             if (selectMode === 'single') {
                 selectList = [dateString];
@@ -49,101 +51,111 @@ export class DatepickerPlus {
                     selectList = [dateString];
                 }
             }
+            // check if has disabled or return prev. state
             const hasDisabled = this.checkIfHasDisabled(selectList, this.disabled);
             if (hasDisabled)
                 return this.viewElements;
+            // generate select scope if range mode active
             const scopeSize = this.plusConfig.selectScopeSize;
             if (selectMode === 'range' && scopeSize > 0) {
                 if (!this.activeScope) {
-                    this.activeScope = this.generateScope(this.viewElements, this.disabled);
+                    this.activeScope = this.generateScope(this.disabled);
                     this.activeScope.activate(dateString, scopeSize);
                 }
                 else {
                     this.activeScope.deactivate();
                 }
             }
-            const selectedViewElements = this.selectMultipleDates(selectList, this.viewElements);
-            this.viewElements = this.updateTags(tags, selectedViewElements);
-            this.selected = selectList;
+            // reset selected
+            this.deselect(this.selected);
+            // apply selected
+            this.selectMultipleDates(selectList);
+            // emit
             this.onDateSelect.emit(this.selected);
             if (selectMode === 'range' && this.selected.length > 1)
                 this.onRangeSelect.emit(this.selected);
         };
-        this.deselect = (dateString) => {
+        this.deselect = (dateStringList) => {
             const { selectMode } = this.plusConfig;
-            let selectList = [];
-            if (selectMode === 'multiple') {
-                selectList = this.selected.filter(s => s !== dateString);
-            }
             if (selectMode === 'range') {
+                dateStringList = this.selected;
                 if (this.activeScope)
                     this.activeScope.deactivate();
             }
-            const selected = this.selectMultipleDates(selectList, this.viewElements);
-            this.viewElements = this.updateTags(tags, selected);
-            this.selected = selectList;
+            dateStringList.forEach(dateString => {
+                const dateElement = this.getDateElement(dateString);
+                dateElement.setAttr('checked', false);
+                // clean range attributes
+                if (selectMode === 'range') {
+                    dateElement.resetRangeAttributes();
+                }
+                dateElement.updateDateClasses();
+            });
+            this.selected = this.selected.filter(s => !(dateStringList.includes(s)));
         };
-        this.unfoldTag = (tag, tags) => {
-            if (!(tag in tags))
-                return [tag];
-            if (this.viewElements.length !== 0) {
-                return this.viewElements.map((month) => month.filter(dateElement => dateElement.tags[tag] === true)).reduce((p, n) => [...p, ...n]).map(dateElement => dateElement.dateString);
-            }
-            else {
-                return [];
-            }
+        this.getDateElement = (dateString) => {
+            return this.dateRegistry[dateString];
         };
-    }
-    updateViewElements(next) {
-        this.registerViewDates(next);
-        this.viewElements = next.map(month => month.map(dateString => {
-            return this.registered[dateString];
-        }));
+        this.unfoldAttribute = (attr) => {
+            const unfolded = [];
+            this.viewElements
+                .reduce((p, n) => [...p, ...n])
+                .forEach(dateElement => {
+                if (dateElement.getAttr(attr)) {
+                    unfolded.push(dateElement.dateString);
+                }
+            });
+            return unfolded;
+        };
+        this.registerDate = (dateString) => {
+            if (dateString in this.dateRegistry)
+                return this.dateRegistry[dateString];
+            const dateElement = new DateElement(dateString);
+            this.dateRegistry[dateString] = dateElement;
+            return dateElement;
+        };
     }
     componentWillLoad() {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
         this.patchConfigLists();
-        this.viewList = this.createViewList(this.plusConfig.viewRange);
-        this.updateTags(tags, this.viewElements);
-        this.plusConfig.disabled = this.unfoldDisabledList(this.plusConfig.disabled);
-        this.disableMultipleDates(this.plusConfig.disabled, this.viewElements);
-        this.plusConfig.selected.forEach(this.select);
         if (this.plusConfig.layout === 'horizontal') {
             this.plusConfig.weekHeader = 'per-month';
         }
     }
-    createViewList([start, end]) {
+    componentDidLoad() {
+        /**
+         * UNFOLD DATE STRING RANGE
+         * CREATE & REGISTER
+         * UPDATE VIEW ELEMENTS
+         */
+        const viewRange = this.unfoldViewRange(this.plusConfig.viewRange);
+        const createdElements = viewRange.map(month => month.map(this.registerDate));
+        this.viewElements = createdElements;
+        // disable
+        const disabled = this.unfoldDateStringList(this.plusConfig.disabled);
+        this.disableMultipleDates(disabled);
+        // select
+        this.plusConfig.selected.forEach(this.select);
+    }
+    unfoldViewRange([start, end]) {
         const dates = unfoldRange(start, end);
         return groupDates(dates).toArray();
     }
-    registerViewDates(viewList) {
-        return viewList.forEach(month => month.forEach(dateString => {
-            const registered = registerDate(this.registered, dateString);
-            this.registered = registered;
-        }));
-    }
-    generateScope(viewElements, disabledCache) {
-        let disabled = [];
+    generateScope(disabledSnapshot) {
         return {
             activate: (dateString, scopeSize) => {
-                const scopeRange = getScopeRange(dateString, scopeSize);
-                return viewElements.map(month => month.map((dateElement) => {
-                    const inScope = dateStringInRange(dateElement.dateString, scopeRange);
-                    if (inScope) {
-                        dateElement.disabled = false;
-                    }
-                    else {
-                        dateElement.disabled = true;
-                        this.disabled.push(dateElement.dateString);
-                    }
-                    this.disabled = disabled;
-                    return dateElement;
-                }));
+                const [scopeStart, scopeEnd] = getScopeRange(dateString, scopeSize);
+                const [viewStart, viewEnd] = this.plusConfig.viewRange;
+                const disableTargets = [
+                    ...unfoldRange(viewStart, scopeStart),
+                    ...unfoldRange(scopeEnd, viewEnd)
+                ];
+                this.disableMultipleDates(disableTargets);
             },
             deactivate: () => {
-                const disabled = this.disableMultipleDates(disabledCache, this.viewElements);
+                this.enableMultipleDates(this.disabled);
+                this.disableMultipleDates(disabledSnapshot);
                 this.activeScope = null;
-                return disabled;
             }
         };
     }
@@ -152,39 +164,44 @@ export class DatepickerPlus {
         disabled.forEach(d => map[d] = true);
         return selected.some(s => (s in map));
     }
-    selectMultipleDates(dateStringList, viewElements) {
-        return viewElements.map(month => month.map((dateElement) => {
-            dateElement.checked = dateStringList.includes(dateElement.dateString);
+    selectMultipleDates(dateStringList) {
+        dateStringList.forEach(dateString => {
+            const dateElement = this.getDateElement(dateString);
+            if (!dateElement)
+                return;
+            dateElement.setAttr('checked', true);
             if (dateStringList.length > 1) {
-                dateElement.rangeIndex = dateElement.checked ? dateStringList.indexOf(dateElement.dateString) : null;
-                dateElement.rangeEndIndex = dateElement.checked ? dateStringList.length - 1 : null;
+                const checked = dateElement.getAttr('checked');
+                dateElement.setAttr('rangeIndex', checked ? dateStringList.indexOf(dateElement.dateString) : null);
+                dateElement.setAttr('rangeEndIndex', checked ? dateStringList.length - 1 : null);
             }
-            return dateElement;
-        }));
+            if (this.plusConfig.selectMode === 'range') {
+                const { rangeStart, rangeEnd, connector } = attributeChecks;
+                dateElement.updateAttributes({ rangeStart, rangeEnd, connector });
+            }
+        });
+        this.selected = dateStringList;
     }
-    disableMultipleDates(dateStringList, viewElements) {
-        let disabled = [];
-        const withDisabled = viewElements.map(month => month.map(dateElement => {
-            const isDisabled = dateStringList.includes(dateElement.dateString);
-            dateElement.disabled = isDisabled;
-            if (isDisabled)
-                disabled.push(dateElement.dateString);
-            return dateElement;
-        }));
-        this.disabled = disabled;
-        return withDisabled;
+    disableMultipleDates(dateStringList) {
+        this.disabled = dateStringList.filter(dateString => {
+            const dateElement = this.getDateElement(dateString);
+            if (!dateElement)
+                return false;
+            dateElement.setAttr('disabled', true);
+            return true;
+        });
     }
-    updateTags(tags, viewElements) {
-        if (viewElements) {
-            return viewElements.map(month => month.map((dateElement) => {
-                for (const tag in tags) {
-                    dateElement.tags[tag] = tags[tag](dateElement);
-                }
-                return dateElement;
-            }));
-        }
+    enableMultipleDates(dateStringList) {
+        dateStringList.forEach(dateString => {
+            const dateElement = this.getDateElement(dateString);
+            if (!dateElement)
+                return;
+            dateElement.setAttr('disabled', false);
+        });
+        this.disabled = this.disabled.filter(dateString => !dateStringList.includes(dateString));
     }
     render() {
+        console.count('RENDER...');
         return renderContainer.call(this, this.viewElements, this.plusConfig);
     }
     static get is() { return "datepicker-plus"; }
@@ -218,8 +235,7 @@ export class DatepickerPlus {
         }
     }; }
     static get states() { return {
-        "viewElements": {},
-        "viewList": {}
+        "viewElements": {}
     }; }
     static get events() { return [{
             "method": "onDateSelect",
@@ -278,9 +294,5 @@ export class DatepickerPlus {
                     }
                 }
             }
-        }]; }
-    static get watchers() { return [{
-            "propName": "viewList",
-            "methodName": "updateViewElements"
         }]; }
 }

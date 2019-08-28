@@ -19,7 +19,7 @@
 //     rangeEnd?: boolean
 //     highlight?: boolean
 // }
-// export interface IDateElement extends IDateOptions, IDateHelperMethods, IDateClassList {
+// export interface DateElement extends IDateOptions, IDateHelperMethods, IDateClassList {
 //     day: number
 //     month: number
 //     year: number
@@ -45,7 +45,7 @@
 //         return dateString
 //     },
 //     offset() {
-//         const date = (this as IDateElement).dateObject()
+//         const date = (this as DateElement).dateObject()
 //         const now = new Date()
 //         return dateOffset(date, now)
 //     }
@@ -53,7 +53,7 @@
 // const composeDateClassList = () => ({
 //     classListString: DEFAULT_CLASSES.day,
 //     updateClassListString() {
-//         const date = (this as IDateElement)
+//         const date = (this as DateElement)
 //         const classList = [
 //             DEFAULT_CLASSES.day,
 //             date.highlight && DEFAULT_CLASSES.highlight,
@@ -67,12 +67,12 @@
 //         return this.classListString = classList.filter(c=>c).join(' ')
 //     }
 // })
-// export const createdDateElements: {[key: string]: IDateElement} = {
+// export const createdDateElements: {[key: string]: DateElement} = {
 //     /**
 //      * CREATED DATE ELEMENTS...
 //      */
 // }
-// export function createDateElement({ dateString, options, datepickerPlus }: IDateParams): IDateElement {
+// export function createDateElement({ dateString, options, datepickerPlus }: IDateParams): DateElement {
 //     const [year, month, day] = getDateComponents(dateString)
 //     const dateOptions = Object.create({
 //         tags: {},
