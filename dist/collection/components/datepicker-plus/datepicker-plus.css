@@ -74,8 +74,8 @@
     background-color: gold;
 }
 
-.dpp .day.highlight {
-    background-color: #7e5;
+.dpp .day.highlighted {
+    background-color: gold;
 }
 
 .dpp .day.today {

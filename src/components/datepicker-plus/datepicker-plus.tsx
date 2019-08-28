@@ -53,6 +53,10 @@ export class DatepickerPlus {
     /** DISABLED */
   ];
   
+  public highlighted: DateString[] = [
+    /** HIGHLIGHTED */
+  ];
+  
   public activeScope: IScopeController = null
   
   @Event() onDateSelect: EventEmitter<DateString[]>
@@ -168,6 +172,7 @@ export class DatepickerPlus {
       dateElement.updateDateClasses()
     })
     this.selected = this.selected.filter(s => !(dateStringList.includes(s)))
+    this.clearHighlighted()
   }
 
   generateScope(disabledSnapshot: DateString[]): IScopeController {
@@ -187,6 +192,25 @@ export class DatepickerPlus {
         this.activeScope = null;
       }
     }
+  }
+
+  highlightON(dateString: DateString) {
+    if (this.plusConfig.selectMode==='range' && this.selected.length===1) {
+      this.clearHighlighted()
+      this.highlighted = unfoldRange(this.selected[0], dateString);
+      this.highlighted.forEach(dateString => {
+        const dateElement = this.getDateElement(dateString)
+        dateElement.setAttr('highlighted', true)
+      })
+    }
+  }
+
+  clearHighlighted() {
+    this.highlighted.forEach(dateString => {
+      const dateElement = this.getDateElement(dateString);
+      if (dateElement) dateElement.removeAttr('highlighted')
+    })
+    this.highlighted = [];
   }
   
   checkIfHasDisabled(selected: DateString[], disabled: DateString[]) {

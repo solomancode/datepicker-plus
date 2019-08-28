@@ -87,6 +87,7 @@ export class DateElement {
 
     removeAttr(attr: string) {
         delete this.attributes[attr]
+        this.updateDateClasses()
     }
 
     resetRangeAttributes() {

@@ -8,9 +8,11 @@ export function renderDate (dateElement: DateElement) {
     const onChange = (e: any) => {
         return e.target.checked ? this.select(dateElement.dateString) : this.deselect([dateElement.dateString])
     }
+    const onEnter = () => dateElement.getAttr('disabled') === false && this.highlightON(dateElement.dateString);
     return (
         <time part="day"
               dateTime={dateElement.dateString}
+              onMouseEnter={onEnter.bind(this)}
               ref={element => dateElement.hookDOMElement(element)}>
              <label>
                 {dateElement.day}

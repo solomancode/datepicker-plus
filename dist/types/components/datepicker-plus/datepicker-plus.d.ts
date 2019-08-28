@@ -27,6 +27,7 @@ export declare class DatepickerPlus {
     viewElements: DateElement[][];
     private selected;
     disabled: DateString[];
+    highlighted: DateString[];
     activeScope: IScopeController;
     onDateSelect: EventEmitter<DateString[]>;
     onDateDeselect: EventEmitter<DateString[]>;
@@ -39,6 +40,8 @@ export declare class DatepickerPlus {
     select: (dateString: string) => DateElement[][];
     deselect: (dateStringList: string[]) => void;
     generateScope(disabledSnapshot: DateString[]): IScopeController;
+    highlightON(dateString: DateString): void;
+    clearHighlighted(): void;
     checkIfHasDisabled(selected: DateString[], disabled: DateString[]): boolean;
     getDateElement: (dateString: string) => DateElement;
     selectMultipleDates(dateStringList: DateString[]): void;
