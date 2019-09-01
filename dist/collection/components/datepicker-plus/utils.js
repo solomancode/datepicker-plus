@@ -37,9 +37,9 @@ export const NormDt = (dateString) => {
     return dateString.split('-').map(s => s.padStart(2, '0')).join('-');
 };
 export const unfoldRange = (dateString0, dateString1) => {
-    if (dateString0 === dateString1)
-        return [];
     const [start, end] = sortDates([dateString0, dateString1]).map(NormDt);
+    if (start === end)
+        return [];
     let rangeDates = [];
     let currentDateString = getNextDayString(start);
     while (currentDateString !== end) {

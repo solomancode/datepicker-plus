@@ -27,9 +27,9 @@ const NormDt = (dateString) => {
     return dateString.split('-').map(s => s.padStart(2, '0')).join('-');
 };
 const unfoldRange = (dateString0, dateString1) => {
-    if (dateString0 === dateString1)
-        return [];
     const [start, end] = sortDates([dateString0, dateString1]).map(NormDt);
+    if (start === end)
+        return [];
     let rangeDates = [];
     let currentDateString = getNextDayString(start);
     while (currentDateString !== end) {
@@ -474,9 +474,11 @@ class DatepickerPlus {
             });
             this.selected = this.selected.filter(s => !(dateStringList.includes(s)));
             this.clearHighlighted();
+            this.onDeselect.emit(dateStringList);
         };
         this.getDateElement = (dateString) => {
-            return this.dateRegistry[dateString];
+            const NDStr = NormDt(dateString);
+            return this.dateRegistry[NDStr];
         };
         this.unfoldAttribute = (attr) => {
             const unfolded = [];
@@ -490,15 +492,18 @@ class DatepickerPlus {
             return unfolded;
         };
         this.registerDate = (dateString) => {
-            if (dateString in this.dateRegistry)
-                return this.dateRegistry[dateString];
-            const dateElement = new DateElement(dateString);
-            this.dateRegistry[dateString] = dateElement;
+            const NDStr = NormDt(dateString);
+            if (NDStr in this.dateRegistry)
+                return this.dateRegistry[NDStr];
+            const dateElement = new DateElement(NDStr);
+            this.dateRegistry[NDStr] = dateElement;
             return dateElement;
         };
         this.onDateSelect = __chunk_1.createEvent(this, "onDateSelect", 7);
-        this.onDateDeselect = __chunk_1.createEvent(this, "onDateDeselect", 7);
+        this.onDeselect = __chunk_1.createEvent(this, "onDeselect", 7);
         this.onRangeSelect = __chunk_1.createEvent(this, "onRangeSelect", 7);
+        this.onHighlight = __chunk_1.createEvent(this, "onHighlight", 7);
+        this.onHighlightClear = __chunk_1.createEvent(this, "onHighlightClear", 7);
     }
     componentWillLoad() {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
@@ -552,6 +557,7 @@ class DatepickerPlus {
                 const dateElement = this.getDateElement(dateString);
                 dateElement.setAttr('highlighted', true);
             });
+            this.onHighlight.emit(this.highlighted);
         }
     }
     clearHighlighted() {
@@ -561,6 +567,7 @@ class DatepickerPlus {
                 dateElement.removeAttr('highlighted');
         });
         this.highlighted = [];
+        this.onHighlightClear.emit(void 0);
     }
     checkIfHasDisabled(selected, disabled) {
         const map = {};

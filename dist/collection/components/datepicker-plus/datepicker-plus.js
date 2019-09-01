@@ -1,7 +1,7 @@
 import { DEFAULT_CONFIG } from './config';
 import { DateElement } from './DateElement';
 import { renderContainer } from './templates';
-import { checkIfValidDateString, getScopeRange, groupDates, patchArray, unfoldRange } from './utils';
+import { checkIfValidDateString, getScopeRange, groupDates, patchArray, unfoldRange, NormDt } from './utils';
 import { attributeChecks } from './attributes';
 export class DatepickerPlus {
     constructor() {
@@ -96,9 +96,11 @@ export class DatepickerPlus {
             });
             this.selected = this.selected.filter(s => !(dateStringList.includes(s)));
             this.clearHighlighted();
+            this.onDeselect.emit(dateStringList);
         };
         this.getDateElement = (dateString) => {
-            return this.dateRegistry[dateString];
+            const NDStr = NormDt(dateString);
+            return this.dateRegistry[NDStr];
         };
         this.unfoldAttribute = (attr) => {
             const unfolded = [];
@@ -112,10 +114,11 @@ export class DatepickerPlus {
             return unfolded;
         };
         this.registerDate = (dateString) => {
-            if (dateString in this.dateRegistry)
-                return this.dateRegistry[dateString];
-            const dateElement = new DateElement(dateString);
-            this.dateRegistry[dateString] = dateElement;
+            const NDStr = NormDt(dateString);
+            if (NDStr in this.dateRegistry)
+                return this.dateRegistry[NDStr];
+            const dateElement = new DateElement(NDStr);
+            this.dateRegistry[NDStr] = dateElement;
             return dateElement;
         };
     }
@@ -171,6 +174,7 @@ export class DatepickerPlus {
                 const dateElement = this.getDateElement(dateString);
                 dateElement.setAttr('highlighted', true);
             });
+            this.onHighlight.emit(this.highlighted);
         }
     }
     clearHighlighted() {
@@ -180,6 +184,7 @@ export class DatepickerPlus {
                 dateElement.removeAttr('highlighted');
         });
         this.highlighted = [];
+        this.onHighlightClear.emit(void 0);
     }
     checkIfHasDisabled(selected, disabled) {
         const map = {};
@@ -279,8 +284,8 @@ export class DatepickerPlus {
                 }
             }
         }, {
-            "method": "onDateDeselect",
-            "name": "onDateDeselect",
+            "method": "onDeselect",
+            "name": "onDeselect",
             "bubbles": true,
             "cancelable": true,
             "composed": true,
@@ -315,6 +320,40 @@ export class DatepickerPlus {
                         "location": "local"
                     }
                 }
+            }
+        }, {
+            "method": "onHighlight",
+            "name": "onHighlight",
+            "bubbles": true,
+            "cancelable": true,
+            "composed": true,
+            "docs": {
+                "tags": [],
+                "text": ""
+            },
+            "complexType": {
+                "original": "DateString[]",
+                "resolved": "string[]",
+                "references": {
+                    "DateString": {
+                        "location": "local"
+                    }
+                }
+            }
+        }, {
+            "method": "onHighlightClear",
+            "name": "onHighlightClear",
+            "bubbles": true,
+            "cancelable": true,
+            "composed": true,
+            "docs": {
+                "tags": [],
+                "text": ""
+            },
+            "complexType": {
+                "original": "void",
+                "resolved": "void",
+                "references": {}
             }
         }]; }
 }

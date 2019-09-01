@@ -22,9 +22,9 @@ var NormDt = function (dateString) {
     return dateString.split('-').map(function (s) { return s.padStart(2, '0'); }).join('-');
 };
 var unfoldRange = function (dateString0, dateString1) {
-    if (dateString0 === dateString1)
-        return [];
     var _a = sortDates([dateString0, dateString1]).map(NormDt), start = _a[0], end = _a[1];
+    if (start === end)
+        return [];
     var rangeDates = [];
     var currentDateString = getNextDayString(start);
     while (currentDateString !== end) {
@@ -466,9 +466,11 @@ var DatepickerPlus = /** @class */ (function () {
             });
             _this.selected = _this.selected.filter(function (s) { return !(dateStringList.includes(s)); });
             _this.clearHighlighted();
+            _this.onDeselect.emit(dateStringList);
         };
         this.getDateElement = function (dateString) {
-            return _this.dateRegistry[dateString];
+            var NDStr = NormDt(dateString);
+            return _this.dateRegistry[NDStr];
         };
         this.unfoldAttribute = function (attr) {
             var unfolded = [];
@@ -482,15 +484,18 @@ var DatepickerPlus = /** @class */ (function () {
             return unfolded;
         };
         this.registerDate = function (dateString) {
-            if (dateString in _this.dateRegistry)
-                return _this.dateRegistry[dateString];
-            var dateElement = new DateElement(dateString);
-            _this.dateRegistry[dateString] = dateElement;
+            var NDStr = NormDt(dateString);
+            if (NDStr in _this.dateRegistry)
+                return _this.dateRegistry[NDStr];
+            var dateElement = new DateElement(NDStr);
+            _this.dateRegistry[NDStr] = dateElement;
             return dateElement;
         };
         this.onDateSelect = createEvent(this, "onDateSelect", 7);
-        this.onDateDeselect = createEvent(this, "onDateDeselect", 7);
+        this.onDeselect = createEvent(this, "onDeselect", 7);
         this.onRangeSelect = createEvent(this, "onRangeSelect", 7);
+        this.onHighlight = createEvent(this, "onHighlight", 7);
+        this.onHighlightClear = createEvent(this, "onHighlightClear", 7);
     }
     DatepickerPlus.prototype.componentWillLoad = function () {
         this.plusConfig = Object.assign({}, DEFAULT_CONFIG, this.plusConfig);
@@ -545,6 +550,7 @@ var DatepickerPlus = /** @class */ (function () {
                 var dateElement = _this.getDateElement(dateString);
                 dateElement.setAttr('highlighted', true);
             });
+            this.onHighlight.emit(this.highlighted);
         }
     };
     DatepickerPlus.prototype.clearHighlighted = function () {
@@ -555,6 +561,7 @@ var DatepickerPlus = /** @class */ (function () {
                 dateElement.removeAttr('highlighted');
         });
         this.highlighted = [];
+        this.onHighlightClear.emit(void 0);
     };
     DatepickerPlus.prototype.checkIfHasDisabled = function (selected, disabled) {
         var map = {};

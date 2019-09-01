@@ -14,11 +14,13 @@
 
 ## Events
 
-| Event            | Description | Type                    |
-| ---------------- | ----------- | ----------------------- |
-| `onDateDeselect` |             | `CustomEvent<string[]>` |
-| `onDateSelect`   |             | `CustomEvent<string[]>` |
-| `onRangeSelect`  |             | `CustomEvent<string[]>` |
+| Event              | Description | Type                    |
+| ------------------ | ----------- | ----------------------- |
+| `onDateSelect`     |             | `CustomEvent<string[]>` |
+| `onDeselect`       |             | `CustomEvent<string[]>` |
+| `onHighlight`      |             | `CustomEvent<string[]>` |
+| `onHighlightClear` |             | `CustomEvent<void>`     |
+| `onRangeSelect`    |             | `CustomEvent<string[]>` |
 
 
 ----------------------------------------------
