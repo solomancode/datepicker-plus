@@ -2,7 +2,7 @@ import { Component, Event, EventEmitter, Prop, State } from '@stencil/core';
 import { DEFAULT_CONFIG, IMonth, IWeekDay, SelectMode } from './config';
 import { DateElement } from './DateElement';
 import { renderContainer } from './templates';
-import { checkIfValidDateString, getScopeRange, groupDates, patchArray, unfoldRange } from './utils';
+import { checkIfValidDateString, getScopeRange, groupDates, patchArray, unfoldRange, NormDt } from './utils';
 import { attributeChecks } from './attributes';
 
 export type DateString = string
@@ -60,8 +60,10 @@ export class DatepickerPlus {
   public activeScope: IScopeController = null
   
   @Event() onDateSelect: EventEmitter<DateString[]>
-  @Event() onDateDeselect: EventEmitter<DateString[]>
+  @Event() onDeselect: EventEmitter<DateString[]>
   @Event() onRangeSelect: EventEmitter<DateString[]>
+  @Event() onHighlight: EventEmitter<DateString[]>
+  @Event() onHighlightClear: EventEmitter<void>
 
   componentWillLoad() {
     this.plusConfig = { ...DEFAULT_CONFIG, ...this.plusConfig }
@@ -173,6 +175,7 @@ export class DatepickerPlus {
     })
     this.selected = this.selected.filter(s => !(dateStringList.includes(s)))
     this.clearHighlighted()
+    this.onDeselect.emit(dateStringList);
   }
 
   generateScope(disabledSnapshot: DateString[]): IScopeController {
@@ -202,6 +205,7 @@ export class DatepickerPlus {
         const dateElement = this.getDateElement(dateString)
         dateElement.setAttr('highlighted', true)
       })
+      this.onHighlight.emit(this.highlighted);
     }
   }
 
@@ -211,6 +215,7 @@ export class DatepickerPlus {
       if (dateElement) dateElement.removeAttr('highlighted')
     })
     this.highlighted = [];
+    this.onHighlightClear.emit(void 0);
   }
   
   checkIfHasDisabled(selected: DateString[], disabled: DateString[]) {
@@ -220,7 +225,8 @@ export class DatepickerPlus {
   }
   
   getDateElement = (dateString: DateString): DateElement => {
-    return this.dateRegistry[dateString]
+    const NDStr = NormDt(dateString)
+    return this.dateRegistry[NDStr]
   }
   
   selectMultipleDates(dateStringList: DateString[]) {
@@ -272,9 +278,10 @@ export class DatepickerPlus {
   }
 
   registerDate = (dateString: DateString) => {
-    if (dateString in this.dateRegistry) return this.dateRegistry[dateString];
-    const dateElement = new DateElement(dateString)
-    this.dateRegistry[dateString] = dateElement
+    const NDStr = NormDt(dateString);
+    if (NDStr in this.dateRegistry) return this.dateRegistry[NDStr];
+    const dateElement = new DateElement(NDStr)
+    this.dateRegistry[NDStr] = dateElement
     return dateElement
   }
 

@@ -30,8 +30,10 @@ export declare class DatepickerPlus {
     highlighted: DateString[];
     activeScope: IScopeController;
     onDateSelect: EventEmitter<DateString[]>;
-    onDateDeselect: EventEmitter<DateString[]>;
+    onDeselect: EventEmitter<DateString[]>;
     onRangeSelect: EventEmitter<DateString[]>;
+    onHighlight: EventEmitter<DateString[]>;
+    onHighlightClear: EventEmitter<void>;
     componentWillLoad(): void;
     componentDidLoad(): void;
     private unfoldDateStringList;

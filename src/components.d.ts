@@ -32,8 +32,10 @@ declare global {
 
 declare namespace LocalJSX {
   interface DatepickerPlus extends JSXBase.HTMLAttributes<HTMLDatepickerPlusElement> {
-    'onOnDateDeselect'?: (event: CustomEvent<DateString[]>) => void;
     'onOnDateSelect'?: (event: CustomEvent<DateString[]>) => void;
+    'onOnDeselect'?: (event: CustomEvent<DateString[]>) => void;
+    'onOnHighlight'?: (event: CustomEvent<DateString[]>) => void;
+    'onOnHighlightClear'?: (event: CustomEvent<void>) => void;
     'onOnRangeSelect'?: (event: CustomEvent<DateString[]>) => void;
     'plusConfig'?: IPlusConfig;
   }

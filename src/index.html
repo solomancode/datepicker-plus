@@ -48,7 +48,7 @@
 
   <script>
     // On Date Deselect
-    datepickerPlus.addEventListener('onDateDeselect', (event) => {
+    datepickerPlus.addEventListener('onDeselect', (event) => {
       console.log(`🦍 %cdeselected x ${event.detail.length}`,'background: antiquewhite; padding: 2px 5px')
       console.log(event.detail)
     })
@@ -58,6 +58,14 @@
     // On Range select
     datepickerPlus.addEventListener('onRangeSelect', (event) => {
       console.log(`🧮 %cselect range x ${event.detail.length}`,'background: antiquewhite; padding: 2px 5px')
+      console.log(event.detail)
+    })
+  </script>
+
+  <script>
+    // On Range select
+    datepickerPlus.addEventListener('onHighlight', (event) => {
+      console.log(`🌹 %chighlighted ${event.detail.length}`,'background: antiquewhite; padding: 2px 5px')
       console.log(event.detail)
     })
   </script>
