@@ -6,7 +6,7 @@ export const dateToString = (date: Date) => {
     const month = date.getMonth()
     const mm = (month + 1)
     const dd = date.getDate()
-    return `${yyyy}-${mm}-${dd}`
+    return NormDt(`${yyyy}-${mm}-${dd}`)
 }
 
 export const getNextDayString = (dateString: DateString) => {
@@ -37,12 +37,17 @@ export const getCurrentMonthRange = () => {
     return [ dateToString(firstDay), dateToString(lastDay) ]
 }
 
+// Normalize Date String
+export const NormDt = (dateString: DateString) => {
+    return dateString.split('-').map(s=>s.padStart(2,'0')).join('-');
+}
+
 export const unfoldRange = (dateString0: string, dateString1: string): string[] => {
     if (dateString0===dateString1) return [];
-    const [start, end] = sortDates([dateString0, dateString1])
+    const [start, end] = sortDates([dateString0, dateString1]).map(NormDt)
     let rangeDates = []
     let currentDateString = getNextDayString(start);
-    while (currentDateString!==end) {
+    while (currentDateString !== end) {
         if (rangeDates.length>3000) openGithubIssue({ title: 'Memory leak @ utils.unfoldRange()', label: 'bug', body: JSON.stringify({dateString0,dateString1},null,2)})
         rangeDates.push(currentDateString)
         currentDateString = getNextDayString(currentDateString);

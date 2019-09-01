@@ -5,6 +5,7 @@ export declare const getNextDayString: (dateString: string) => string;
 export declare const isSameDate: (date1: Date, date2: Date) => boolean;
 export declare const dateStringInRange: (dateString: string, dateRange: [string, string]) => boolean;
 export declare const getCurrentMonthRange: () => string[];
+export declare const NormDt: (dateString: string) => string;
 export declare const unfoldRange: (dateString0: string, dateString1: string) => string[];
 export declare const parsePropJSON: (prop: string) => any;
 export declare const sortDates: ([dateString0, dateString1]: [string, string]) => string[];
