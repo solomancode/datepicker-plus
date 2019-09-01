@@ -4,7 +4,7 @@ var dateToString = function (date) {
     var month = date.getMonth();
     var mm = (month + 1);
     var dd = date.getDate();
-    return yyyy + "-" + mm + "-" + dd;
+    return NormDt(yyyy + "-" + mm + "-" + dd);
 };
 var getNextDayString = function (dateString) {
     var next = new Date(dateString);
@@ -17,10 +17,14 @@ var getCurrentMonthRange = function () {
     var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     return [dateToString(firstDay), dateToString(lastDay)];
 };
+// Normalize Date String
+var NormDt = function (dateString) {
+    return dateString.split('-').map(function (s) { return s.padStart(2, '0'); }).join('-');
+};
 var unfoldRange = function (dateString0, dateString1) {
     if (dateString0 === dateString1)
         return [];
-    var _a = sortDates([dateString0, dateString1]), start = _a[0], end = _a[1];
+    var _a = sortDates([dateString0, dateString1]).map(NormDt), start = _a[0], end = _a[1];
     var rangeDates = [];
     var currentDateString = getNextDayString(start);
     while (currentDateString !== end) {

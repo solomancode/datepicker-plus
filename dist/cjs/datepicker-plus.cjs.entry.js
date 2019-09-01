@@ -9,7 +9,7 @@ const dateToString = (date) => {
     const month = date.getMonth();
     const mm = (month + 1);
     const dd = date.getDate();
-    return `${yyyy}-${mm}-${dd}`;
+    return NormDt(`${yyyy}-${mm}-${dd}`);
 };
 const getNextDayString = (dateString) => {
     const next = new Date(dateString);
@@ -22,10 +22,14 @@ const getCurrentMonthRange = () => {
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     return [dateToString(firstDay), dateToString(lastDay)];
 };
+// Normalize Date String
+const NormDt = (dateString) => {
+    return dateString.split('-').map(s => s.padStart(2, '0')).join('-');
+};
 const unfoldRange = (dateString0, dateString1) => {
     if (dateString0 === dateString1)
         return [];
-    const [start, end] = sortDates([dateString0, dateString1]);
+    const [start, end] = sortDates([dateString0, dateString1]).map(NormDt);
     let rangeDates = [];
     let currentDateString = getNextDayString(start);
     while (currentDateString !== end) {
