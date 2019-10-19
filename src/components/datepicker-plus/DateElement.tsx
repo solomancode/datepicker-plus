@@ -1,9 +1,14 @@
-import { DateString } from "./datepicker-plus";
 import { DEFAULT_CLASSES } from "./config";
 import { AttributeCheckFn, attributeChecks } from "./attributes";
+import { DateString } from "../../datepicker-plus";
 
 export class DateElement {
 
+    /**
+     * pending operations to be called in 
+     * later time when a certain condition
+     * is met.
+     */
     private pendingQueue: (() => boolean)[] = []
 
     /**
@@ -12,6 +17,10 @@ export class DateElement {
     private DateDOMElement: HTMLTimeElement
     private checkboxDOMElement: HTMLInputElement
 
+    /**
+     * hooks a DOM element reference and applies
+     * pending operations.
+     */
     hookDOMElement(element: HTMLTimeElement | HTMLInputElement): void {
         if (element instanceof HTMLTimeElement) {
             this.DateDOMElement = element
@@ -21,6 +30,9 @@ export class DateElement {
         this.pendingQueue = this.pendingQueue.filter(fn=>fn.call(this) === false)
     }
 
+    /**
+     * update date class-list
+     */
     updateDateClasses() {
         if (this.DateDOMElement) {
             this.DateDOMElement.setAttribute(
@@ -50,6 +62,9 @@ export class DateElement {
          */
     }
 
+    /**
+     * updates a date attribute
+     */
     private updateCheckboxAttribute(attr: string, value: any) {
         if (this.checkboxDOMElement) {
             this.checkboxDOMElement[attr] = value;
@@ -64,8 +79,11 @@ export class DateElement {
         this.updateDateClasses()
     }
     
+    /**
+     * updates a DOM attribute
+     */
     private updateDOMAttribute(attr: string, value: any) {
-        if (attr==='checked'||attr==='disabled') {
+        if (attr===DEFAULT_CLASSES.checked||attr===DEFAULT_CLASSES.disabled) {
             this.updateCheckboxAttribute(attr, value);
         }
         this.updateDateClasses()
@@ -90,6 +108,9 @@ export class DateElement {
         this.updateDateClasses()
     }
 
+    /**
+     * resets range attributes
+     */
     resetRangeAttributes() {
         this.removeAttr('rangeIndex')
         this.removeAttr('rangeEndIndex')
@@ -98,6 +119,9 @@ export class DateElement {
         this.removeAttr('connector')
     }
 
+    /**
+     * update date attributes
+     */
     updateAttributes(attributes: {[key: string]: AttributeCheckFn}) {
         for (const attr in attributes) {
             if (attributes.hasOwnProperty(attr)) {

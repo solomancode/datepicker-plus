@@ -1,3 +1,6 @@
+/**
+ * takes a date, returns a dateString
+ */
 export const dateToString = (date) => {
     const yyyy = date.getFullYear();
     const month = date.getMonth();
@@ -5,11 +8,17 @@ export const dateToString = (date) => {
     const dd = date.getDate();
     return NormDt(`${yyyy}-${mm}-${dd}`);
 };
+/**
+ * given a dateString, return the next day dateString
+ */
 export const getNextDayString = (dateString) => {
     const next = new Date(dateString);
     next.setDate(next.getDate() + 1);
     return dateToString(next);
 };
+/**
+ * check if a pair of dates are equal.
+ */
 export const isSameDate = (date1, date2) => {
     if (date1.getDate() !== date2.getDate())
         return false;
@@ -19,6 +28,9 @@ export const isSameDate = (date1, date2) => {
         return false;
     return true;
 };
+/**
+ * checks if a certain dateString exists in a range of dates
+ */
 export const dateStringInRange = (dateString, dateRange) => {
     const [start, end] = sortDates(dateRange);
     const targetDate = new Date(dateString);
@@ -26,16 +38,23 @@ export const dateStringInRange = (dateString, dateRange) => {
     const endOffset = dateOffset(targetDate, new Date(end));
     return startOffset >= 0 && endOffset <= 0;
 };
+/**
+ * current month start and end dates
+ */
 export const getCurrentMonthRange = () => {
     const date = new Date();
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     return [dateToString(firstDay), dateToString(lastDay)];
 };
-// Normalize Date String
+// Normalize Date String (use it everywhere)
 export const NormDt = (dateString) => {
     return dateString.split('-').map(s => s.padStart(2, '0')).join('-');
 };
+/**
+ * given a pair of dateStrings, this function will
+ * generate all the dates in between.
+ */
 export const unfoldRange = (dateString0, dateString1) => {
     const [start, end] = sortDates([dateString0, dateString1]).map(NormDt);
     if (start === end)
@@ -50,20 +69,37 @@ export const unfoldRange = (dateString0, dateString1) => {
     }
     return [start, ...rangeDates, end];
 };
+/**
+ * parse props JSON, usually props are
+ * given in string format
+ */
 export const parsePropJSON = (prop) => {
     return JSON.parse(prop.replace(/'/g, '"'));
 };
+/**
+ * sort a pair of dates
+ */
 export const sortDates = ([dateString0, dateString1]) => {
     const dt0 = new Date(dateString0);
     const dt1 = new Date(dateString1);
     return (dt0.valueOf() - dt1.valueOf()) > 0 ? [dateString1, dateString0] : [dateString0, dateString1];
 };
+/**
+ * calculate the offset between two dates
+ */
 export const dateOffset = (date0, date1) => {
     return Math.ceil((date0.getTime() - date1.getTime()) / 86400000);
 };
+/**
+ * fills an array's empty slots
+ */
 export const patchArray = (target = [], source) => {
     return source.map((itm, i) => target[i] || itm);
 };
+/**
+ * group dates for view.
+ * TODO: elaborate more...
+ */
 export const groupDates = (dateStringList) => {
     const group = Object.create({
         sorted: { years: [], months: {} },
@@ -102,10 +138,16 @@ export const groupDates = (dateStringList) => {
     }
     return group;
 };
+/**
+ * checks if a given dateString is valid
+ */
 export const checkIfValidDateString = (dateString) => {
     let date = new Date(dateString);
     return isNaN(date.getDate()) ? false : true;
 };
+/**
+ * convert a month to weeks
+ */
 export const monthToWeeks = (month) => {
     let week = [];
     let weeks = [];
@@ -124,6 +166,10 @@ export const monthToWeeks = (month) => {
     }
     return weeks;
 };
+/**
+ * given scope center and size, this function will
+ * calculate all the dates required to generate that scope
+ */
 export const getScopeRange = (scopeCenter, scopeSize) => {
     const start = new Date(scopeCenter);
     const startDay = start.getDate();
@@ -133,6 +179,9 @@ export const getScopeRange = (scopeCenter, scopeSize) => {
     end.setDate(endDate + scopeSize);
     return [start, end].map(date => dateToString(date));
 };
+/**
+ * auto-open an issue if something weird happens.
+ */
 export const openGithubIssue = ({ title, body, label }) => {
     const tl = 'title=' + encodeURIComponent(title);
     const lb = 'labels=' + encodeURIComponent(label);

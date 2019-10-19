@@ -9,10 +9,13 @@ import { HTMLStencilElement, JSXBase } from './stencil.core';
 import {
   DateString,
   IPlusConfig,
-} from './components/datepicker-plus/datepicker-plus';
+} from './datepicker-plus';
 
 export namespace Components {
   interface DatepickerPlus {
+    /**
+    * date picker plus config passed as a prop.
+    */
     'plusConfig': IPlusConfig;
   }
 }
@@ -32,11 +35,29 @@ declare global {
 
 declare namespace LocalJSX {
   interface DatepickerPlus extends JSXBase.HTMLAttributes<HTMLDatepickerPlusElement> {
+    /**
+    * emits when a date is selected. use it to react to date selected
+    */
     'onOnDateSelect'?: (event: CustomEvent<DateString[]>) => void;
+    /**
+    * emits when a date is deselected use it to react to date deselected
+    */
     'onOnDeselect'?: (event: CustomEvent<DateString[]>) => void;
+    /**
+    * emits when a date or more is highlighted as potential select candidate
+    */
     'onOnHighlight'?: (event: CustomEvent<DateString[]>) => void;
+    /**
+    * emits when date highlight is cleared after dates deselect
+    */
     'onOnHighlightClear'?: (event: CustomEvent<void>) => void;
+    /**
+    * emits when a complete date range is selected use it to react to a complete date range selected
+    */
     'onOnRangeSelect'?: (event: CustomEvent<DateString[]>) => void;
+    /**
+    * date picker plus config passed as a prop.
+    */
     'plusConfig'?: IPlusConfig;
   }
 

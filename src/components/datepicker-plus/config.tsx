@@ -1,16 +1,9 @@
-import { IPlusConfig, DateString } from "./datepicker-plus";
 import { getCurrentMonthRange } from "./utils";
+import { IPlusConfig, DateString, IWeekDay, IMonth } from "../../datepicker-plus";
 
-export interface IWeekDay {
-    name: string,
-    abbr: string,
-    isWeekend?: boolean
-}
-
-export interface IMonth {
-    name: string,
-    abbr: string
-}
+/**
+ * Common Configuration Defaults
+ */
 
 export const DEFAULT_WEEK_DAYS: IWeekDay[] = [
     { name: 'Sunday', abbr: 'Sun', isWeekend: true },
@@ -44,7 +37,7 @@ export const DEFAULT_CLASSES = {
     day: 'day',
     year: 'year',
     disabled: 'disabled',
-    selected: 'selected',
+    checked: 'checked',
     month: 'month',
     months: 'months',
     monthName: 'month-name',
@@ -59,8 +52,6 @@ export const DEFAULT_CLASSES = {
     singleHeader: 'single-header',
     highlight: 'highlight'
 }
-
-export type SelectMode = 'single' | 'multiple' | 'range'
 
 export const DEFAULT_CONFIG: IPlusConfig = {
     selectMode: 'range',

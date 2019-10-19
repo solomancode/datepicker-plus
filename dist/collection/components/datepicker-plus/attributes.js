@@ -1,5 +1,11 @@
 import { dateOffset } from "./utils";
+/**
+ * calculate date offset starting from today
+ */
 const offsetFromToday = (dateString) => dateOffset(new Date(dateString), new Date());
+/**
+ * available date dynamic attributes
+ */
 const today = (dateElement) => offsetFromToday(dateElement.dateString) === 0;
 const tomorrow = (dateElement) => offsetFromToday(dateElement.dateString) === 1;
 const yesterday = (dateElement) => offsetFromToday(dateElement.dateString) === -1;

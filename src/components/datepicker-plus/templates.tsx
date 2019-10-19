@@ -1,14 +1,23 @@
 import { h } from '@stencil/core';
 import { monthToWeeks } from './utils';
-import { DEFAULT_CLASSES, IWeekDay, IMonth } from "./config";
-import { IPlusConfig } from './datepicker-plus';
+import { DEFAULT_CLASSES } from "./config";
 import { DateElement } from './DateElement';
+import { IPlusConfig, IWeekDay, IMonth } from '../../datepicker-plus';
 
+/**
+ * ------------------------------
+ * JSX, fancy templates goes here.
+ * -------------------------------
+ */
+
+/**
+ * renders the interactive date element
+ */
 export function renderDate (dateElement: DateElement) {
     const onChange = (e: any) => {
         return e.target.checked ? this.select(dateElement.dateString) : this.deselect([dateElement.dateString])
     }
-    const onEnter = () => dateElement.getAttr('disabled') === false && this.highlightON(dateElement.dateString);
+    const onEnter = () => !dateElement.getAttr(DEFAULT_CLASSES.disabled) && this.highlightON(dateElement.dateString);
     return (
         <time part="day"
               dateTime={dateElement.dateString}
@@ -26,6 +35,9 @@ export function renderDate (dateElement: DateElement) {
     )
 }
 
+/**
+ * week header, renders week days.
+ */
 export function renderWeekHeader (weekDays: IWeekDay[]) {
     return (
         <header class={DEFAULT_CLASSES.weekHeader} part="week-header">
@@ -34,6 +46,9 @@ export function renderWeekHeader (weekDays: IWeekDay[]) {
     )
 }
 
+/**
+ * of course we need an empty placeholder
+ */
 export function renderEmpty (offset: number) {
     const nodes = []
     while (offset) {
@@ -43,6 +58,9 @@ export function renderEmpty (offset: number) {
     return nodes;
 }
 
+/**
+ * it renders the whole week 24/7
+ */
 export function renderWeek (week: DateElement[], renderHeader: boolean, weekDays: IWeekDay[]) {
     return (
         <section part="week" class={DEFAULT_CLASSES.week}>
@@ -56,6 +74,9 @@ export function renderWeek (week: DateElement[], renderHeader: boolean, weekDays
     )
 }
 
+/**
+ * renders a month header
+ */
 export function renderMonthHeader(dayFirst: DateElement, months: IMonth[]) {
     return (
         <header class={DEFAULT_CLASSES.monthHeader} part="month-header">
@@ -65,6 +86,9 @@ export function renderMonthHeader(dayFirst: DateElement, months: IMonth[]) {
     )
 }
 
+/**
+ * renders a month
+ */
 export function renderMonth (month: DateElement[], config: IPlusConfig) {
     const styles = config.layout === 'horizontal' ? {
         width: (window.innerWidth - 60) + 'px'
@@ -80,6 +104,10 @@ export function renderMonth (month: DateElement[], config: IPlusConfig) {
     )
 }
 
+/**
+ * render date picker container.
+ * and handles multiple layout options.
+ */
 export function renderContainer(dates: DateElement[][], config: IPlusConfig) {
     const styles = config.layout === 'horizontal' ? {
         width: (window.innerWidth * dates.length) + 'px'
@@ -89,7 +117,7 @@ export function renderContainer(dates: DateElement[][], config: IPlusConfig) {
         // theme stylesheet
         config.stylesheetUrl ? <link rel="stylesheet" type="text/css" href={config.stylesheetUrl}/> : null,
         // contents
-        <section class={(config.stylesheetUrl ? '' : 'dpp ') + config.layout} part="dpp-container">
+        <section class={(config.stylesheetUrl ? 'dpp-custom ' : 'dpp ') + config.layout} part="dpp-container">
             <section style={styles} class="viewport">
                 {[
                     renderSingleHeader() || null,

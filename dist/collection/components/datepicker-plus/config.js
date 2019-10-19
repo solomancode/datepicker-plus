@@ -1,4 +1,7 @@
 import { getCurrentMonthRange } from "./utils";
+/**
+ * Common Configuration Defaults
+ */
 export const DEFAULT_WEEK_DAYS = [
     { name: 'Sunday', abbr: 'Sun', isWeekend: true },
     { name: 'Monday', abbr: 'Mon ' },
@@ -29,7 +32,7 @@ export const DEFAULT_CLASSES = {
     day: 'day',
     year: 'year',
     disabled: 'disabled',
-    selected: 'selected',
+    checked: 'checked',
     month: 'month',
     months: 'months',
     monthName: 'month-name',

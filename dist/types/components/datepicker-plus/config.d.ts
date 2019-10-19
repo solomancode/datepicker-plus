@@ -1,13 +1,7 @@
-import { IPlusConfig } from "./datepicker-plus";
-export interface IWeekDay {
-    name: string;
-    abbr: string;
-    isWeekend?: boolean;
-}
-export interface IMonth {
-    name: string;
-    abbr: string;
-}
+import { IPlusConfig, IWeekDay, IMonth } from "../../datepicker-plus";
+/**
+ * Common Configuration Defaults
+ */
 export declare const DEFAULT_WEEK_DAYS: IWeekDay[];
 export declare const DEFAULT_MONTHS: IMonth[];
 /**
@@ -17,7 +11,7 @@ export declare const DEFAULT_CLASSES: {
     day: string;
     year: string;
     disabled: string;
-    selected: string;
+    checked: string;
     month: string;
     months: string;
     monthName: string;
@@ -32,5 +26,4 @@ export declare const DEFAULT_CLASSES: {
     singleHeader: string;
     highlight: string;
 };
-export declare type SelectMode = 'single' | 'multiple' | 'range';
 export declare const DEFAULT_CONFIG: IPlusConfig;

@@ -1,38 +1,79 @@
-import { DEFAULT_CONFIG } from './config';
+import { DEFAULT_CONFIG, DEFAULT_CLASSES } from './config';
 import { DateElement } from './DateElement';
 import { renderContainer } from './templates';
 import { checkIfValidDateString, getScopeRange, groupDates, patchArray, unfoldRange, NormDt } from './utils';
 import { attributeChecks } from './attributes';
 export class DatepickerPlus {
     constructor() {
+        /**
+         * date picker plus config passed as a prop.
+         */
         this.plusConfig = DEFAULT_CONFIG;
+        /**
+         * register new created date objects for reuse
+         */
         this.dateRegistry = {
         /** LOOKUP ELEMENTS */
         };
+        /**
+         * reactive state to update view elements
+         */
         this.viewElements = [];
+        /**
+         * a list of isoString formated dates to be
+         * selected.
+         */
         this.selected = [
         /** SELECTED */
         ];
+        /**
+         * a list of isoString formated dates to be
+         * disabled
+         */
         this.disabled = [
         /** DISABLED */
         ];
+        /**
+         * a list of isoString formated dates to be
+         * highlighted
+         */
         this.highlighted = [
         /** HIGHLIGHTED */
         ];
+        /**
+         * scope controller object to enable/disable
+         * selection scope
+         */
         this.activeScope = null;
-        this.unfoldDateStringList = (disabled) => {
-            if (!disabled.length)
-                return [];
-            return disabled.map(dateString => {
-                return checkIfValidDateString(dateString) ? [dateString] : this.unfoldAttribute(dateString);
-            }).reduce((p, n) => [...p, ...n]);
-        };
+        /**
+         * prepare configuration for initialization
+         * fill in necessary data
+         */
         this.patchConfigLists = () => {
             const { months: default_months, weekDays: default_weekDays } = DEFAULT_CONFIG.i18n;
             const { months, weekDays } = this.plusConfig.i18n;
             this.plusConfig.i18n.months = patchArray(months, default_months);
             this.plusConfig.i18n.weekDays = patchArray(weekDays, default_weekDays);
         };
+        /**
+         * dynamic dates can be achieved through a date attribute
+         *
+         * some examples of currently available date attributes are:
+         * ( today - tomorrow - yesterday - past - future )
+         *
+         * this methods unfolds registered date attributes to it's corresponding dateString(s)
+         * a date attribute might be unfolded to a list of corresponding dateStrings
+         */
+        this.unfoldDateStringListAttributes = (dateStringList) => {
+            if (!dateStringList.length)
+                return [];
+            return dateStringList.map(dateString => {
+                return checkIfValidDateString(dateString) ? [dateString] : this.unfoldAttribute(dateString);
+            }).reduce((p, n) => [...p, ...n]);
+        };
+        /**
+         * selects a date in different selection modes
+         */
         this.select = (dateString) => {
             const { selectMode } = this.plusConfig;
             // generate selected list
@@ -78,6 +119,9 @@ export class DatepickerPlus {
             if (selectMode === 'range' && this.selected.length > 1)
                 this.onRangeSelect.emit(this.selected);
         };
+        /**
+         * deselect a list of dates
+         */
         this.deselect = (dateStringList) => {
             const { selectMode } = this.plusConfig;
             if (selectMode === 'range') {
@@ -87,7 +131,7 @@ export class DatepickerPlus {
             }
             dateStringList.forEach(dateString => {
                 const dateElement = this.getDateElement(dateString);
-                dateElement.setAttr('checked', false);
+                dateElement.setAttr(DEFAULT_CLASSES.checked, false);
                 // clean range attributes
                 if (selectMode === 'range') {
                     dateElement.resetRangeAttributes();
@@ -98,10 +142,17 @@ export class DatepickerPlus {
             this.clearHighlighted();
             this.onDeselect.emit(dateStringList);
         };
+        /**
+         * returns a date element using it's dateString
+         */
         this.getDateElement = (dateString) => {
             const NDStr = NormDt(dateString);
             return this.dateRegistry[NDStr];
         };
+        /**
+         * unfolds a date attribute within the
+         * current active view.
+         */
         this.unfoldAttribute = (attr) => {
             const unfolded = [];
             this.viewElements
@@ -113,6 +164,9 @@ export class DatepickerPlus {
             });
             return unfolded;
         };
+        /**
+         * registers a date for later use
+         */
         this.registerDate = (dateString) => {
             const NDStr = NormDt(dateString);
             if (NDStr in this.dateRegistry)
@@ -130,24 +184,42 @@ export class DatepickerPlus {
         }
     }
     componentDidLoad() {
-        /**
-         * UNFOLD DATE STRING RANGE
-         * CREATE & REGISTER
-         * UPDATE VIEW ELEMENTS
-         */
+        // unfold view dateString pair
         const viewRange = this.unfoldViewRange(this.plusConfig.viewRange);
+        // create a date element for each dateString
         const createdElements = viewRange.map(month => month.map(this.registerDate));
+        // set view elements, reactive prop. will trigger a re-render.
         this.viewElements = createdElements;
         // disable
-        const disabled = this.unfoldDateStringList(this.plusConfig.disabled);
+        const disabled = this.unfoldDateStringListAttributes(this.plusConfig.disabled);
         this.disableMultipleDates(disabled);
         // select
-        this.plusConfig.selected.forEach(this.select);
+        const selected = this.unfoldDateStringListAttributes(this.plusConfig.selected);
+        this.checkDatesBeforeSelect(selected);
     }
+    /**
+     * checks for valid select conditions before
+     * applying date select
+     */
+    checkDatesBeforeSelect(selected) {
+        if (this.plusConfig.selectMode === 'range' && selected.length < 2) {
+            console.info('%c— Date selection will be cancelled —\n', 'color: #e52', 'Range select mode requires a minimum of two dates to select.');
+        }
+        else {
+            selected.forEach(this.select);
+        }
+    }
+    /**
+     * given two dates this method will return
+     * the dates in between formatted for view
+     */
     unfoldViewRange([start, end]) {
         const dates = unfoldRange(start, end);
         return groupDates(dates).toArray();
     }
+    /**
+     * generates a selection constraint scope
+     */
     generateScope(disabledSnapshot) {
         return {
             activate: (dateString, scopeSize) => {
@@ -166,6 +238,9 @@ export class DatepickerPlus {
             }
         };
     }
+    /**
+     * highlight potential select candidates
+     */
     highlightON(dateString) {
         if (this.plusConfig.selectMode === 'range' && this.selected.length === 1) {
             this.clearHighlighted();
@@ -177,6 +252,9 @@ export class DatepickerPlus {
             this.onHighlight.emit(this.highlighted);
         }
     }
+    /**
+     * clear highlighted dates
+     */
     clearHighlighted() {
         this.highlighted.forEach(dateString => {
             const dateElement = this.getDateElement(dateString);
@@ -186,19 +264,26 @@ export class DatepickerPlus {
         this.highlighted = [];
         this.onHighlightClear.emit(void 0);
     }
+    /**
+     * checks if selected contains a disabled date
+     */
     checkIfHasDisabled(selected, disabled) {
         const map = {};
         disabled.forEach(d => map[d] = true);
         return selected.some(s => (s in map));
     }
+    /**
+     * select multiple dates and applies
+     * required attributes
+     */
     selectMultipleDates(dateStringList) {
         dateStringList.forEach(dateString => {
             const dateElement = this.getDateElement(dateString);
             if (!dateElement)
                 return;
-            dateElement.setAttr('checked', true);
+            dateElement.setAttr(DEFAULT_CLASSES.checked, true);
             if (dateStringList.length > 1) {
-                const checked = dateElement.getAttr('checked');
+                const checked = dateElement.getAttr(DEFAULT_CLASSES.checked);
                 dateElement.setAttr('rangeIndex', checked ? dateStringList.indexOf(dateElement.dateString) : null);
                 dateElement.setAttr('rangeEndIndex', checked ? dateStringList.length - 1 : null);
             }
@@ -209,26 +294,35 @@ export class DatepickerPlus {
         });
         this.selected = dateStringList;
     }
+    /**
+     * disable multiple dates
+     */
     disableMultipleDates(dateStringList) {
         this.disabled = dateStringList.filter(dateString => {
             const dateElement = this.getDateElement(dateString);
             if (!dateElement)
                 return false;
-            dateElement.setAttr('disabled', true);
+            dateElement.setAttr(DEFAULT_CLASSES.disabled, true);
             return true;
         });
     }
+    /**
+     * enables multiple dates
+     */
     enableMultipleDates(dateStringList) {
         dateStringList.forEach(dateString => {
             const dateElement = this.getDateElement(dateString);
             if (!dateElement)
                 return;
-            dateElement.setAttr('disabled', false);
+            dateElement.setAttr(DEFAULT_CLASSES.disabled, false);
         });
         this.disabled = this.disabled.filter(dateString => !dateStringList.includes(dateString));
     }
+    /**
+     * RENDER... 👀
+     *
+     */
     render() {
-        console.count('RENDER...');
         return renderContainer.call(this, this.viewElements, this.plusConfig);
     }
     static get is() { return "datepicker-plus"; }
@@ -248,7 +342,8 @@ export class DatepickerPlus {
                 "resolved": "IPlusConfig",
                 "references": {
                     "IPlusConfig": {
-                        "location": "local"
+                        "location": "import",
+                        "path": "../../datepicker-plus"
                     }
                 }
             },
@@ -256,7 +351,7 @@ export class DatepickerPlus {
             "optional": false,
             "docs": {
                 "tags": [],
-                "text": ""
+                "text": "date picker plus config passed as a prop."
             },
             "defaultValue": "DEFAULT_CONFIG"
         }
@@ -272,14 +367,15 @@ export class DatepickerPlus {
             "composed": true,
             "docs": {
                 "tags": [],
-                "text": ""
+                "text": "emits when a date is selected.\nuse it to react to date selected"
             },
             "complexType": {
                 "original": "DateString[]",
                 "resolved": "string[]",
                 "references": {
                     "DateString": {
-                        "location": "local"
+                        "location": "import",
+                        "path": "../../datepicker-plus"
                     }
                 }
             }
@@ -291,14 +387,15 @@ export class DatepickerPlus {
             "composed": true,
             "docs": {
                 "tags": [],
-                "text": ""
+                "text": "emits when a date is deselected\nuse it to react to date deselected"
             },
             "complexType": {
                 "original": "DateString[]",
                 "resolved": "string[]",
                 "references": {
                     "DateString": {
-                        "location": "local"
+                        "location": "import",
+                        "path": "../../datepicker-plus"
                     }
                 }
             }
@@ -310,14 +407,15 @@ export class DatepickerPlus {
             "composed": true,
             "docs": {
                 "tags": [],
-                "text": ""
+                "text": "emits when a complete date range is selected\nuse it to react to a complete date range selected"
             },
             "complexType": {
                 "original": "DateString[]",
                 "resolved": "string[]",
                 "references": {
                     "DateString": {
-                        "location": "local"
+                        "location": "import",
+                        "path": "../../datepicker-plus"
                     }
                 }
             }
@@ -329,14 +427,15 @@ export class DatepickerPlus {
             "composed": true,
             "docs": {
                 "tags": [],
-                "text": ""
+                "text": "emits when a date or more is highlighted as\npotential select candidate"
             },
             "complexType": {
                 "original": "DateString[]",
                 "resolved": "string[]",
                 "references": {
                     "DateString": {
-                        "location": "local"
+                        "location": "import",
+                        "path": "../../datepicker-plus"
                     }
                 }
             }
@@ -348,7 +447,7 @@ export class DatepickerPlus {
             "composed": true,
             "docs": {
                 "tags": [],
-                "text": ""
+                "text": "emits when date highlight is cleared after\ndates deselect"
             },
             "complexType": {
                 "original": "void",

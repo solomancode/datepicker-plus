@@ -1,6 +1,9 @@
-import { DateString } from "./datepicker-plus";
 import { DateElement } from "./DateElement";
+import { DateString } from "../../datepicker-plus";
 
+/**
+ * takes a date, returns a dateString
+ */
 export const dateToString = (date: Date) => {
     const yyyy = date.getFullYear()
     const month = date.getMonth()
@@ -9,12 +12,18 @@ export const dateToString = (date: Date) => {
     return NormDt(`${yyyy}-${mm}-${dd}`)
 }
 
+/**
+ * given a dateString, return the next day dateString
+ */
 export const getNextDayString = (dateString: DateString) => {
     const next = new Date(dateString)
     next.setDate(next.getDate() + 1);
     return dateToString(next);
 }
 
+/**
+ * check if a pair of dates are equal.
+ */
 export const isSameDate = (date1: Date, date2: Date) => {
     if (date1.getDate() !== date2.getDate()) return false;
     if (date1.getUTCMonth() !== date2.getUTCMonth()) return false;
@@ -22,6 +31,9 @@ export const isSameDate = (date1: Date, date2: Date) => {
     return true;
 }
 
+/**
+ * checks if a certain dateString exists in a range of dates
+ */
 export const dateStringInRange = (dateString: string, dateRange: [string, string]) => {
     const [ start, end ] = sortDates(dateRange)
     const targetDate = new Date(dateString)
@@ -30,6 +42,9 @@ export const dateStringInRange = (dateString: string, dateRange: [string, string
     return startOffset >= 0 && endOffset <= 0;
 }
 
+/**
+ * current month start and end dates
+ */
 export const getCurrentMonthRange = () => {
     const date = new Date();
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -37,11 +52,15 @@ export const getCurrentMonthRange = () => {
     return [ dateToString(firstDay), dateToString(lastDay) ]
 }
 
-// Normalize Date String
+// Normalize Date String (use it everywhere)
 export const NormDt = (dateString: DateString) => {
     return dateString.split('-').map(s=>s.padStart(2,'0')).join('-');
 }
 
+/**
+ * given a pair of dateStrings, this function will
+ * generate all the dates in between.
+ */
 export const unfoldRange = (dateString0: string, dateString1: string): string[] => {
     const [start, end] = sortDates([dateString0, dateString1]).map(NormDt);
     if (start===end) return [];
@@ -55,10 +74,17 @@ export const unfoldRange = (dateString0: string, dateString1: string): string[] 
     return [start, ...rangeDates, end];
 }
 
+/**
+ * parse props JSON, usually props are
+ * given in string format
+ */
 export const parsePropJSON = (prop: string) => {
     return JSON.parse(prop.replace(/'/g,'"'))
 }
 
+/**
+ * sort a pair of dates
+ */
 export const sortDates = ([dateString0, dateString1]: [DateString, DateString]) => {
     const dt0 = new Date(dateString0)
     const dt1 = new Date(dateString1)
@@ -71,10 +97,16 @@ interface IGithubIssueParams {
     label: string
 }
 
+/**
+ * calculate the offset between two dates
+ */
 export const dateOffset = (date0: Date, date1: Date) => {
     return Math.ceil((date0.getTime()-date1.getTime())/86400000)
 }
 
+/**
+ * fills an array's empty slots
+ */
 export const patchArray = (target: any[] = [], source: any) => {
     return source.map((itm: any, i: any) => target[i] || itm)
 }
@@ -87,6 +119,10 @@ interface IDateGroup {
     toArray(): DateString[][]
 }
 
+/**
+ * group dates for view.
+ * TODO: elaborate more...
+ */
 export const groupDates = (dateStringList: DateString[]): IDateGroup => {
     const group: IDateGroup = Object.create({
         sorted: { years: [], months: {} },
@@ -124,11 +160,17 @@ export const groupDates = (dateStringList: DateString[]): IDateGroup => {
     return group;
 }
 
+/**
+ * checks if a given dateString is valid
+ */
 export const checkIfValidDateString = (dateString: DateString) => {
     let date = new Date(dateString);
     return isNaN(date.getDate()) ? false : true; 
 }
 
+/**
+ * convert a month to weeks
+ */
 export const monthToWeeks = (month: DateElement[]) => {
     let week = [];
     let weeks = [];
@@ -147,6 +189,10 @@ export const monthToWeeks = (month: DateElement[]) => {
     return weeks;
 }
 
+/**
+ * given scope center and size, this function will
+ * calculate all the dates required to generate that scope
+ */
 export const getScopeRange = (scopeCenter: DateString, scopeSize: number) => {
     const start = new Date(scopeCenter)
     const startDay = start.getDate()
@@ -157,6 +203,9 @@ export const getScopeRange = (scopeCenter: DateString, scopeSize: number) => {
     return [start, end].map(date => dateToString(date)) as [DateString, DateString]
 }
 
+/**
+ * auto-open an issue if something weird happens.
+ */
 export const openGithubIssue = ({ title, body, label }: IGithubIssueParams) => {
     const tl = 'title=' + encodeURIComponent(title)
     const lb = 'labels=' + encodeURIComponent(label)

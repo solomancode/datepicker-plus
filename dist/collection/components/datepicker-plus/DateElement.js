@@ -3,6 +3,11 @@ import { attributeChecks } from "./attributes";
 export class DateElement {
     constructor(dateString) {
         this.dateString = dateString;
+        /**
+         * pending operations to be called in
+         * later time when a certain condition
+         * is met.
+         */
         this.pendingQueue = [];
         /**
          * DATE ATTRIBUTES
@@ -19,6 +24,10 @@ export class DateElement {
         this.dayOfWeek = this.date.getDay();
         this.updateAttributes(attributeChecks);
     }
+    /**
+     * hooks a DOM element reference and applies
+     * pending operations.
+     */
     hookDOMElement(element) {
         if (element instanceof HTMLTimeElement) {
             this.DateDOMElement = element;
@@ -28,6 +37,9 @@ export class DateElement {
         }
         this.pendingQueue = this.pendingQueue.filter(fn => fn.call(this) === false);
     }
+    /**
+     * update date class-list
+     */
     updateDateClasses() {
         if (this.DateDOMElement) {
             this.DateDOMElement.setAttribute('class', DEFAULT_CLASSES.day + ' ' +
@@ -40,6 +52,9 @@ export class DateElement {
         }
         return true; // success, remove from queue
     }
+    /**
+     * updates a date attribute
+     */
     updateCheckboxAttribute(attr, value) {
         if (this.checkboxDOMElement) {
             this.checkboxDOMElement[attr] = value;
@@ -55,8 +70,11 @@ export class DateElement {
         }
         this.updateDateClasses();
     }
+    /**
+     * updates a DOM attribute
+     */
     updateDOMAttribute(attr, value) {
-        if (attr === 'checked' || attr === 'disabled') {
+        if (attr === DEFAULT_CLASSES.checked || attr === DEFAULT_CLASSES.disabled) {
             this.updateCheckboxAttribute(attr, value);
         }
         this.updateDateClasses();
@@ -75,6 +93,9 @@ export class DateElement {
         delete this.attributes[attr];
         this.updateDateClasses();
     }
+    /**
+     * resets range attributes
+     */
     resetRangeAttributes() {
         this.removeAttr('rangeIndex');
         this.removeAttr('rangeEndIndex');
@@ -82,6 +103,9 @@ export class DateElement {
         this.removeAttr('rangeEnd');
         this.removeAttr('connector');
     }
+    /**
+     * update date attributes
+     */
     updateAttributes(attributes) {
         for (const attr in attributes) {
             if (attributes.hasOwnProperty(attr)) {
