@@ -1,5 +1,9 @@
 # Datepicker Plus
 
+![select date range](select.gif)
+
+
+
 *Datepicker Plus* is an input control to select dates. It's a **web component** built with [StencilJS](https://stenciljs.com/). *Datepicker Plus* can be used directly in a web page or you can integrate the *Datepicker* with other frameworks, like angular, react or Vue. check [stenciljs framework integration](<https://stenciljs.com/docs/overview>) for more info.
 
 **Features**
@@ -293,4 +297,3 @@ npm test
 ```
 
 Need help? Check out stencilJS docs [here](https://stenciljs.com/docs/my-first-component).
-
