@@ -1,4 +1,4 @@
-import { h, r as registerInstance, c as createEvent } from './chunk-3bfffd8a.js';
+import { h, r as registerInstance, c as createEvent } from './chunk-fcdf5eaf.js';
 
 /**
  * takes a date, returns a dateString
@@ -17,28 +17,6 @@ const getNextDayString = (dateString) => {
     const next = new Date(dateString);
     next.setDate(next.getDate() + 1);
     return dateToString(next);
-};
-/**
- * check if a pair of dates are equal.
- */
-const isSameDate = (date1, date2) => {
-    if (date1.getDate() !== date2.getDate())
-        return false;
-    if (date1.getUTCMonth() !== date2.getUTCMonth())
-        return false;
-    if (date1.getFullYear() !== date2.getFullYear())
-        return false;
-    return true;
-};
-/**
- * checks if a certain dateString exists in a range of dates
- */
-const dateStringInRange = (dateString, dateRange) => {
-    const [start, end] = sortDates(dateRange);
-    const targetDate = new Date(dateString);
-    const startOffset = dateOffset(targetDate, new Date(start));
-    const endOffset = dateOffset(targetDate, new Date(end));
-    return startOffset >= 0 && endOffset <= 0;
 };
 /**
  * current month start and end dates
@@ -70,13 +48,6 @@ const unfoldRange = (dateString0, dateString1) => {
         currentDateString = getNextDayString(currentDateString);
     }
     return [start, ...rangeDates, end];
-};
-/**
- * parse props JSON, usually props are
- * given in string format
- */
-const parsePropJSON = (prop) => {
-    return JSON.parse(prop.replace(/'/g, '"'));
 };
 /**
  * sort a pair of dates
@@ -832,7 +803,7 @@ class DatepickerPlus {
     render() {
         return renderContainer.call(this, this.viewElements, this.plusConfig);
     }
-    static get style() { return ".dpp {\n    font-family: monospace;\n}\n\n.horizontal {\n    overflow-x: scroll;\n}\n\n.horizontal .month {\n    display: inline-block;\n}\n\n.month {\n    border: 1px solid #ccc;\n    padding: 20px;\n}\n\n.dpp .month-header {\n    text-transform: uppercase;\n    font-weight: bold;\n    margin-bottom: 5px;\n}\n\n.dpp .day.checked.rangeStart {\n    background-color: #cddc39;\n}\n\n.dpp .day.checked.rangeEnd {\n    background-color: #ff9800;\n}\n\n.week-header {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.single-header {\n    padding: 5px 20px;\n}\n\n.week-header abbr {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    text-align: center;\n}\n\n.week-content {\n    display: -ms-flexbox;\n    display: flex;\n}\n\n.week-content > .day, .week-content > .empty {\n    -ms-flex-positive: 1;\n    flex-grow: 1;\n    -ms-flex-preferred-size: 80px;\n    flex-basis: 80px;\n    text-align: center;\n}\n\n.day {\n    position: relative;\n    line-height: 30px;\n}\n\n.day > label {\n    display: block;\n    width: 100%;\n    height: 100%;\n    cursor: pointer;\n    -webkit-box-sizing: border-box;\n    box-sizing: border-box;\n}\n\n.day.disabled {\n    color: #ccc;\n    background-color: #f8f8f8;\n}\n\n.dpp .day.checked {\n    background-color: gold;\n}\n\n.dpp .day.highlighted {\n    background-color: gold;\n}\n\n.dpp .day.today {\n    outline: 1px solid #ccc;\n}\n\n.checkbox {\n    display: none;\n}\n\n.month-header {\n    display: -ms-flexbox;\n    display: flex;\n    -ms-flex-pack: justify;\n    justify-content: space-between;\n}"; }
+    static get style() { return ".dpp{font-family:monospace}.horizontal{overflow-x:scroll}.horizontal .month{display:inline-block}.month{border:1px solid #ccc;padding:20px}.dpp .month-header{text-transform:uppercase;font-weight:700;margin-bottom:5px}.dpp .day.checked.rangeStart{background-color:#cddc39}.dpp .day.checked.rangeEnd{background-color:#ff9800}.week-header{display:-ms-flexbox;display:flex}.single-header{padding:5px 20px}.week-header abbr{-ms-flex-positive:1;flex-grow:1;text-align:center}.week-content{display:-ms-flexbox;display:flex}.week-content>.day,.week-content>.empty{-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:80px;flex-basis:80px;text-align:center}.day{position:relative;line-height:30px}.day>label{display:block;width:100%;height:100%;cursor:pointer;-webkit-box-sizing:border-box;box-sizing:border-box}.day.disabled{color:#ccc;background-color:#f8f8f8}.dpp .day.checked,.dpp .day.highlighted{background-color:gold}.dpp .day.today{outline:1px solid #ccc}.checkbox{display:none}.month-header{display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between}"; }
 }
 
 export { DatepickerPlus as datepicker_plus };
